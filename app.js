@@ -240,8 +240,10 @@
 
   function buildEntry() {
     if (!currentEntry) return null;
+    const baseEntry = Store.getHistory().find((entry) => entry.id === currentEntry.id) || currentEntry;
+    const draftById = new Map(draftItems.map((item) => [item.id, item]));
     const currentSlot = sessionMemoSlot();
-    const baseMemos = orderedMemos(Array.isArray(currentEntry.memos) ? currentEntry.memos : []);
+    const baseMemos = orderedMemos(Array.isArray(baseEntry.memos) ? baseEntry.memos : []);
     const existingMemo = baseMemos.find((memo) => memoSlot(memo) === currentSlot);
     const memo = memoEntry(document.getElementById("home-memo")?.value || "", existingMemo);
     const memos = [
@@ -249,8 +251,11 @@
       ...(memo ? [memo] : [])
     ];
     const entry = {
-      ...currentEntry,
-      items: draftItems.map((item) => ({ ...item })),
+      ...baseEntry,
+      items: (baseEntry.items || []).map((item) => {
+        const draft = draftById.get(item.id);
+        return draft ? { ...item, ...draft } : item;
+      }),
       memos,
       memo: memoText(memos)
     };
