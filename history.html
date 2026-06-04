@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#080a15" />
     <meta name="format-detection" content="telephone=no" />
-    <title>주문내역</title>
+    <title>요청 내역</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-name-en" />
+    <link rel="stylesheet" href="style.css?v=20260604-page-roles" />
   </head>
   <body>
     <div class="shell">
@@ -16,32 +16,24 @@
         <div class="main-surface">
           <header class="page-header">
             <div>
-              <p class="eyebrow" data-i18n="appName">식당 재료 요청</p>
-              <h1 data-i18n="history">주문내역</h1>
+              <h1 data-i18n="history">요청 내역</h1>
             </div>
+            <button id="close-detail" class="ghost-button hidden" type="button" data-i18n="close">닫기</button>
           </header>
-          <section class="panel">
-            <div class="form-grid">
-              <label class="field">
-                <span data-i18n="dateFilter">날짜 필터</span>
-                <input type="date" id="date-filter" />
-              </label>
-              <div class="field">
-                <span class="field-label">&nbsp;</span>
-                <div class="button-row">
-                  <button class="ghost-button" id="download-date" data-i18n="downloadDateCsv">선택 날짜 CSV 다운로드</button>
-                  <button class="ghost-button" id="download-all" data-i18n="downloadAllCsv">전체 CSV 다운로드</button>
-                  <button class="danger-button" id="clear-all" data-i18n="clearAll">전체 삭제</button>
-                </div>
-              </div>
-            </div>
+          <section id="history-week-view">
+            <div id="week-pager" class="pager"></div>
+            <section id="history-list" class="history-week-list admin-section"></section>
           </section>
-          <section id="history-list" class="list admin-section"></section>
+          <section id="history-detail" class="hidden"></section>
+          <section class="button-row admin-section">
+            <button class="ghost-button" id="download-all" data-i18n="downloadAllCsv">전체 CSV 다운로드</button>
+            <button class="danger-button" id="clear-all" data-i18n="clearAll">전체 삭제</button>
+          </section>
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-name-en"></script>
-    <script src="i18n.js?v=20260604-name-en"></script>
-    <script src="history.js?v=20260604-name-en"></script>
+    <script src="storage.js?v=20260604-page-roles"></script>
+    <script src="i18n.js?v=20260604-page-roles"></script>
+    <script src="history.js?v=20260604-page-roles"></script>
   </body>
 </html>

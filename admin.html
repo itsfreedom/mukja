@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>관리자</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-name-en" />
+    <link rel="stylesheet" href="style.css?v=20260604-page-roles" />
   </head>
   <body>
     <div class="shell">
@@ -51,11 +51,23 @@
 
             <div class="admin-grid admin-section">
               <section class="panel">
-                <h2 data-i18n="employeeManagement">직원 관리</h2>
-                <div id="employee-list" class="list admin-section"></div>
+                <h2 data-i18n="passwordManagement">비밀번호 관리</h2>
+                <div id="access-list" class="list admin-section"></div>
                 <div class="button-row admin-section">
-                  <input id="employee-name" data-i18n-placeholder="name" />
-                  <button id="add-employee" class="button" data-i18n="add">추가</button>
+                  <input id="access-password" data-i18n-placeholder="password" />
+                  <select id="access-role">
+                    <option value="department">부서</option>
+                    <option value="restaurant">레스토랑</option>
+                    <option value="admin">관리자</option>
+                  </select>
+                  <select id="access-department">
+                    <option value="">-</option>
+                    <option value="카페테리아">카페테리아</option>
+                    <option value="야채">야채</option>
+                    <option value="그로서리">그로서리</option>
+                  </select>
+                  <input id="access-label" data-i18n-placeholder="name" />
+                  <button id="add-access" class="button" data-i18n="add">추가</button>
                 </div>
               </section>
 
@@ -84,6 +96,20 @@
                 <button id="add-ingredient" class="button" data-i18n="add">추가</button>
               </div>
               <div id="ingredient-list" class="table-wrap admin-section"></div>
+            </section>
+
+            <section class="panel admin-section">
+              <h2 data-i18n="menuManagement">메뉴 관리</h2>
+              <div class="form-grid admin-section">
+                <input id="menu-name-ko" data-i18n-placeholder="name" />
+                <input id="menu-name-en" data-i18n-placeholder="englishName" />
+                <input id="menu-category-input" data-i18n-placeholder="menuCategory" />
+                <input id="menu-price" data-i18n-placeholder="price" inputmode="decimal" />
+                <select id="menu-recipe"></select>
+                <label class="field"><span data-i18n="seasonalMenu">계절 메뉴</span><input id="menu-seasonal" type="checkbox" /></label>
+                <button id="add-menu" class="button" data-i18n="save">저장</button>
+              </div>
+              <div id="admin-menu-list" class="table-wrap admin-section"></div>
             </section>
 
             <section class="panel admin-section">
@@ -156,8 +182,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-name-en"></script>
-    <script src="i18n.js?v=20260604-name-en"></script>
-    <script src="admin.js?v=20260604-name-en"></script>
+    <script src="storage.js?v=20260604-page-roles"></script>
+    <script src="i18n.js?v=20260604-page-roles"></script>
+    <script src="admin.js?v=20260604-page-roles"></script>
   </body>
 </html>

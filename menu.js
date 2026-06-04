@@ -8,6 +8,7 @@
   const list = document.getElementById("menu-list");
   const detail = document.getElementById("menu-detail");
   let activeId = "";
+  const canViewMenu = ["restaurant", "admin"].includes(Store.getAuth()?.role);
 
   function money(menu) {
     if (!menu.price) return "-";
@@ -52,6 +53,7 @@
         <span class="badge">${menu.category || "-"}</span>
         ${menu.seasonal ? `<span class="badge yellow">${I18n.t("seasonalMenu")}</span>` : ""}
         <span class="badge ${menu.discontinued ? "yellow" : "green"}">${menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu")}</span>
+        ${recipe ? `<a class="ghost-button compact-button" href="recipes.html?id=${encodeURIComponent(recipe.id)}&from=menu">${I18n.t("viewRecipes")}</a>` : ""}
       </div>
       ${recipe ? `
         <h3 class="admin-section">${I18n.t("ingredients")}</h3>
@@ -65,6 +67,11 @@
   }
 
   function render() {
+    if (!canViewMenu) {
+      list.innerHTML = `<div class="list-card muted">${I18n.t("noAccess")}</div>`;
+      detail.textContent = "";
+      return;
+    }
     const menus = filteredMenus();
     if (!menus.length) {
       list.innerHTML = `<div class="panel muted">${I18n.t("noMenus")}</div>`;
@@ -72,17 +79,30 @@
       return;
     }
     if (!activeId || !menus.some((menu) => menu.id === activeId)) activeId = menus[0].id;
-    list.innerHTML = menus.map((menu) => `
-      <button class="list-card menu-row ${menu.id === activeId ? "is-active" : ""}" data-menu="${menu.id}" type="button">
-        <div>
-          <strong>${I18n.menuName(menu)}</strong>
-          <div class="item-meta">${[I18n.secondaryMenuName(menu), menu.category].filter(Boolean).join(" · ")}</div>
+    const groups = menus.reduce((acc, menu) => {
+      const key = menu.category || "-";
+      acc[key] = acc[key] || [];
+      acc[key].push(menu);
+      return acc;
+    }, {});
+    list.innerHTML = Object.entries(groups).map(([group, groupMenus]) => `
+      <section class="menu-category-group">
+        <h2>${group}</h2>
+        <div class="list admin-section">
+          ${groupMenus.map((menu) => `
+            <button class="list-card menu-row ${menu.id === activeId ? "is-active" : ""} ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}" type="button">
+              <div>
+                <strong>${I18n.menuName(menu)}</strong>
+                <div class="item-meta">${I18n.secondaryMenuName(menu)}</div>
+              </div>
+              <div class="menu-row-price">
+                <strong>${money(menu)}</strong>
+                ${menu.discontinued ? `<span>${I18n.t("discontinuedMenu")}</span>` : menu.seasonal ? `<span>${I18n.t("seasonalMenu")}</span>` : ""}
+              </div>
+            </button>
+          `).join("")}
         </div>
-        <div class="menu-row-price">
-          <strong>${money(menu)}</strong>
-          ${menu.discontinued ? `<span>${I18n.t("discontinuedMenu")}</span>` : menu.seasonal ? `<span>${I18n.t("seasonalMenu")}</span>` : ""}
-        </div>
-      </button>
+      </section>
     `).join("");
     list.querySelectorAll("[data-menu]").forEach((button) => {
       button.addEventListener("click", () => {

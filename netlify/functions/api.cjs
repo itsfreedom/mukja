@@ -63,6 +63,18 @@ async function ensureSchema(client) {
       created_at timestamptz not null default now()
     );
 
+    create table if not exists access_accounts (
+      password text primary key,
+      role text not null,
+      department text,
+      label text,
+      enabled boolean not null default true,
+      changed_by_identity_id text references access_identities(id) on delete set null,
+      changed_ip text,
+      changed_user_agent text,
+      updated_at timestamptz not null default now()
+    );
+
     create table if not exists orders (
       id text primary key,
       order_date text not null,
@@ -187,6 +199,7 @@ async function ensureSchema(client) {
     alter table ingredients add column if not exists name_en text;
 
     create index if not exists idx_orders_created_at on orders(created_at desc);
+    create index if not exists idx_access_accounts_role on access_accounts(role, department);
     create index if not exists idx_order_items_order_id on order_items(order_id, item_index);
     create index if not exists idx_order_memos_order_id on order_memos(order_id, memo_index);
     create index if not exists idx_receipt_confirmations_item on receipt_confirmations(order_item_id, confirmed_at desc);
@@ -248,6 +261,48 @@ async function recordAccess(client, event, path) {
     values ($1, $2, $3, $4, $5, $6, $7)
   `, [info.memberId, info.role, info.department || "", path, event.httpMethod, info.ip, info.userAgent]);
   return info;
+}
+
+async function upsertAccessAccount(client, password, account, info) {
+  if (!password || !account?.role) throw new Error("Invalid access account");
+  await client.query(`
+    insert into access_accounts (
+      password, role, department, label, enabled,
+      changed_by_identity_id, changed_ip, changed_user_agent, updated_at
+    )
+    values ($1, $2, $3, $4, $5, $6, $7, $8, now())
+    on conflict (password) do update set
+      role = excluded.role,
+      department = excluded.department,
+      label = excluded.label,
+      enabled = excluded.enabled,
+      changed_by_identity_id = excluded.changed_by_identity_id,
+      changed_ip = excluded.changed_ip,
+      changed_user_agent = excluded.changed_user_agent,
+      updated_at = now()
+  `, [
+    password,
+    account.role,
+    account.department || "",
+    account.label || account.department || account.role,
+    account.enabled !== false,
+    info.memberId,
+    info.ip,
+    info.userAgent
+  ]);
+}
+
+async function listAccessAccounts(client) {
+  const rows = await client.query("select * from access_accounts where enabled = true order by role asc, department asc, label asc");
+  return rows.rows.reduce((accounts, row) => {
+    accounts[row.password] = {
+      role: row.role,
+      department: row.department || "",
+      label: row.label || row.department || row.role,
+      enabled: row.enabled
+    };
+    return accounts;
+  }, {});
 }
 
 function parseBody(event) {
@@ -594,6 +649,10 @@ exports.handler = async (event) => {
       return json(200, { ok: true, db: true });
     }
 
+    if (method === "GET" && path === "/access-accounts") {
+      return json(200, { ok: true, accessAccounts: await listAccessAccounts(client) });
+    }
+
     if (method === "GET" && path === "/history") {
       return json(200, { ok: true, history: await listHistory(client) });
     }
@@ -614,6 +673,20 @@ exports.handler = async (event) => {
       const { entry } = parseBody(event);
       await client.query("begin");
       await upsertOrder(client, entry, info);
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "PUT" && path === "/access-accounts") {
+      const { accessAccounts } = parseBody(event);
+      if (!accessAccounts || typeof accessAccounts !== "object" || Array.isArray(accessAccounts)) {
+        return json(400, { ok: false, error: "accessAccounts must be an object" });
+      }
+      await client.query("begin");
+      await client.query("delete from access_accounts");
+      for (const [password, account] of Object.entries(accessAccounts)) {
+        await upsertAccessAccount(client, password, account, info);
+      }
       await client.query("commit");
       return json(200, { ok: true });
     }

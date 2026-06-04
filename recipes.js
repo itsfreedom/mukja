@@ -7,7 +7,13 @@
   const section = document.getElementById("recipe-section");
   const list = document.getElementById("recipe-list");
   const detail = document.getElementById("recipe-detail");
-  let activeId = "";
+  const params = new URLSearchParams(window.location.search);
+  let activeId = params.get("id") || "";
+  const closeButton = document.getElementById("close-recipe");
+  if (params.get("from") === "menu") closeButton.classList.remove("hidden");
+  closeButton.addEventListener("click", () => {
+    window.location.href = "menu.html";
+  });
 
   function renderFilters() {
     section.innerHTML = `<option value="">${I18n.t("all")}</option>` + Store.getSections().map((s) => `<option value="${s}">${I18n.sectionLabel(s)}</option>`).join("");

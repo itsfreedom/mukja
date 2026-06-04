@@ -23,7 +23,7 @@
     { id: "emp-2", name: "직원2", enabled: true }
   ];
   const defaultTargets = ["카페테리아", "야채", "그로서리"];
-  const accessCodes = {
+  const defaultAccessCodes = {
     c1234: { role: "department", department: "카페테리아", label: "카페테리아" },
     v1234: { role: "department", department: "야채", label: "야채" },
     g1234: { role: "department", department: "그로서리", label: "그로서리" },
@@ -134,8 +134,21 @@
     return getJson(keys.auth, null);
   }
 
+  function accessAccounts() {
+    return getJson("restaurant_access_codes", defaultAccessCodes);
+  }
+
+  function setAccessAccounts(accounts) {
+    const next = accounts || defaultAccessCodes;
+    setJson("restaurant_access_codes", next);
+    syncQuietly(() => apiRequest("/access-accounts", {
+      method: "PUT",
+      body: JSON.stringify({ accessAccounts: next })
+    }));
+  }
+
   function authenticate(password) {
-    const account = accessCodes[String(password || "").trim()];
+    const account = accessAccounts()[String(password || "").trim()];
     if (!account) return null;
     const session = {
       ...account,
@@ -161,7 +174,6 @@
 
   function startPath(session = auth()) {
     if (session?.role === "admin") return "admin.html";
-    if (session?.role === "department") return "order.html";
     return "index.html";
   }
 
@@ -205,6 +217,25 @@
         await apiRequest("/history", {
           method: "PUT",
           body: JSON.stringify({ history: localHistory })
+        });
+      }
+    } catch {
+      apiState.checked = true;
+      apiState.available = false;
+    }
+  }
+
+  async function hydrateAccessAccountsFromApi() {
+    const localAccounts = accessAccounts();
+    try {
+      const data = await apiRequest("/access-accounts");
+      const remoteAccounts = data.accessAccounts && typeof data.accessAccounts === "object" ? data.accessAccounts : {};
+      if (Object.keys(remoteAccounts).length) {
+        setJson("restaurant_access_codes", remoteAccounts);
+      } else if (Object.keys(localAccounts).length) {
+        await apiRequest("/access-accounts", {
+          method: "PUT",
+          body: JSON.stringify({ accessAccounts: localAccounts })
         });
       }
     } catch {
@@ -306,6 +337,7 @@
   async function init() {
     if (!localStorage.getItem(keys.lang)) localStorage.setItem(keys.lang, "ko");
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
+    if (!localStorage.getItem("restaurant_access_codes")) setJson("restaurant_access_codes", defaultAccessCodes);
     if (!localStorage.getItem(keys.sections) || shouldResetSections(getJson(keys.sections, []))) setJson(keys.sections, defaultSections);
     if (!localStorage.getItem(keys.employees)) setJson(keys.employees, defaultEmployees);
     if (!localStorage.getItem(keys.recipes)) setJson(keys.recipes, defaultRecipes);
@@ -322,6 +354,7 @@
     } else {
       setJson(keys.ingredients, getJson(keys.ingredients, []).map(normalizeIngredient));
     }
+    await hydrateAccessAccountsFromApi();
     await hydrateIngredientsFromApi();
     await hydrateHistoryFromApi();
     await hydrateRecipesFromApi();
@@ -511,6 +544,7 @@
       lang: localStorage.getItem(keys.lang) || "ko",
       employees: getJson(keys.employees, []),
       sections: getJson(keys.sections, []),
+      accessAccounts: accessAccounts(),
       ingredients: getJson(keys.ingredients, []),
       recipes: getJson(keys.recipes, []),
       menus: getJson(keys.menus, []),
@@ -526,6 +560,7 @@
     localStorage.setItem(keys.lang, data.lang || "ko");
     setJson(keys.employees, data.employees || []);
     setJson(keys.sections, data.sections || []);
+    setAccessAccounts(data.accessAccounts || defaultAccessCodes);
     setIngredients(data.ingredients || []);
     setJson(keys.recipes, data.recipes || []);
     setJson(keys.menus, data.menus || []);
@@ -666,6 +701,8 @@
     clearHistory,
     dbStatus: () => ({ ...apiState }),
     getAuth: auth,
+    getAccessAccounts: accessAccounts,
+    setAccessAccounts,
     authenticate,
     logoutAuth,
     canAdmin,
@@ -685,13 +722,12 @@
       if (!sidebar || !window.I18n) return;
       const session = auth();
       const isRestricted = (key) => {
-        if (key === "home") return session?.role === "department";
+        if (key === "menus") return !["restaurant", "admin"].includes(session?.role);
         if (key === "admin") return session?.role !== "admin";
         return false;
       };
       const nav = [
         ["home", "index.html", "⌂"],
-        ["order", "order.html", "🛒"],
         ["history", "history.html", "↺"],
         ["menus", "menu.html", "🍚"],
         ["admin", "admin.html", "⚙"]

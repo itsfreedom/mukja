@@ -1,121 +1,109 @@
 (async function () {
   await Store.init();
-  const startPath = Store.startPath();
-  if (Store.getAuth()?.role === "department" && startPath !== "index.html") {
-    window.location.href = startPath;
-    return;
-  }
   AppUI.renderSidebar("home");
   AppUI.registerServiceWorker();
 
-  const lastOrderDate = document.getElementById("last-order-date");
-  const lastOrderList = document.getElementById("last-order-list");
-
-  function sampleLastOrder() {
-    return {
-      id: "sample-last-order",
-      date: Store.today(),
-      time: "09:20",
-      mode: "simple",
-      employee: "",
-      memo: "오전 준비용 샘플",
-      isSample: true,
-      items: [
-        { name: "돈까스", section: "반조리", target: "카페테리아", quantity: "20", unit: "개" },
-        { name: "만두", section: "반조리", target: "카페테리아", quantity: "3", unit: "봉" },
-        { name: "양파", section: "야채", target: "야채", quantity: "1", unit: "kg" },
-        { name: "감자", section: "야채", target: "야채", quantity: "2", unit: "박스" },
-        { name: "대파", section: "야채", target: "야채", quantity: "4", unit: "단" },
-        { name: "김치", section: "반찬", target: "카페테리아", quantity: "5", unit: "kg" },
-        { name: "단무지", section: "반찬", target: "카페테리아", quantity: "2", unit: "팩" },
-        { name: "식용유", section: "소스", target: "카페테리아", quantity: "1", unit: "통" },
-        { name: "간장", section: "소스", target: "카페테리아", quantity: "2", unit: "병" },
-        { name: "계란", section: "냉장", target: "카페테리아", quantity: "1", unit: "판" },
-        { name: "밀가루", section: "식재료", target: "그로서리", quantity: "3", unit: "kg" },
-        { name: "우유", section: "냉장", target: "카페테리아", quantity: "2", unit: "L" },
-        { name: "치즈", section: "냉장", target: "카페테리아", quantity: "2", unit: "팩" },
-        { name: "냉동만두", section: "냉동", target: "카페테리아", quantity: "4", unit: "봉" },
-        { name: "냉동감자", section: "냉동", target: "그로서리", quantity: "3", unit: "봉" },
-        { name: "기타요청", section: "기타", target: "그로서리", quantity: "1", unit: "개" }
-      ]
-    };
-  }
+  const title = document.querySelector("[data-home-title]");
+  const subtitle = document.querySelector("[data-home-subtitle]");
+  const list = document.getElementById("home-request-list");
+  const status = document.getElementById("home-status");
+  const session = Store.getAuth();
 
   function sectionFor(item) {
     if (item.section) return item.section;
-    const matched = Store.getIngredients().find((ingredient) => ingredient.name === item.name);
-    return matched ? matched.section : "기타";
+    const matched = Store.getIngredients().find((ingredient) => ingredient.id === item.id || ingredient.name === item.name);
+    return matched?.section || "기타";
   }
 
-  function renderLastOrder() {
+  function relevantEntries() {
     const history = Store.getHistory();
-    const latest = history[0]?.id === "sample-last-order" ? sampleLastOrder() : history[0] || sampleLastOrder();
-    const simple = latest.mode === "simple";
-    const role = Store.getAuth()?.role;
-    const department = Store.getAuth()?.department;
-    const canSaveReceived = role === "restaurant" || role === "admin";
-    const visibleItems = role === "department" && department
-      ? latest.items.filter((item) => item.target === department)
-      : latest.items;
-    const sections = Store.getSections().filter((section) =>
-      visibleItems.some((item) => sectionFor(item) === section)
-    );
-    lastOrderDate.textContent = latest.date || "";
-
-    const groups = visibleItems.reduce((acc, item) => {
-      const section = sectionFor(item);
-      acc[section] = acc[section] || [];
-      acc[section].push(item);
-      return acc;
-    }, {});
-    const orderedItems = sections.flatMap((section) => groups[section].map((item) => ({ ...item, displaySection: section })));
-
-    lastOrderList.innerHTML = `
-      <div class="receive-scroll">
-        ${sections.map((section) => `
-          <section class="receive-section">
-            <h3>${I18n.sectionLabel(section)}</h3>
-            <div class="receive-list">
-              ${groups[section].map((item) => {
-                const index = orderedItems.findIndex((candidate) => candidate.name === item.name && candidate.displaySection === section);
-                return `
-                  <label class="receive-row">
-                    <input type="checkbox" data-receive-index="${index}" ${item.received ? "checked" : ""} ${canSaveReceived ? "" : "disabled"} />
-                    <span class="receive-row-main">
-                      <strong>${item.name}</strong>
-                      ${simple ? "" : `<span>${[item.quantity, item.unit].filter(Boolean).join(" ")} · ${I18n.targetLabel(item.target || "")}</span>`}
-                    </span>
-                  </label>
-                `;
-              }).join("")}
-            </div>
-          </section>
-        `).join("")}
-      </div>
-      ${canSaveReceived ? `<button id="save-received" class="button" type="button">${I18n.t("saveReceived")}</button>` : ""}
-      <p id="received-status" class="status"></p>
-    `;
-    document.getElementById("save-received")?.addEventListener("click", () => {
-      const checkedKeys = new Set(
-        Array.from(lastOrderList.querySelectorAll("[data-receive-index]:checked")).map((input) => {
-          const item = orderedItems[Number(input.dataset.receiveIndex)];
-          return `${item.displaySection}|${item.name}`;
-        })
-      );
-      const updated = {
-        ...latest,
-        isSample: false,
-        items: latest.items.map((item) =>
-          ({ ...item, received: checkedKeys.has(`${sectionFor(item)}|${item.name}`) })
-        )
-      };
-      Store.saveHistoryEntry(updated);
-      document.getElementById("received-status").textContent = I18n.t("receivedSaved");
-      setTimeout(renderLastOrder, 600);
-    });
-    I18n.applyI18n();
+    if (session?.role === "department" && session.department) {
+      return history.flatMap((entry) => {
+        const items = (entry.items || []).filter((item) => item.target === session.department);
+        return items.length ? [{ ...entry, items }] : [];
+      });
+    }
+    return history;
   }
 
-  renderLastOrder();
+  function itemLine(item, canReceive) {
+    return `
+      <label class="receive-row">
+        <input type="checkbox" data-receive="${item.__entryId}|${item.__index}" ${item.received ? "checked" : ""} ${canReceive ? "" : "disabled"} />
+        <span class="receive-row-main">
+          <strong>${I18n.itemName(item)}</strong>
+          <span>${[item.quantity, item.unit, I18n.targetLabel(item.target || "")].filter(Boolean).join(" · ")}</span>
+        </span>
+      </label>
+    `;
+  }
+
+  function departmentView(entries) {
+    title.textContent = I18n.t("receivedRequests");
+    subtitle.textContent = session?.department ? I18n.targetLabel(session.department) : "";
+    if (!entries.length) {
+      list.innerHTML = `<div class="list-card muted">${I18n.t("noDepartmentRequests")}</div>`;
+      return;
+    }
+    list.innerHTML = entries.slice(0, 12).map((entry) => `
+      <article class="list-card">
+        <div class="list-card-header">
+          <strong>${entry.date} ${entry.time || ""}</strong>
+          <a class="ghost-button compact-button" href="history.html?id=${encodeURIComponent(entry.id)}">${I18n.t("detail")}</a>
+        </div>
+        <div class="receive-list admin-section">
+          ${(entry.items || []).map((item, index) => itemLine({ ...item, __entryId: entry.id, __index: index }, false)).join("")}
+        </div>
+        ${entry.memo ? `<p class="muted">${entry.memo}</p>` : ""}
+      </article>
+    `).join("");
+  }
+
+  function receiptView(entries) {
+    title.textContent = I18n.t("receiptStatus");
+    subtitle.textContent = I18n.t("restaurantReceiptStatus");
+    if (!entries.length) {
+      list.innerHTML = `<div class="list-card muted">${I18n.t("noHistory")}</div>`;
+      return;
+    }
+    list.innerHTML = entries.slice(0, 10).map((entry) => {
+      const items = (entry.items || []).map((item, index) => ({ ...item, __entryId: entry.id, __index: index }));
+      const received = items.filter((item) => item.received).length;
+      return `
+        <article class="list-card">
+          <div class="list-card-header">
+            <div>
+              <strong>${entry.date} ${entry.time || ""}</strong>
+              <div class="item-meta">${received}/${items.length} ${I18n.t("receivedCount")}</div>
+            </div>
+            <a class="ghost-button compact-button" href="history.html?id=${encodeURIComponent(entry.id)}">${I18n.t("detail")}</a>
+          </div>
+          <div class="receive-list admin-section">
+            ${items.map((item) => itemLine(item, true)).join("")}
+          </div>
+        </article>
+      `;
+    }).join("");
+    list.querySelectorAll("[data-receive]").forEach((input) => {
+      input.addEventListener("change", () => {
+        const [entryId, indexText] = input.dataset.receive.split("|");
+        const history = Store.getHistory();
+        const next = history.map((entry) => {
+          if (entry.id !== entryId) return entry;
+          const items = (entry.items || []).map((item, index) =>
+            index === Number(indexText) ? { ...item, received: input.checked } : item
+          );
+          return { ...entry, items };
+        });
+        Store.replaceHistory(next);
+        status.textContent = I18n.t("receivedSaved");
+        setTimeout(() => (status.textContent = ""), 1800);
+      });
+    });
+  }
+
+  const entries = relevantEntries();
+  if (session?.role === "department") departmentView(entries);
+  else receiptView(entries);
   I18n.applyI18n();
 })();

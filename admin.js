@@ -40,17 +40,20 @@
     document.getElementById("ingredient-section").innerHTML = options;
     document.getElementById("recipe-section").innerHTML = options;
     document.getElementById("recipe-filter").innerHTML = `<option value="">${I18n.t("all")}</option>${options}`;
+    document.getElementById("menu-recipe").innerHTML = `<option value="">${I18n.t("recipeDetail")}</option>` + Store.getRecipes()
+      .map((recipe) => `<option value="${recipe.id}">${recipe.name}</option>`)
+      .join("");
   }
 
-  function renderEmployees() {
-    document.getElementById("employee-list").innerHTML = Store.getEmployees().map((emp) => `
+  function renderAccessAccounts() {
+    const accounts = Store.getAccessAccounts();
+    document.getElementById("access-list").innerHTML = Object.entries(accounts).map(([password, account]) => `
       <div class="list-card">
         <div class="list-card-header">
-          <div><strong>${emp.name}</strong><div class="item-meta">${emp.enabled ? I18n.t("enabled") : I18n.t("disabled")}</div></div>
+          <div><strong>${password}</strong><div class="item-meta">${I18n.roleLabel(account.label || account.department || account.role)} · ${account.role}</div></div>
           <div class="button-row">
-            <button class="ghost-button" data-edit-employee="${emp.id}">${I18n.t("edit")}</button>
-            <button class="ghost-button" data-toggle-employee="${emp.id}">${emp.enabled ? I18n.t("disabled") : I18n.t("enabled")}</button>
-            <button class="danger-button" data-delete-employee="${emp.id}">${I18n.t("delete")}</button>
+            <button class="ghost-button" data-edit-access="${password}">${I18n.t("edit")}</button>
+            <button class="danger-button" data-delete-access="${password}">${I18n.t("delete")}</button>
           </div>
         </div>
       </div>
@@ -90,6 +93,24 @@
       </table>`;
   }
 
+  function renderMenus() {
+    document.getElementById("admin-menu-list").innerHTML = `
+      <table>
+        <thead><tr><th>${I18n.t("name")}</th><th>${I18n.t("englishName")}</th><th>${I18n.t("menuCategory")}</th><th>${I18n.t("price")}</th><th>${I18n.t("enabled")}</th><th></th></tr></thead>
+        <tbody>
+          ${Store.getMenus().map((menu) => `
+            <tr class="${menu.discontinued ? "is-disabled" : ""}">
+              <td>${menu.nameKo}</td><td>${menu.nameEn || ""}</td><td>${menu.category || ""}</td><td>${menu.price || ""}</td><td>${menu.discontinued ? I18n.t("disabled") : I18n.t("enabled")}</td>
+              <td class="button-row">
+                <button class="ghost-button" data-edit-menu="${menu.id}">${I18n.t("edit")}</button>
+                <button class="ghost-button" data-toggle-menu="${menu.id}">${menu.discontinued ? I18n.t("enabled") : I18n.t("disabled")}</button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>`;
+  }
+
   function recipeRows() {
     const q = document.getElementById("recipe-search").value.trim().toLowerCase();
     const section = document.getElementById("recipe-filter").value;
@@ -121,28 +142,46 @@
   function renderAll() {
     renderMode();
     renderOptions();
-    renderEmployees();
+    renderAccessAccounts();
     renderSections();
     renderIngredients();
+    renderMenus();
     renderRecipes();
     attachRowEvents();
     I18n.applyI18n();
   }
 
   function attachRowEvents() {
-    document.querySelectorAll("[data-edit-employee]").forEach((button) => button.onclick = () => {
-      const rows = Store.getEmployees();
-      const emp = rows.find((row) => row.id === button.dataset.editEmployee);
-      const name = prompt(I18n.t("name"), emp.name);
-      if (name) { emp.name = name; Store.setEmployees(rows); renderAll(); }
+    document.querySelectorAll("[data-edit-access]").forEach((button) => button.onclick = () => {
+      const accounts = Store.getAccessAccounts();
+      const oldPassword = button.dataset.editAccess;
+      const account = accounts[oldPassword];
+      const password = prompt(I18n.t("password"), oldPassword) || oldPassword;
+      if (password !== oldPassword && accounts[password]) {
+        setStatus(I18n.t("duplicatePassword"));
+        return;
+      }
+      const department = account.role === "department"
+        ? prompt(I18n.t("target"), account.department || "") || account.department || ""
+        : account.department || "";
+      const label = prompt(I18n.t("name"), account.label || department || account.role);
+      if (!label) return;
+      if (password !== oldPassword) delete accounts[oldPassword];
+      accounts[password] = { ...account, label, department };
+      Store.setAccessAccounts(accounts);
+      renderAll();
     });
-    document.querySelectorAll("[data-toggle-employee]").forEach((button) => button.onclick = () => {
-      const rows = Store.getEmployees();
-      const emp = rows.find((row) => row.id === button.dataset.toggleEmployee);
-      emp.enabled = !emp.enabled; Store.setEmployees(rows); renderAll();
-    });
-    document.querySelectorAll("[data-delete-employee]").forEach((button) => button.onclick = () => {
-      Store.setEmployees(Store.getEmployees().filter((row) => row.id !== button.dataset.deleteEmployee)); renderAll();
+    document.querySelectorAll("[data-delete-access]").forEach((button) => button.onclick = () => {
+      const accounts = Store.getAccessAccounts();
+      const account = accounts[button.dataset.deleteAccess];
+      const adminCount = Object.values(accounts).filter((row) => row.role === "admin").length;
+      if (account?.role === "admin" && adminCount <= 1) {
+        setStatus(I18n.t("adminAccessRequired"));
+        return;
+      }
+      delete accounts[button.dataset.deleteAccess];
+      Store.setAccessAccounts(accounts);
+      renderAll();
     });
     document.querySelectorAll("[data-edit-section]").forEach((button) => button.onclick = () => {
       const oldName = button.dataset.editSection;
@@ -174,6 +213,13 @@
       Store.setIngredients(Store.getIngredients().filter((row) => row.id !== button.dataset.deleteIngredient)); renderAll();
     });
     document.querySelectorAll("[data-edit-recipe]").forEach((button) => button.onclick = () => loadRecipe(button.dataset.editRecipe));
+    document.querySelectorAll("[data-edit-menu]").forEach((button) => button.onclick = () => loadMenu(button.dataset.editMenu));
+    document.querySelectorAll("[data-toggle-menu]").forEach((button) => button.onclick = () => {
+      Store.setMenus(Store.getMenus().map((menu) =>
+        menu.id === button.dataset.toggleMenu ? { ...menu, discontinued: !menu.discontinued } : menu
+      ));
+      renderAll();
+    });
     document.querySelectorAll("[data-toggle-recipe]").forEach((button) => button.onclick = () => {
       const rows = Store.getRecipes();
       const recipe = rows.find((row) => row.id === button.dataset.toggleRecipe);
@@ -194,6 +240,18 @@
     document.getElementById("add-recipe").dataset.editing = id;
   }
 
+  function loadMenu(id) {
+    const menu = Store.getMenus().find((row) => row.id === id);
+    if (!menu) return;
+    document.getElementById("menu-name-ko").value = menu.nameKo || "";
+    document.getElementById("menu-name-en").value = menu.nameEn || "";
+    document.getElementById("menu-category-input").value = menu.category || "";
+    document.getElementById("menu-price").value = menu.price || "";
+    document.getElementById("menu-recipe").value = menu.recipeId || "";
+    document.getElementById("menu-seasonal").checked = Boolean(menu.seasonal);
+    document.getElementById("add-menu").dataset.editing = id;
+  }
+
   document.getElementById("admin-login").addEventListener("click", () => {
     const input = document.getElementById("admin-password").value;
     if (input.trim() === "madmin" && Store.authenticate(input)?.role === "admin") {
@@ -205,11 +263,17 @@
   });
   logout.addEventListener("click", () => { Store.logoutAuth(); window.location.reload(); });
   document.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => { Store.setMode(button.dataset.mode); renderAll(); }));
-  document.getElementById("add-employee").addEventListener("click", () => {
-    const name = document.getElementById("employee-name").value.trim();
-    if (!name) return;
-    Store.setEmployees([...Store.getEmployees(), { id: Store.id("emp"), name, enabled: true }]);
-    document.getElementById("employee-name").value = "";
+  document.getElementById("add-access").addEventListener("click", () => {
+    const password = document.getElementById("access-password").value.trim();
+    const role = document.getElementById("access-role").value;
+    const department = document.getElementById("access-department").value;
+    const label = document.getElementById("access-label").value.trim() || department || role;
+    if (!password || (role === "department" && !department)) return;
+    Store.setAccessAccounts({
+      ...Store.getAccessAccounts(),
+      [password]: { role, department: role === "department" ? department : "", label }
+    });
+    ["access-password", "access-label"].forEach((id) => (document.getElementById(id).value = ""));
     renderAll();
   });
   document.getElementById("add-section").addEventListener("click", () => {
@@ -233,6 +297,32 @@
       enabled: true
     }]);
     ["ingredient-name", "ingredient-name-en", "ingredient-unit"].forEach((id) => (document.getElementById(id).value = ""));
+    renderAll();
+  });
+  document.getElementById("add-menu").addEventListener("click", (event) => {
+    const id = event.currentTarget.dataset.editing;
+    const nameKo = document.getElementById("menu-name-ko").value.trim();
+    if (!nameKo) return;
+    const recipeId = document.getElementById("menu-recipe").value;
+    const recipe = Store.getRecipes().find((row) => row.id === recipeId);
+    const menu = {
+      id: id || Store.id("menu"),
+      recipeId,
+      recipeName: recipe?.name || "",
+      nameKo,
+      nameEn: document.getElementById("menu-name-en").value.trim(),
+      category: document.getElementById("menu-category-input").value.trim(),
+      price: document.getElementById("menu-price").value.trim(),
+      currency: "CAD",
+      seasonal: document.getElementById("menu-seasonal").checked,
+      discontinued: id ? Boolean(Store.getMenus().find((row) => row.id === id)?.discontinued) : false,
+      notes: ""
+    };
+    Store.saveMenu(menu);
+    event.currentTarget.dataset.editing = "";
+    ["menu-name-ko", "menu-name-en", "menu-category-input", "menu-price"].forEach((field) => document.getElementById(field).value = "");
+    document.getElementById("menu-recipe").value = "";
+    document.getElementById("menu-seasonal").checked = false;
     renderAll();
   });
   document.getElementById("add-recipe").addEventListener("click", (event) => {

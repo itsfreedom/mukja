@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>먹자 골목 관리</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-name-en" />
+    <link rel="stylesheet" href="style.css?v=20260604-page-roles" />
   </head>
   <body class="home-page">
     <div class="shell">
@@ -18,19 +18,20 @@
             <div class="last-order-header">
               <div>
                 <div class="last-order-title-row">
-                  <h2 data-i18n="lastOrder">마지막 주문 내역</h2>
-                  <span id="last-order-date" class="last-order-date"></span>
+                  <h2 data-home-title>요청 현황</h2>
+                  <span data-home-subtitle class="last-order-date"></span>
                 </div>
               </div>
               <a class="more-link" href="history.html" data-i18n="more">more...</a>
             </div>
-            <div id="last-order-list" class="section-history-list admin-section"></div>
+            <div id="home-request-list" class="section-history-list admin-section"></div>
+            <p id="home-status" class="status"></p>
           </section>
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-name-en"></script>
-    <script src="i18n.js?v=20260604-name-en"></script>
-    <script src="app.js?v=20260604-name-en"></script>
+    <script src="storage.js?v=20260604-page-roles"></script>
+    <script src="i18n.js?v=20260604-page-roles"></script>
+    <script src="app.js?v=20260604-page-roles"></script>
   </body>
 </html>
