@@ -649,6 +649,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   line-height: 1.45;
   white-space: pre-wrap;
 }
+.memo-entry p.memo-placeholder {
+  color: var(--muted);
+}
 .memo-empty {
   color: var(--muted);
   font-size: 0.84rem;

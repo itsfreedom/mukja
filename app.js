@@ -80,6 +80,10 @@
     }[slot] || { role: session?.role || "", department: session?.department || "", label: session?.label || "" };
   }
 
+  function memoSlots() {
+    return ["admin", "restaurant", "cafeteria", "vegetable", "grocery"];
+  }
+
   function orderedMemos(memos) {
     const slotOrder = { admin: 0, restaurant: 1, cafeteria: 2, vegetable: 3, grocery: 4, other: 5 };
     return (Array.isArray(memos) ? memos : [])
@@ -161,25 +165,35 @@
 
   function renderMemoPanel(entry) {
     const allMemos = orderedMemos(Array.isArray(entry.memos) ? entry.memos : []);
+    const currentSlot = sessionMemoSlot();
     const current = currentMemo(allMemos);
-    const readonlyMemos = allMemos.filter((memo) => memoSlot(memo) !== sessionMemoSlot());
+    const memoBySlot = allMemos.reduce((acc, memo) => {
+      const slot = memoSlot(memo);
+      if (!acc.has(slot)) acc.set(slot, memo);
+      return acc;
+    }, new Map());
+    const readonlySlots = memoSlots().filter((slot) => slot !== currentSlot);
     return `
       <section class="memo-panel home-memo-panel admin-section">
         <h3>타부서에서 작성한 메모 <span>수정 불가</span></h3>
         <div class="memo-log">
-          ${readonlyMemos.length ? readonlyMemos.map((memo) => `
+          ${readonlySlots.map((slot) => {
+            const memo = memoBySlot.get(slot);
+            const label = memo ? memoLabel(memo) : memoSlotInfo(slot).label;
+            return `
             <article class="memo-entry">
               <div class="memo-entry-meta">
-                <strong>${memoLabel(memo)}</strong>
-                <span>${memo.createdAt ? new Date(memo.createdAt).toLocaleString(I18n.lang() === "en" ? "en-CA" : "ko-KR") : ""}</span>
+                <strong>${I18n.roleLabel(label)}</strong>
+                <span>${memo?.createdAt ? new Date(memo.createdAt).toLocaleString(I18n.lang() === "en" ? "en-CA" : "ko-KR") : ""}</span>
               </div>
-              <p>${memo.text || ""}</p>
+              <p class="${memo ? "" : "memo-placeholder"}">${memo?.text || I18n.t("memoNone")}</p>
             </article>
-          `).join("") : `<div class="memo-empty">${I18n.t("noMemo")}</div>`}
+          `;
+          }).join("")}
         </div>
         <label class="field">
           <span>메모 추가</span>
-          <textarea id="home-memo" data-i18n-placeholder="memoPlaceholder">${current?.text || ""}</textarea>
+          <textarea id="home-memo" placeholder="${current?.text ? I18n.t("memoPlaceholder") : I18n.t("memoNone")}">${current?.text || ""}</textarea>
         </label>
         <div class="button-row home-action-row">
           <button class="button" id="home-save" type="button">저장</button>
