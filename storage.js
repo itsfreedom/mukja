@@ -17,7 +17,7 @@
     checked: false,
     available: false
   };
-  const demoSeedVersion = "home-20b";
+  const demoSeedVersion = "home-20c";
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
   const defaultEmployees = [
@@ -525,11 +525,12 @@
 
   function seedLocalTestDataOnce() {
     const marker = localStorage.getItem(keys.demoSeeded);
-    if (marker === demoSeedVersion || marker === "reset") return;
     const history = getJson(keys.history, []);
+    const latest = history.slice().sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0];
+    if (marker === demoSeedVersion && (latest?.items || []).length >= 20) return;
     const menus = getJson(keys.menus, []);
-    if (history.length && !["auto", "manual"].includes(marker || "")) return;
-    if (menus.length > defaultMenuSeeds.length && !["auto", "manual"].includes(marker || "")) return;
+    if (history.length && (latest?.items || []).length >= 20 && !["auto", "manual"].includes(marker || "")) return;
+    if (menus.length > defaultMenuSeeds.length && !["auto", "manual"].includes(marker || "") && (latest?.items || []).length >= 20) return;
     const data = testData();
     setJson(keys.sections, data.sections);
     setJson("restaurant_access_codes", data.accessAccounts);
