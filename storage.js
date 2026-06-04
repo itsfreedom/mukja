@@ -648,20 +648,24 @@
         ? savedSidebarState === "1"
         : window.matchMedia("(max-width: 900px)").matches;
       document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
+      const toggleText = sidebarCollapsed ? "&gt;" : "&lt;";
+      const toggleLabel = sidebarCollapsed ? "메뉴 열기" : "메뉴 닫기";
       sidebar.innerHTML = `
-        <button class="sidebar-toggle" data-sidebar-toggle type="button" aria-label="메뉴 열기" aria-expanded="${!sidebarCollapsed}">
-          <span class="sidebar-toggle-icon">›</span>
+        <button class="sidebar-toggle" data-sidebar-toggle type="button" aria-label="${toggleLabel}" aria-expanded="${!sidebarCollapsed}">
+          <span class="sidebar-toggle-icon">${toggleText}</span>
         </button>
         <div class="brand">
           <div class="brand-copy">
             <div class="brand-main-row">
               <img class="brand-mark" src="assets/mokja-logo.jpg" alt="" />
-              <div class="brand-heading">
-                <div class="brand-title">${I18n.t("appName")}</div>
-                ${session ? `<div class="brand-role">${I18n.roleLabel(session.label)}</div>` : ""}
+              <div class="brand-title">${I18n.t("appName")}</div>
+            </div>
+            <div class="brand-sub-row">
+              <div class="brand-role">${session ? I18n.roleLabel(session.label) : ""}</div>
+              <div class="brand-tools">
+                <button class="lang-toggle" data-lang-toggle type="button" aria-label="${I18n.t("language")}">${I18n.lang() === "ko" ? "🇺🇸" : "🇰🇷"}</button>
+                ${session ? `<button class="header-logout" type="button" data-auth-logout aria-label="${I18n.t("logout")}">⎋</button>` : ""}
               </div>
-              <button class="lang-toggle" data-lang-toggle type="button" aria-label="${I18n.t("language")}">${I18n.lang() === "ko" ? "🇺🇸" : "🇰🇷"}</button>
-              ${session ? `<button class="header-logout" type="button" data-auth-logout aria-label="${I18n.t("logout")}">⎋</button>` : ""}
             </div>
           </div>
         </div>
@@ -680,6 +684,9 @@
           const collapsed = document.body.classList.toggle("sidebar-collapsed");
           localStorage.setItem(sidebarStateKey, collapsed ? "1" : "0");
           sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+          sidebarToggle.setAttribute("aria-label", collapsed ? "메뉴 열기" : "메뉴 닫기");
+          const icon = sidebarToggle.querySelector(".sidebar-toggle-icon");
+          if (icon) icon.textContent = collapsed ? ">" : "<";
         });
       }
       let clock = document.querySelector("[data-layout-clock]");

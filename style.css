@@ -1343,12 +1343,12 @@ body {
 }
 
 .sidebar-toggle {
-  position: absolute;
-  top: 14px;
-  right: -17px;
-  z-index: 2;
-  width: 34px;
-  height: 34px;
+  position: fixed;
+  top: 50dvh;
+  left: calc(var(--sidebar-open) - 22px);
+  z-index: 300;
+  width: 44px;
+  height: 74px;
   border: 1px solid rgba(184, 196, 240, 0.2);
   border-radius: 999px;
   background: rgba(13, 17, 32, 0.98);
@@ -1357,28 +1357,45 @@ body {
   place-items: center;
   padding: 0;
   cursor: pointer;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+  transform: translateY(-50%);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+  transition: left 180ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.sidebar-toggle:hover {
+  border-color: rgba(130, 168, 255, 0.42);
+  background: rgba(19, 26, 47, 0.98);
 }
 
 .sidebar-toggle-icon {
   display: block;
-  font-size: 1.45rem;
+  font-size: 1.86rem;
+  font-weight: 900;
   line-height: 1;
-  transform: rotate(180deg);
-  transition: transform 180ms ease;
-}
-
-.sidebar-collapsed .sidebar-toggle-icon {
-  transform: rotate(0);
 }
 
 .brand {
   min-height: 44px;
-  padding: 0 26px 10px 0;
+  padding: 0 0 12px;
 }
 
 .brand-main-row {
-  grid-template-columns: 42px minmax(0, 1fr) 36px 36px;
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+
+.brand-sub-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding-left: 52px;
+}
+
+.brand-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .brand-mark,
@@ -1469,20 +1486,21 @@ body {
   width: var(--sidebar-closed);
 }
 
+.sidebar-collapsed .sidebar-toggle {
+  left: calc(var(--sidebar-closed) - 22px);
+}
+
 .sidebar-collapsed .main-frame,
 .sidebar-collapsed .layout-clock {
   margin-left: var(--sidebar-closed);
-}
-
-.sidebar-collapsed .brand {
-  padding-right: 0;
 }
 
 .sidebar-collapsed .brand-main-row {
   grid-template-columns: 42px;
 }
 
-.sidebar-collapsed .brand-heading,
+.sidebar-collapsed .brand-title,
+.sidebar-collapsed .brand-sub-row,
 .sidebar-collapsed .brand-role,
 .sidebar-collapsed .lang-toggle,
 .sidebar-collapsed .header-logout,
