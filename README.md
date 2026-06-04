@@ -1,23 +1,154 @@
-# Mukja Order
+# 먹자 골목 관리
 
-Mobile-first PWA for Mokja Alley restaurant ingredient ordering, recipe lookup, order history, and admin CSV management.
+먹자 골목 관리는 식당 재료 주문, 마지막 주문 확인, 레시피 확인, 주문 내역 관리, CSV 가져오기/내보내기를 모바일에서 빠르게 처리하기 위한 웹앱입니다.
 
-## Local Preview
+현재 버전은 **간편모드 중심**으로 개발 중입니다. 사용자가 별도로 일반모드 개발을 요청하기 전까지 화면과 기능은 간편모드 기준으로 정리합니다.
 
-```bash
-python3 -m http.server 4173
+## 접속 주소
+
+Netlify 배포 주소:
+
+```text
+https://mukjamtl.netlify.app
 ```
 
-Open:
+로컬 확인 주소:
 
 ```text
 http://127.0.0.1:4173
 ```
 
-## Deploy
+## 주요 기능
 
-This project is static and Netlify-ready. The publish directory is the repository root.
+- 홈에서 마지막 주문 내역 확인
+- 주문 부서별 재료 주문 작성
+- 카페테리아 품목을 섹션별로 확인
+- 요청 메시지 자동 생성
+- 카페테리아 메시지 복사
+- 야채 / 그로서리 메시지 복사
+- 주문 내역 저장 및 확인
+- 레시피 조회
+- 관리자 페이지에서 재료, 섹션, 주문 리스트, 레시피 CSV 관리
 
-## Data Direction
+## 화면 구성
 
-The current app can run locally with `localStorage`. The next planned step is moving order, receiving, and department confirmation data to a shared database-backed API for multi-device use.
+### 홈
+
+홈에서는 최근 주문 내역을 확인하고 입고된 품목을 체크할 수 있습니다.
+
+간편모드에서는 품목명 중심으로 표시되며, 입고 확인 후 저장할 수 있습니다.
+
+### 주문
+
+주문 화면에서는 `주문 부서`를 선택한 뒤 필요한 품목을 체크합니다.
+
+현재 주문 부서는 다음 세 가지입니다.
+
+- 카페테리아
+- 야채
+- 그로서리
+
+카페테리아 품목은 아래 섹션으로 나누어 표시됩니다.
+
+- 반조리
+- 반찬
+- 소스
+- 냉장
+- 냉동
+
+간편모드에서는 품목 행에 **항목명만 표시**합니다.
+
+### 요청 메시지
+
+품목을 선택한 뒤 `저장 및 요청 메시지 만들기`를 누르면 요청 메시지가 생성됩니다.
+
+메시지는 두 영역으로 나누어 표시됩니다.
+
+- 카페테리아
+- 야채 / 그로서리
+
+각 메시지는 별도의 복사 버튼으로 복사할 수 있습니다.
+
+### 주문내역
+
+저장된 주문 내역을 날짜별로 확인할 수 있습니다.
+
+간편모드 주문 내역은 품목명 목록 중심으로 표시됩니다.
+
+### 레시피
+
+등록된 레시피를 검색하고 상세 내용을 확인할 수 있습니다.
+
+### 관리자
+
+관리자 페이지에서는 다음 데이터를 관리할 수 있습니다.
+
+- 직원
+- 섹션
+- 재료
+- 레시피
+- 주문 리스트 CSV
+- 레시피 CSV
+- 전체 설정 JSON
+
+## 로컬 실행 방법
+
+터미널에서 프로젝트 폴더로 이동합니다.
+
+```bash
+cd "/Users/itsfree/Documents/Mukja Order"
+```
+
+로컬 서버를 실행합니다.
+
+```bash
+python3 -m http.server 4173
+```
+
+브라우저에서 아래 주소를 엽니다.
+
+```text
+http://127.0.0.1:4173
+```
+
+## 배포 방식
+
+이 프로젝트는 정적 웹앱입니다.
+
+Netlify 설정은 `netlify.toml`에 들어 있으며, 현재 publish directory는 저장소 루트입니다.
+
+```toml
+[build]
+  publish = "."
+  command = ""
+```
+
+GitHub `main` 브랜치에 변경 사항을 push하면 Netlify가 자동으로 배포합니다.
+
+## 데이터 저장 방식
+
+현재 버전은 브라우저의 `localStorage`를 사용합니다.
+
+다음 단계에서는 DB 연결을 추가할 예정입니다. DB 연결 후에는 아래 데이터를 여러 기기에서 공유할 수 있게 됩니다.
+
+- 주문 내역
+- 부서별 출고 확인
+- 우리 쪽 입고 확인
+- 출고/입고 비교 결과
+- 담당자 역할 및 로그인 정보
+
+## 개발 예정
+
+- Netlify Database 또는 Neon 기반 DB 연결
+- 부서 담당자 로그인
+- 부서별 출고 확인 화면
+- 우리 쪽 입고 확인 화면
+- 출고/입고 불일치 비교 화면
+- 사용자용 화면 캡처 추가
+- 개발 버전 1.0 기준 `README_ENG.md` 작성
+
+## 문서 관리 원칙
+
+현재는 `README.md`를 한글 기준으로 먼저 관리합니다.
+
+영문 문서는 개발 버전 1.0이 정리된 뒤 `README_ENG.md`로 별도 작성합니다.
