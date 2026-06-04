@@ -135,11 +135,30 @@ async function ensureSchema(client) {
       synced_at timestamptz not null default now()
     );
 
+    create table if not exists menus (
+      id text primary key,
+      recipe_id text references recipes(id) on delete set null,
+      name_ko text not null,
+      name_en text,
+      seasonal boolean not null default false,
+      discontinued boolean not null default false,
+      price numeric(10, 2),
+      currency text not null default 'CAD',
+      notes text,
+      changed_by_identity_id text references access_identities(id) on delete set null,
+      changed_ip text,
+      changed_user_agent text,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    );
+
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_order_items_order_id on order_items(order_id, item_index);
     create index if not exists idx_receipt_confirmations_item on receipt_confirmations(order_item_id, confirmed_at desc);
     create index if not exists idx_department_confirmations_item on department_confirmations(order_item_id, department, confirmed_at desc);
     create index if not exists idx_recipes_section on recipes(section, enabled);
+    create index if not exists idx_menus_recipe_id on menus(recipe_id);
+    create index if not exists idx_menus_status on menus(discontinued, seasonal);
   `);
   return schemaReady;
 }
@@ -323,6 +342,67 @@ async function listRecipes(client) {
   }));
 }
 
+async function upsertMenu(client, menu, info) {
+  if (!menu?.id || !menu.nameKo) throw new Error("Invalid menu");
+  const price = menu.price === "" || menu.price === undefined || menu.price === null ? null : Number(menu.price);
+  await client.query(`
+    insert into menus (
+      id, recipe_id, name_ko, name_en, seasonal, discontinued, price, currency, notes,
+      changed_by_identity_id, changed_ip, changed_user_agent, updated_at
+    )
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())
+    on conflict (id) do update set
+      recipe_id = excluded.recipe_id,
+      name_ko = excluded.name_ko,
+      name_en = excluded.name_en,
+      seasonal = excluded.seasonal,
+      discontinued = excluded.discontinued,
+      price = excluded.price,
+      currency = excluded.currency,
+      notes = excluded.notes,
+      changed_by_identity_id = excluded.changed_by_identity_id,
+      changed_ip = excluded.changed_ip,
+      changed_user_agent = excluded.changed_user_agent,
+      updated_at = now()
+  `, [
+    menu.id,
+    menu.recipeId || null,
+    menu.nameKo,
+    menu.nameEn || "",
+    Boolean(menu.seasonal),
+    Boolean(menu.discontinued),
+    Number.isFinite(price) ? price : null,
+    menu.currency || "CAD",
+    menu.notes || "",
+    info.memberId,
+    info.ip,
+    info.userAgent
+  ]);
+}
+
+async function listMenus(client) {
+  const menus = await client.query(`
+    select
+      menus.*,
+      recipes.name as recipe_name
+    from menus
+    left join recipes on recipes.id = menus.recipe_id
+    order by menus.discontinued asc, menus.name_ko asc
+  `);
+  return menus.rows.map((row) => ({
+    id: row.id,
+    recipeId: row.recipe_id || "",
+    recipeName: row.recipe_name || "",
+    nameKo: row.name_ko,
+    nameEn: row.name_en || "",
+    seasonal: row.seasonal,
+    discontinued: row.discontinued,
+    price: row.price === null ? "" : String(row.price),
+    currency: row.currency || "CAD",
+    notes: row.notes || ""
+  }));
+}
+
 async function listHistory(client) {
   const orders = await client.query("select * from orders order by created_at desc, order_date desc, order_time desc");
   if (!orders.rows.length) return [];
@@ -381,6 +461,10 @@ exports.handler = async (event) => {
       return json(200, { ok: true, recipes: await listRecipes(client) });
     }
 
+    if (method === "GET" && path === "/menus") {
+      return json(200, { ok: true, menus: await listMenus(client) });
+    }
+
     if (method === "POST" && path === "/history") {
       const { entry } = parseBody(event);
       await client.query("begin");
@@ -414,6 +498,30 @@ exports.handler = async (event) => {
       await client.query("begin");
       await upsertRecipe(client, recipe, info);
       await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "PUT" && path === "/menus") {
+      const { menus } = parseBody(event);
+      if (!Array.isArray(menus)) return json(400, { ok: false, error: "menus must be an array" });
+      await client.query("begin");
+      await client.query("delete from menus");
+      for (const menu of menus) await upsertMenu(client, menu, info);
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "POST" && path === "/menus") {
+      const { menu } = parseBody(event);
+      await client.query("begin");
+      await upsertMenu(client, menu, info);
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    const menuDeleteMatch = path.match(/^\/menus\/([^/]+)$/);
+    if (method === "DELETE" && menuDeleteMatch) {
+      await client.query("delete from menus where id = $1", [decodeURIComponent(menuDeleteMatch[1])]);
       return json(200, { ok: true });
     }
 
