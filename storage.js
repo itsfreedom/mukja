@@ -9,6 +9,7 @@
     recipes: "restaurant_recipes",
     menus: "restaurant_menus",
     history: "restaurant_history",
+    demoSeeded: "restaurant_demo_seeded",
     memberId: "restaurant_member_id",
     auth: "restaurant_auth"
   };
@@ -521,6 +522,21 @@
     return !Array.isArray(sections) || sections.length === 0 || oldSections.every((section) => sections.includes(section));
   }
 
+  function seedLocalTestDataOnce() {
+    if (localStorage.getItem(keys.demoSeeded)) return;
+    const history = getJson(keys.history, []);
+    const menus = getJson(keys.menus, []);
+    if (history.length || menus.length > defaultMenuSeeds.length) return;
+    const data = testData();
+    setJson(keys.sections, data.sections);
+    setJson("restaurant_access_codes", data.accessAccounts);
+    setJson(keys.ingredients, data.ingredients);
+    setJson(keys.recipes, data.recipes);
+    setJson(keys.menus, data.menus);
+    setJson(keys.history, data.history);
+    localStorage.setItem(keys.demoSeeded, "auto");
+  }
+
   async function init() {
     if (!localStorage.getItem(keys.lang)) localStorage.setItem(keys.lang, "ko");
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
@@ -541,6 +557,7 @@
     } else {
       setJson(keys.ingredients, getJson(keys.ingredients, []).map(normalizeIngredient));
     }
+    seedLocalTestDataOnce();
     await hydrateAccessAccountsFromApi();
     await hydrateIngredientsFromApi();
     await hydrateHistoryFromApi();
@@ -754,7 +771,7 @@
     setJson(keys.history, data.history || []);
   }
 
-  function applyDataBundle(data) {
+  function applyDataBundle(data, marker) {
     localStorage.setItem(keys.mode, "simple");
     setJson(keys.sections, data.sections || defaultSections);
     setJson("restaurant_access_codes", data.accessAccounts || defaultAccessCodes);
@@ -762,6 +779,7 @@
     setJson(keys.recipes, data.recipes || []);
     setJson(keys.menus, (data.menus || []).map(normalizeMenu));
     setJson(keys.history, data.history || []);
+    if (marker) localStorage.setItem(keys.demoSeeded, marker);
     syncQuietly(() => apiRequest("/seed-data", {
       method: "PUT",
       body: JSON.stringify(data)
@@ -770,13 +788,13 @@
 
   function seedTestData() {
     const data = testData();
-    applyDataBundle(data);
+    applyDataBundle(data, "manual");
     return data;
   }
 
   function resetDemoData() {
     const data = defaultData();
-    applyDataBundle(data);
+    applyDataBundle(data, "reset");
     return data;
   }
 
