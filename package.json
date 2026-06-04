@@ -5,7 +5,6 @@
   "description": "Mobile-first restaurant ingredient ordering PWA for Mukja Alley.",
   "license": "UNLICENSED",
   "dependencies": {
-    "@netlify/database": "^1.0.0",
     "pg": "^8.16.0"
   }
 }
