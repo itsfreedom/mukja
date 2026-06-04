@@ -303,6 +303,10 @@
     setStatus("초기화했습니다.");
   }
 
+  window.addEventListener("store:migrated", () => {
+    renderLatest(latestEntry());
+  });
+
   renderLatest(latestEntry());
   I18n.applyI18n();
 })();

@@ -381,7 +381,10 @@
   }
 
   function mergeHistory(remoteRows, legacyRows) {
-    return mergeRowsById(remoteRows, legacyRows)
+    const realLegacyRows = (Array.isArray(legacyRows) ? legacyRows : []).filter((entry) =>
+      entry?.id && !String(entry.id).startsWith("history-test-")
+    );
+    return mergeRowsById(remoteRows, realLegacyRows)
       .sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`));
   }
 
@@ -418,6 +421,7 @@
     dataState.menus = migrated.menus;
     dataState.history = migrated.history;
     clearLegacyLocalData();
+    window.dispatchEvent(new CustomEvent("store:migrated"));
     return true;
   }
 
@@ -688,13 +692,11 @@
     await hydrateHistoryFromApi();
     await hydrateRecipesFromApi();
     await hydrateMenusFromApi();
-    try {
-      await migrateLegacyLocalData();
-    } catch (error) {
+    migrateLegacyLocalData().catch((error) => {
       apiState.checked = true;
       apiState.available = false;
       apiState.error = error?.message || "Legacy migration failed";
-    }
+    });
     localStorage.setItem(keys.initialized, "true");
   }
 
