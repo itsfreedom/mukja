@@ -19,6 +19,13 @@ const pages = [
   { file: 'recipes.html', script: 'recipes.js' },
   { file: 'admin.html', script: 'admin.js' }
 ];
+const expectedHomeMemos = {
+  admin: ['레스토랑', '카페테리아', '야채', '그로서리'],
+  restaurant: ['관리자', '카페테리아', '야채', '그로서리'],
+  cafeteria: ['관리자', '레스토랑', '야채', '그로서리'],
+  vegetable: ['관리자', '레스토랑', '카페테리아', '그로서리'],
+  grocery: ['관리자', '레스토랑', '카페테리아', '야채']
+};
 const sharedScripts = ['storage.js', 'i18n.js'];
 const local = (file) => fs.readFile(path.join(cwd, file), 'utf8');
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -59,9 +66,12 @@ async function runPage(userName, session, page) {
   const result = { user: userName, page: page.file, errors };
   if (page.file === 'index.html') {
     const homeText = window.document.querySelector('#home-request-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+    result.memoLabels = [...window.document.querySelectorAll('.memo-entry strong')].map((node) => node.textContent.trim());
+    result.memoTextArea = window.document.querySelector('#home-memo')?.value || '';
     result.subtitle = window.document.querySelector('[data-home-subtitle]')?.textContent || '';
     result.sample = homeText.slice(0, 180);
-    result.pass = !/저장된 주문내역이 없습니다/.test(homeText) && homeText.length > 0;
+    result.pass = !/저장된 주문내역이 없습니다/.test(homeText) && homeText.length > 0
+      && expectedHomeMemos[userName].every((label) => result.memoLabels.includes(label));
   } else if (page.file === 'history.html') {
     const text = window.document.querySelector('#history-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);

@@ -32,8 +32,8 @@
   function sameAuthor(memo) {
     if (!memo) return false;
     if (memo.role && memo.role === session?.role) return true;
-    if (memo.department && memo.department === session?.department) return true;
-    if (memo.authorLabel && memo.authorLabel === session?.label) return true;
+    if (memo.department && Store.normalizeTargetName(memo.department) === Store.normalizeTargetName(session?.department)) return true;
+    if (memo.authorLabel && Store.normalizeTargetName(memo.authorLabel) === Store.normalizeTargetName(session?.label)) return true;
     return false;
   }
 

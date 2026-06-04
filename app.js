@@ -45,21 +45,28 @@
     return I18n.t("memo");
   }
 
+  function normalizedLabel(value) {
+    return Store.normalizeTargetName(value);
+  }
+
   function memoSlot(memo) {
-    if (memo.role === "admin" || memo.authorLabel === "관리자") return "admin";
-    if (memo.role === "restaurant" || memo.authorLabel === "레스토랑") return "restaurant";
-    if (memo.department === "카페테리아" || memo.authorLabel === "카페테리아") return "cafeteria";
-    if (memo.department === "야채" || memo.authorLabel === "야채") return "vegetable";
-    if (memo.department === "그로서리" || memo.authorLabel === "그로서리") return "grocery";
+    const author = normalizedLabel(memo.authorLabel);
+    const department = normalizedLabel(memo.department);
+    if (memo.role === "admin" || author === "관리자") return "admin";
+    if (memo.role === "restaurant" || author === "레스토랑") return "restaurant";
+    if (department === "카페테리아" || author === "카페테리아") return "cafeteria";
+    if (department === "야채" || author === "야채") return "vegetable";
+    if (department === "그로서리" || author === "그로서리") return "grocery";
     return "other";
   }
 
   function sessionMemoSlot() {
     if (session?.role === "admin") return "admin";
     if (session?.role === "restaurant") return "restaurant";
-    if (session?.department === "카페테리아") return "cafeteria";
-    if (session?.department === "야채") return "vegetable";
-    if (session?.department === "그로서리") return "grocery";
+    const department = normalizedLabel(session?.department || session?.label);
+    if (department === "카페테리아") return "cafeteria";
+    if (department === "야채") return "vegetable";
+    if (department === "그로서리") return "grocery";
     return "other";
   }
 
@@ -74,18 +81,24 @@
   }
 
   function orderedMemos(memos) {
-    const slotOrder = ["admin", "restaurant", "cafeteria", "vegetable", "grocery"];
-    const bySlot = new Map();
-    memos.forEach((memo) => {
-      const slot = memoSlot(memo);
-      if (!bySlot.has(slot)) bySlot.set(slot, memo);
-    });
-    return slotOrder.map((slot) => bySlot.get(slot)).filter(Boolean);
+    const slotOrder = { admin: 0, restaurant: 1, cafeteria: 2, vegetable: 3, grocery: 4, other: 5 };
+    return (Array.isArray(memos) ? memos : [])
+      .filter((memo) => memo && String(memo.text || "").trim())
+      .slice()
+      .sort((a, b) => {
+        const slotDiff = (slotOrder[memoSlot(a)] ?? 99) - (slotOrder[memoSlot(b)] ?? 99);
+        if (slotDiff) return slotDiff;
+        return String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
+      });
   }
 
   function currentMemo(memos) {
     const slot = sessionMemoSlot();
-    return memos.find((memo) => memoSlot(memo) === slot) || null;
+    return memos
+      .filter((memo) => memoSlot(memo) === slot)
+      .sort((a, b) =>
+        String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || ""))
+      )[0] || null;
   }
 
   function memoEntry(text, existingMemo = null) {
