@@ -5,59 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#080a15" />
     <meta name="format-detection" content="telephone=no" />
-    <title>재료 주문하기</title>
+    <title>요청 리스트</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-menu-page" />
+    <link rel="stylesheet" href="style.css?v=20260604-dept-home" />
   </head>
   <body class="order-page">
     <div class="shell">
       <aside class="sidebar" data-layout-sidebar></aside>
       <main class="main-frame">
         <div class="main-surface">
-          <section id="order" class="split admin-section">
+          <section id="order" class="admin-section">
             <div class="panel" id="order-panel">
               <div class="list-card-header">
                 <div>
-                  <h2 data-i18n="createRequest">주문하기</h2>
+                  <h2 data-i18n="requestList">요청 리스트</h2>
                 </div>
               </div>
-              <div class="form-grid admin-section">
+              <div class="form-grid admin-section normal-only">
                 <label class="field normal-only">
                   <span data-i18n="requester">요청자</span>
                   <select id="employee-select"></select>
                 </label>
-                <label class="field">
+                <label class="field hidden">
                   <span data-i18n="target">주문 부서</span>
                   <select id="target-filter"></select>
                 </label>
               </div>
               <div id="items-list" class="item-list admin-section"></div>
-              <label class="field admin-section">
-                <span data-i18n="memo">메모</span>
-                <textarea id="memo" data-i18n-placeholder="memoPlaceholder"></textarea>
-              </label>
+              <section class="memo-panel admin-section">
+                <h3 data-i18n="memo">메모</h3>
+                <div id="memo-log" class="memo-log"></div>
+                <label class="field admin-section">
+                  <span data-i18n="addMemo">메모 추가</span>
+                  <textarea id="memo" data-i18n-placeholder="memoPlaceholder"></textarea>
+                </label>
+              </section>
               <div class="button-row order-action-row admin-section">
-                <button class="button" id="save-create-message" data-i18n="saveAndCreateMessage">저장 및 요청 메시지 만들기</button>
+                <button class="button" id="save-create-message" data-i18n="save">저장</button>
                 <button class="ghost-button" id="add-order" data-i18n="addOrder">주문 추가</button>
                 <button class="danger-button" id="reset-order" data-i18n="reset">초기화</button>
-              </div>
-            </div>
-
-            <div class="panel">
-              <h2 data-i18n="preview">요청 메시지 미리보기</h2>
-              <div class="message-grid admin-section">
-                <label class="field">
-                  <span data-i18n="cafeteria">카페테리아</span>
-                  <textarea id="cafeteria-preview" class="preview-box" readonly></textarea>
-                </label>
-                <label class="field">
-                  <span data-i18n="vegetableGrocery">야채 / 그로서리</span>
-                  <textarea id="grocery-preview" class="preview-box" readonly></textarea>
-                </label>
-              </div>
-              <div class="button-row admin-section">
-                <button class="ghost-button" id="copy-cafeteria-message" data-i18n="copyCafeteriaMessage">메시지 복사 (카페테리아)</button>
-                <button class="ghost-button" id="copy-grocery-message" data-i18n="copyGroceryMessage">메시지 복사 (야채 / 그로서리)</button>
               </div>
               <p class="status" id="status"></p>
             </div>
@@ -65,8 +51,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-menu-page"></script>
-    <script src="i18n.js?v=20260604-menu-page"></script>
-    <script src="order.js?v=20260604-menu-page"></script>
+    <script src="storage.js?v=20260604-dept-home"></script>
+    <script src="i18n.js?v=20260604-dept-home"></script>
+    <script src="order.js?v=20260604-dept-home"></script>
   </body>
 </html>

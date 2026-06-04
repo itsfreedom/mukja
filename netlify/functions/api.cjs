@@ -95,6 +95,20 @@ async function ensureSchema(client) {
       received_at timestamptz
     );
 
+    create table if not exists order_memos (
+      id text primary key,
+      order_id text not null references orders(id) on delete cascade,
+      memo_index integer not null default 0,
+      role text,
+      department text,
+      author_label text,
+      memo_text text not null,
+      created_by_identity_id text references access_identities(id) on delete set null,
+      created_ip text,
+      created_user_agent text,
+      created_at timestamptz not null default now()
+    );
+
     create table if not exists receipt_confirmations (
       id uuid primary key default gen_random_uuid(),
       order_item_id text not null references order_items(id) on delete cascade,
@@ -157,6 +171,7 @@ async function ensureSchema(client) {
 
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_order_items_order_id on order_items(order_id, item_index);
+    create index if not exists idx_order_memos_order_id on order_memos(order_id, memo_index);
     create index if not exists idx_receipt_confirmations_item on receipt_confirmations(order_item_id, confirmed_at desc);
     create index if not exists idx_department_confirmations_item on department_confirmations(order_item_id, department, confirmed_at desc);
     create index if not exists idx_recipes_section on recipes(section, enabled);
@@ -227,6 +242,11 @@ function itemDbId(orderId, item, index) {
   return `${orderId}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
 }
 
+function memoDbId(orderId, memo, index) {
+  const base = memo.id || `${memo.department || memo.role || "memo"}-${index}`;
+  return `${orderId}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
+}
+
 async function upsertOrder(client, entry, info) {
   const id = entry.id;
   if (!id || !Array.isArray(entry.items)) throw new Error("Invalid order entry");
@@ -259,6 +279,7 @@ async function upsertOrder(client, entry, info) {
     info.userAgent
   ]);
   await client.query("delete from order_items where order_id = $1", [id]);
+  await client.query("delete from order_memos where order_id = $1", [id]);
   for (const [index, item] of entry.items.entries()) {
     await client.query(`
       insert into order_items (
@@ -288,6 +309,29 @@ async function upsertOrder(client, entry, info) {
         values ($1, true, $2, $3, $4)
       `, [itemDbId(id, item, index), info.memberId, info.ip, info.userAgent]);
     }
+  }
+  const memos = Array.isArray(entry.memos) ? entry.memos : [];
+  for (const [index, memo] of memos.entries()) {
+    if (!memo.text) continue;
+    await client.query(`
+      insert into order_memos (
+        id, order_id, memo_index, role, department, author_label, memo_text,
+        created_by_identity_id, created_ip, created_user_agent, created_at
+      )
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, coalesce($11::timestamptz, now()))
+    `, [
+      memoDbId(id, memo, index),
+      id,
+      index,
+      memo.role || "",
+      memo.department || "",
+      memo.authorLabel || "",
+      memo.text || "",
+      memo.identityId || info.memberId,
+      memo.ip || info.ip,
+      memo.userAgent || info.userAgent,
+      memo.createdAt || null
+    ]);
   }
 }
 
@@ -414,11 +458,18 @@ async function listHistory(client) {
   const orders = await client.query("select * from orders order by created_at desc, order_date desc, order_time desc");
   if (!orders.rows.length) return [];
   const ids = orders.rows.map((row) => row.id);
-  const items = await client.query(`
+  const [items, memos] = await Promise.all([
+    client.query(`
     select * from order_items
     where order_id = any($1::text[])
     order by order_id, item_index
-  `, [ids]);
+    `, [ids]),
+    client.query(`
+    select * from order_memos
+    where order_id = any($1::text[])
+    order by order_id, memo_index
+    `, [ids])
+  ]);
   const byOrder = items.rows.reduce((acc, item) => {
     acc[item.order_id] = acc[item.order_id] || [];
     acc[item.order_id].push({
@@ -432,6 +483,18 @@ async function listHistory(client) {
     });
     return acc;
   }, {});
+  const memosByOrder = memos.rows.reduce((acc, memo) => {
+    acc[memo.order_id] = acc[memo.order_id] || [];
+    acc[memo.order_id].push({
+      id: memo.id,
+      role: memo.role || "",
+      department: memo.department || "",
+      authorLabel: memo.author_label || "",
+      text: memo.memo_text || "",
+      createdAt: memo.created_at
+    });
+    return acc;
+  }, {});
   return orders.rows.map((row) => ({
     id: row.id,
     date: row.order_date,
@@ -441,6 +504,7 @@ async function listHistory(client) {
     target: row.target || "",
     memo: row.memo || "",
     message: row.message || "",
+    memos: memosByOrder[row.id] || [],
     items: byOrder[row.id] || []
   }));
 }

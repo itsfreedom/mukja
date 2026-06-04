@@ -642,16 +642,12 @@
             <div class="brand-main-row">
               <img class="brand-mark" src="assets/mokja-logo.jpg" alt="" />
               <div class="brand-title">${I18n.t("appName")}</div>
+              ${session ? `<div class="brand-role">${I18n.roleLabel(session.label)}</div>` : ""}
               <button class="lang-toggle" data-lang-toggle type="button" aria-label="${I18n.t("language")}">${I18n.lang() === "ko" ? "🇺🇸" : "🇰🇷"}</button>
+              ${session ? `<button class="header-logout" type="button" data-auth-logout aria-label="${I18n.t("logout")}">⎋</button>` : ""}
             </div>
           </div>
         </div>
-        ${session ? `
-          <div class="role-strip">
-            <span>${I18n.t("currentRole")}: ${I18n.roleLabel(session.label)}</span>
-            <button type="button" data-auth-logout>${I18n.t("logout")}</button>
-          </div>
-        ` : ""}
         <nav class="nav">
           ${nav.map(([key, href, icon]) => `
             <a class="nav-link ${active === key ? "is-active" : ""}" href="${href}">
