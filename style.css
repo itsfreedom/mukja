@@ -13,6 +13,24 @@
   --red: #f26b7a;
   --yellow: #f0b257;
   --shadow: 0 24px 64px rgba(0, 0, 0, 0.24);
+  --ui-card-border: 1px solid rgba(184, 196, 240, 0.15);
+  --ui-card-radius: 12px;
+  --ui-card-bg: rgba(255, 255, 255, 0.04);
+  --ui-row-border: 1px solid rgba(184, 196, 240, 0.12);
+  --ui-row-radius: 13px;
+  --ui-row-bg: rgba(255, 255, 255, 0.035);
+  --ui-row-min-height: 44px;
+  --ui-row-padding: 10px 12px;
+  --ui-row-gap: 10px;
+  --ui-checkbox-size: 18px;
+  --ui-table-border: 1px solid rgba(184, 196, 240, 0.12);
+  --ui-table-row-border: 1px solid rgba(184, 196, 240, 0.1);
+  --ui-table-radius: 14px;
+  --ui-table-cell-padding: 12px;
+  --ui-pager-size: 34px;
+  --ui-pager-radius: 10px;
+  --ui-pager-border: 1px solid rgba(184, 196, 240, 0.14);
+  --ui-pager-bg: rgba(255, 255, 255, 0.04);
 }
 
 * { box-sizing: border-box; }
@@ -576,9 +594,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .home-target-section {
   display: grid;
   gap: 12px;
-  border: 1px solid rgba(184, 196, 240, 0.15);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  border: var(--ui-card-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-card-bg);
   padding: 14px;
 }
 .home-memo-panel {
@@ -799,14 +817,20 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
+  gap: var(--ui-row-gap);
+  min-height: var(--ui-row-min-height);
   padding: 8px 2px;
   border: 0;
   border-bottom: 1px solid rgba(184, 196, 240, 0.1);
   border-radius: 0;
   background: transparent;
   color: var(--text);
+}
+.receive-row input[type="checkbox"] {
+  width: var(--ui-checkbox-size);
+  height: var(--ui-checkbox-size);
+  min-height: var(--ui-checkbox-size);
+  padding: 0;
 }
 .receive-row.has-restaurant-receive {
   grid-template-columns: 28px minmax(0, 1fr) 28px;
@@ -835,12 +859,6 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   text-decoration-color: #cfd7ff;
   text-decoration-thickness: 1px;
   opacity: 0.68;
-}
-.home-page input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  min-height: 18px;
-  padding: 0;
 }
 .home-page .button {
   flex: 0 0 auto;
@@ -898,9 +916,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   padding: 0;
 }
 
-.table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid rgba(184, 196, 240, 0.12); }
+.table-wrap { overflow-x: auto; border-radius: var(--ui-table-radius); border: var(--ui-table-border); }
 table { width: 100%; border-collapse: collapse; min-width: 760px; }
-th, td { padding: 12px; border-bottom: 1px solid rgba(184, 196, 240, 0.1); text-align: left; vertical-align: top; }
+th, td { padding: var(--ui-table-cell-padding); border-bottom: var(--ui-table-row-border); text-align: left; vertical-align: top; }
 th { color: var(--muted); font-size: 0.78rem; font-weight: 700; }
 td { color: #dbe2ff; font-size: 0.9rem; }
 
@@ -1652,9 +1670,9 @@ body {
 .item-row,
 .simple .item-row,
 .receive-row {
-  border: 1px solid rgba(184, 196, 240, 0.12);
-  border-radius: 13px;
-  background: rgba(255, 255, 255, 0.035);
+  border: var(--ui-row-border);
+  border-radius: var(--ui-row-radius);
+  background: var(--ui-row-bg);
 }
 
 .simple .item-row {
@@ -1663,7 +1681,7 @@ body {
 }
 
 .receive-row {
-  padding: 10px 12px;
+  padding: var(--ui-row-padding);
 }
 
 .item-section-list,
@@ -1710,7 +1728,7 @@ body {
 
 .pager {
   display: grid;
-  grid-template-columns: repeat(9, minmax(34px, auto));
+  grid-template-columns: repeat(9, minmax(var(--ui-pager-size), auto));
   gap: 6px;
   align-items: center;
   justify-content: center;
@@ -1719,14 +1737,14 @@ body {
 
 .pager button,
 .pager span {
-  min-width: 34px;
-  min-height: 34px;
+  min-width: var(--ui-pager-size);
+  min-height: var(--ui-pager-size);
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  border: 1px solid rgba(184, 196, 240, 0.14);
+  border-radius: var(--ui-pager-radius);
+  border: var(--ui-pager-border);
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ui-pager-bg);
 }
 
 .pager button {
