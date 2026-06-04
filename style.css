@@ -577,14 +577,13 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   display: grid;
   gap: 0;
 }
-.order-request-grid {
-  grid-template-columns: 32px minmax(0, 1fr);
-}
-.order-request-grid span {
-  text-align: left;
-}
 .order-request-row {
   cursor: pointer;
+}
+.order-page .order-request-row:has(input:checked) .receive-row-main strong {
+  color: var(--text);
+  text-decoration: none;
+  opacity: 1;
 }
 .request-target {
   display: grid;

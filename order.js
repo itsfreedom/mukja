@@ -6,14 +6,12 @@
   const session = Store.getAuth();
   const canCreateRequest = ["restaurant", "admin"].includes(session?.role);
   const selected = new Set();
-  let latestEntry = null;
   const els = {
     list: document.getElementById("items-list"),
     memo: document.getElementById("memo"),
-    memoLog: document.getElementById("memo-log"),
     status: document.getElementById("status"),
     save: document.getElementById("save-create-message"),
-    addOrder: document.getElementById("add-order")
+    reset: document.getElementById("reset-order")
   };
 
   function setStatus(text) {
@@ -25,35 +23,12 @@
     return item.id || `${item.target}|${item.section}|${item.nameKo || item.name}`;
   }
 
-  function findLatestEntry() {
-    latestEntry = Store.getHistory()
-      .slice()
-      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0] || null;
-  }
-
   function memoLabel(memo) {
     if (memo.authorLabel) return I18n.roleLabel(memo.authorLabel);
     if (memo.department) return I18n.targetLabel(memo.department);
     if (memo.role === "restaurant") return I18n.roleLabel("레스토랑");
     if (memo.role === "admin") return I18n.roleLabel("관리자");
     return I18n.t("memo");
-  }
-
-  function renderMemoLog() {
-    const memos = Array.isArray(latestEntry?.memos) ? latestEntry.memos : [];
-    if (!memos.length) {
-      els.memoLog.innerHTML = `<div class="memo-empty">${I18n.t("noMemo")}</div>`;
-      return;
-    }
-    els.memoLog.innerHTML = memos.map((memo) => `
-      <article class="memo-entry">
-        <div class="memo-entry-meta">
-          <strong>${memoLabel(memo)}</strong>
-          <span>${memo.createdAt ? new Date(memo.createdAt).toLocaleString(I18n.lang() === "en" ? "en-CA" : "ko-KR") : ""}</span>
-        </div>
-        <p>${memo.text || ""}</p>
-      </article>
-    `).join("");
   }
 
   function targetFor(item) {
@@ -82,9 +57,11 @@
     return `
       <div class="order-request-list">
         ${items.map((item) => `
-          <label class="history-detail-grid order-request-grid history-detail-row order-request-row">
-            <span><input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} /></span>
-            <strong>${I18n.itemName(item)}</strong>
+          <label class="receive-row order-request-row">
+            <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
+            <span class="receive-row-main">
+              <strong>${I18n.itemName(item)}</strong>
+            </span>
           </label>
         `).join("")}
       </div>
@@ -96,7 +73,7 @@
       els.list.innerHTML = `<div class="list-card muted">${I18n.t("noAccess")}</div>`;
       els.memo.disabled = true;
       els.save.disabled = true;
-      els.addOrder.disabled = true;
+      els.reset.disabled = true;
       return;
     }
 
@@ -175,16 +152,7 @@
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
 
-  function mergeItems(base, next) {
-    const map = new Map();
-    [...base, ...next].forEach((item) => {
-      const key = itemKey(item);
-      map.set(key, { ...(map.get(key) || {}), ...item });
-    });
-    return Array.from(map.values());
-  }
-
-  function saveRequest({ appendToLatest = false } = {}) {
+  function saveRequest() {
     if (!canCreateRequest) return;
     const items = selectedItems();
     const memo = memoEntry();
@@ -192,36 +160,33 @@
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
-    const base = appendToLatest && latestEntry ? latestEntry : {};
-    const baseMemos = Array.isArray(base.memos) ? base.memos : [];
-    const memos = [...baseMemos, ...(memo ? [memo] : [])];
+    const memos = memo ? [memo] : [];
     const entry = {
-      ...base,
-      id: base.id || Store.id("history"),
+      id: Store.id("history"),
       date: Store.today(),
       time: Store.nowTime(),
       mode: "simple",
       employee: session?.label || "",
       target: "",
-      items: appendToLatest ? mergeItems(base.items || [], items) : items,
+      items,
       memos,
       memo: memos.map((row) => `[${row.authorLabel || row.role}] ${row.text}`).join("\n"),
       message: ""
     };
     entry.memo = memoText(memos);
     Store.saveHistoryEntry(entry);
-    latestEntry = entry;
-    selected.clear();
-    els.memo.value = "";
-    renderMemoLog();
-    renderItems();
+    resetForm();
     setStatus(I18n.t("saved"));
   }
 
+  function resetForm() {
+    selected.clear();
+    els.memo.value = "";
+    renderItems();
+  }
+
   els.save.addEventListener("click", () => saveRequest());
-  els.addOrder.addEventListener("click", () => saveRequest({ appendToLatest: true }));
-  findLatestEntry();
-  renderMemoLog();
+  els.reset.addEventListener("click", resetForm);
   renderItems();
   I18n.applyI18n();
 })();
