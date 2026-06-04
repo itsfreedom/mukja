@@ -1052,11 +1052,11 @@
         return false;
       };
       const nav = [
-        ["home", "index.html", "⌂"],
-        ["history", "history.html", "↺"],
-        ["order", "order.html", "🛒"],
-        ["menus", "menu.html", "🍚"],
-        ["admin", "admin.html", "⚙"]
+        ["home", "index.html", "H"],
+        ["history", "history.html", "H"],
+        ["order", "order.html", "D"],
+        ["menus", "menu.html", "M"],
+        ["admin", "admin.html", "A"]
       ];
       const sidebarStateKey = "restaurant_sidebar_collapsed";
       const savedSidebarState = localStorage.getItem(sidebarStateKey);
