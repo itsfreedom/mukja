@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>관리자</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-page-roles" />
+    <link rel="stylesheet" href="style.css?v=20260604-fake-data" />
   </head>
   <body>
     <div class="shell">
@@ -171,6 +171,8 @@
               <h2 data-i18n="dataManagement">CSV 데이터 관리</h2>
               <div class="button-row admin-section">
                 <button id="export-settings" class="ghost-button" data-i18n="exportSettings">설정 내보내기</button>
+                <button id="seed-test-data" class="ghost-button" data-i18n="seedTestData">테스트 데이터 생성</button>
+                <button id="reset-demo-data" class="danger-button" data-i18n="resetDemoData">DB 초기화</button>
                 <label class="ghost-button">
                   <span data-i18n="importSettings">설정 가져오기</span>
                   <input id="import-settings" type="file" accept="application/json" class="hidden" />
@@ -182,8 +184,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-page-roles"></script>
-    <script src="i18n.js?v=20260604-page-roles"></script>
-    <script src="admin.js?v=20260604-page-roles"></script>
+    <script src="storage.js?v=20260604-fake-data"></script>
+    <script src="i18n.js?v=20260604-fake-data"></script>
+    <script src="admin.js?v=20260604-fake-data"></script>
   </body>
 </html>

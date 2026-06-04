@@ -360,6 +360,18 @@
     Store.downloadText("restaurant-recipes.csv", Store.recipesToCsv(Store.getRecipes()), "text/csv;charset=utf-8");
     setStatus(I18n.t("exportDone"));
   });
+  document.getElementById("seed-test-data").addEventListener("click", () => {
+    if (!confirm(I18n.t("confirmSeedTestData"))) return;
+    Store.seedTestData();
+    setStatus(I18n.t("testDataSeeded"));
+    renderAll();
+  });
+  document.getElementById("reset-demo-data").addEventListener("click", () => {
+    if (!confirm(I18n.t("confirmResetDemoData"))) return;
+    Store.resetDemoData();
+    setStatus(I18n.t("demoDataReset"));
+    renderAll();
+  });
   document.getElementById("import-history-csv").addEventListener("change", async (event) => {
     const file = event.target.files[0];
     if (!file) return;

@@ -305,6 +305,26 @@ async function listAccessAccounts(client) {
   }, {});
 }
 
+async function replaceSeedData(client, data, info) {
+  const accessAccounts = data.accessAccounts || {};
+  const ingredients = Array.isArray(data.ingredients) ? data.ingredients : [];
+  const recipes = Array.isArray(data.recipes) ? data.recipes : [];
+  const menus = Array.isArray(data.menus) ? data.menus : [];
+  const history = Array.isArray(data.history) ? data.history : [];
+  await client.query("delete from orders");
+  await client.query("delete from menus");
+  await client.query("delete from recipes");
+  await client.query("delete from ingredients");
+  await client.query("delete from access_accounts");
+  for (const [password, account] of Object.entries(accessAccounts)) {
+    await upsertAccessAccount(client, password, account, info);
+  }
+  for (const recipe of recipes) await upsertRecipe(client, recipe, info);
+  for (const ingredient of ingredients) await upsertIngredient(client, ingredient, info);
+  for (const menu of menus) await upsertMenu(client, menu, info);
+  for (const entry of history) await upsertOrder(client, entry, info);
+}
+
 function parseBody(event) {
   if (!event.body) return {};
   const source = event.isBase64Encoded ? Buffer.from(event.body, "base64").toString("utf8") : event.body;
@@ -687,6 +707,14 @@ exports.handler = async (event) => {
       for (const [password, account] of Object.entries(accessAccounts)) {
         await upsertAccessAccount(client, password, account, info);
       }
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "PUT" && path === "/seed-data") {
+      const data = parseBody(event);
+      await client.query("begin");
+      await replaceSeedData(client, data, info);
       await client.query("commit");
       return json(200, { ok: true });
     }

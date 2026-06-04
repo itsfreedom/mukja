@@ -62,6 +62,62 @@
     { recipeName: "불고기", category: "식사", nameKo: "불고기", nameEn: "Bulgogi", price: "16.99" },
     { recipeName: "샐러드", category: "사이드", nameKo: "샐러드", nameEn: "Salad", price: "8.99", seasonal: true }
   ];
+  const testIngredientSeeds = [
+    ["item-test-chicken", "닭다리살", "Chicken Thigh", "반조리", "kg", "카페테리아"],
+    ["item-test-pork-belly", "삼겹살", "Pork Belly", "반조리", "kg", "카페테리아"],
+    ["item-test-fishcake", "어묵", "Fish Cake", "냉장", "팩", "카페테리아"],
+    ["item-test-tofu", "두부", "Tofu", "냉장", "모", "카페테리아"],
+    ["item-test-rice-cake", "떡볶이떡", "Rice Cakes", "냉장", "봉", "카페테리아"],
+    ["item-test-seaweed", "김", "Roasted Seaweed", "반찬", "박스", "카페테리아"],
+    ["item-test-pickled-cucumber", "오이피클", "Pickled Cucumber", "반찬", "통", "카페테리아"],
+    ["item-test-gochujang", "고추장", "Gochujang", "소스", "통", "카페테리아"],
+    ["item-test-doenjang", "된장", "Doenjang", "소스", "통", "카페테리아"],
+    ["item-test-sesame-oil", "참기름", "Sesame Oil", "소스", "병", "카페테리아"],
+    ["item-test-frozen-corn", "냉동옥수수", "Frozen Corn", "냉동", "봉", "카페테리아"],
+    ["item-test-frozen-shrimp", "냉동새우", "Frozen Shrimp", "냉동", "봉", "카페테리아"],
+    ["item-test-carrot", "당근", "Carrot", "야채", "kg", "야채"],
+    ["item-test-cabbage", "양배추", "Cabbage", "야채", "박스", "야채"],
+    ["item-test-lettuce", "상추", "Lettuce", "야채", "박스", "야채"],
+    ["item-test-cucumber", "오이", "Cucumber", "야채", "kg", "야채"],
+    ["item-test-garlic", "마늘", "Garlic", "야채", "kg", "야채"],
+    ["item-test-mushroom", "버섯", "Mushroom", "야채", "팩", "야채"],
+    ["item-test-spinach", "시금치", "Spinach", "야채", "단", "야채"],
+    ["item-test-pepper", "고추", "Chili Pepper", "야채", "팩", "야채"],
+    ["item-test-rice", "쌀", "Rice", "식재료", "포", "그로서리"],
+    ["item-test-sugar", "설탕", "Sugar", "식재료", "kg", "그로서리"],
+    ["item-test-salt", "소금", "Salt", "식재료", "kg", "그로서리"],
+    ["item-test-breadcrumbs", "빵가루", "Breadcrumbs", "식재료", "봉", "그로서리"],
+    ["item-test-noodles", "라면사리", "Ramen Noodles", "식재료", "박스", "그로서리"],
+    ["item-test-curry", "카레가루", "Curry Powder", "식재료", "봉", "그로서리"],
+    ["item-test-plastic-cup", "일회용컵", "Disposable Cups", "기타", "박스", "그로서리"],
+    ["item-test-napkin", "냅킨", "Napkins", "기타", "박스", "그로서리"]
+  ];
+  const testRecipeSeeds = [
+    ["recipe-test-tteokbokki", "떡볶이", "반조리", "매콤달콤한 분식 메뉴", "떡볶이떡, 어묵, 고추장, 설탕, 대파", "1. 양념장을 끓입니다.\n2. 떡과 어묵을 넣습니다.\n3. 농도가 잡히면 대파를 넣습니다.", "소스는 너무 졸이지 않습니다."],
+    ["recipe-test-chicken-mayo", "치킨마요덮밥", "반조리", "남은 치킨을 활용한 덮밥", "닭다리살, 계란, 밥, 간장, 마요네즈", "1. 닭고기를 데웁니다.\n2. 계란을 스크램블합니다.\n3. 밥 위에 재료와 소스를 올립니다.", "소스는 별도 보관합니다."],
+    ["recipe-test-fishcake-soup", "어묵국", "냉장", "간단한 국물 메뉴", "어묵, 대파, 간장, 무", "1. 육수를 끓입니다.\n2. 어묵을 넣습니다.\n3. 간장으로 간합니다.", "오래 끓이면 어묵이 불 수 있습니다."],
+    ["recipe-test-tofu-kimchi", "두부김치", "반찬", "두부와 볶은 김치 반찬", "두부, 김치, 참기름, 대파", "1. 두부를 데웁니다.\n2. 김치를 볶습니다.\n3. 함께 담습니다.", "두부는 물기를 제거합니다."],
+    ["recipe-test-curry-rice", "카레라이스", "식재료", "대량 조리에 편한 카레 메뉴", "카레가루, 감자, 당근, 양파, 밥", "1. 채소를 볶습니다.\n2. 물을 넣고 끓입니다.\n3. 카레가루를 풀어 마무리합니다.", "농도는 배식 전 조절합니다."],
+    ["recipe-test-bibim-noodle", "비빔면", "식재료", "차갑게 먹는 면 메뉴", "라면사리, 고추장, 오이, 계란, 참기름", "1. 면을 삶아 식힙니다.\n2. 양념과 버무립니다.\n3. 고명을 올립니다.", "면은 충분히 헹굽니다."],
+    ["recipe-test-shrimp-fried-rice", "새우볶음밥", "냉동", "냉동새우를 넣은 볶음밥", "냉동새우, 밥, 계란, 대파, 간장", "1. 새우를 볶습니다.\n2. 밥과 계란을 넣습니다.\n3. 간장으로 간합니다.", "새우 해동 상태를 확인합니다."],
+    ["recipe-test-pork-belly-bowl", "삼겹살덮밥", "반조리", "달콤한 소스의 고기 덮밥", "삼겹살, 양파, 간장, 설탕, 밥", "1. 고기를 굽습니다.\n2. 양파와 소스를 넣습니다.\n3. 밥 위에 올립니다.", "기름은 일부 제거합니다."],
+    ["recipe-test-spinach-side", "시금치무침", "반찬", "기본 나물 반찬", "시금치, 소금, 참기름, 마늘", "1. 시금치를 데칩니다.\n2. 물기를 짭니다.\n3. 양념과 버무립니다.", "간은 약하게 시작합니다."],
+    ["recipe-test-cabbage-salad", "양배추샐러드", "야채", "돈까스와 잘 맞는 샐러드", "양배추, 오이피클, 소스", "1. 양배추를 채 썹니다.\n2. 물기를 제거합니다.\n3. 소스를 따로 제공합니다.", "아침에 미리 썰지 않습니다."]
+  ];
+  const testMenuSeeds = [
+    ["떡볶이", "분식", "떡볶이", "Tteokbokki", "11.99"],
+    ["치킨마요덮밥", "덮밥", "치킨마요덮밥", "Chicken Mayo Bowl", "14.99"],
+    ["어묵국", "국", "어묵국", "Fish Cake Soup", "9.99"],
+    ["두부김치", "사이드", "두부김치", "Tofu Kimchi", "10.99"],
+    ["카레라이스", "식사", "카레라이스", "Curry Rice", "13.99"],
+    ["비빔면", "면", "비빔면", "Spicy Mixed Noodles", "12.99"],
+    ["새우볶음밥", "식사", "새우볶음밥", "Shrimp Fried Rice", "15.99"],
+    ["삼겹살덮밥", "덮밥", "삼겹살덮밥", "Pork Belly Bowl", "16.99"],
+    ["시금치무침", "반찬", "시금치무침", "Seasoned Spinach", "5.99"],
+    ["양배추샐러드", "사이드", "양배추샐러드", "Cabbage Salad", "6.99"],
+    ["김치볶음밥", "식사", "김치볶음밥 세트", "Kimchi Fried Rice Set", "17.99"],
+    ["제육볶음", "식사", "제육 도시락", "Spicy Pork Lunch Box", "18.99"]
+  ];
 
   function recipe(name, section, description, ingredients, steps, notes) {
     return { id: id("recipe"), name, section, description, ingredients, steps, notes, imageUrl: "", enabled: true, updatedAt: today() };
@@ -84,6 +140,137 @@
         notes: ""
       };
     });
+  }
+
+  function testIngredients() {
+    const extra = testIngredientSeeds.map(([itemId, nameKo, nameEn, section, unit, target]) => ({
+      id: itemId,
+      name: nameKo,
+      nameKo,
+      nameEn,
+      section,
+      unit,
+      target,
+      enabled: true
+    }));
+    return [...defaultIngredients, ...extra].map(normalizeIngredient);
+  }
+
+  function testRecipes() {
+    const extra = testRecipeSeeds.map(([recipeId, name, section, description, ingredients, steps, notes], index) => ({
+      id: recipeId,
+      name,
+      section,
+      description,
+      ingredients,
+      steps,
+      notes,
+      imageUrl: "",
+      enabled: index % 7 !== 6,
+      updatedAt: today()
+    }));
+    return [...defaultRecipes, ...extra];
+  }
+
+  function testMenus(recipes) {
+    const base = buildDefaultMenus(recipes);
+    const extra = testMenuSeeds.map(([recipeName, category, nameKo, nameEn, price], index) => {
+      const recipeRow = recipes.find((row) => row.name === recipeName);
+      return {
+        id: `menu-test-${nameEn.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
+        recipeId: recipeRow?.id || "",
+        recipeName,
+        category,
+        nameKo,
+        nameEn,
+        seasonal: index % 5 === 0,
+        discontinued: index % 9 === 8,
+        price,
+        currency: "CAD",
+        notes: index % 9 === 8 ? "테스트용 판매 중단 메뉴" : ""
+      };
+    });
+    return [...base, ...extra].map(normalizeMenu);
+  }
+
+  function dateForHistory(weekOffset, dayOffset) {
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const daysSinceTuesday = (todayDate.getDay() + 5) % 7;
+    const date = new Date(todayDate);
+    date.setDate(todayDate.getDate() - daysSinceTuesday - weekOffset * 7 + dayOffset);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function testHistory(ingredients) {
+    const notes = ["오전 입고 필요", "재고 부족 확인", "수량 여유 있게 요청", "대체 가능 품목 있음", "마감 전 확인 필요", "테스트 주문"];
+    const rows = [];
+    for (let week = 0; week < 10; week += 1) {
+      for (let day = 0; day < 6; day += 1) {
+        const itemCount = 6 + ((week + day) % 5);
+        const items = Array.from({ length: itemCount }, (_, index) => {
+          const source = ingredients[(week * 11 + day * 5 + index * 3) % ingredients.length];
+          return {
+            id: `${source.id}-fake-${week}-${day}-${index}`,
+            name: source.nameKo || source.name,
+            nameKo: source.nameKo || source.name,
+            nameEn: source.nameEn || "",
+            section: source.section,
+            target: source.target,
+            quantity: String(1 + ((week + day + index) % 8)),
+            unit: source.unit,
+            received: (week + day + index) % 3 === 0,
+            enabled: true
+          };
+        });
+        const targets = Array.from(new Set(items.map((item) => item.target)));
+        rows.push({
+          id: `history-test-${week}-${day}`,
+          date: dateForHistory(week, day),
+          time: `${String(9 + ((week + day) % 7)).padStart(2, "0")}:${day % 2 ? "30" : "05"}`,
+          mode: "simple",
+          employee: "테스트",
+          target: "",
+          memo: notes[(week + day) % notes.length],
+          message: targets.map((target) => `[${target}] ${items.filter((item) => item.target === target).map((item) => item.nameKo).join(", ")}`).join("\n"),
+          memos: targets.map((target, index) => ({
+            id: `memo-test-${week}-${day}-${index}`,
+            role: index % 2 ? "department" : "restaurant",
+            department: index % 2 ? target : "",
+            authorLabel: index % 2 ? target : "레스토랑",
+            text: `${target} 테스트 메모 ${week + 1}-${day + 1}`,
+            createdAt: `${dateForHistory(week, day)}T${String(10 + index).padStart(2, "0")}:00:00.000Z`
+          })),
+          items
+        });
+      }
+    }
+    return rows.sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`));
+  }
+
+  function testData() {
+    const recipes = testRecipes();
+    const ingredients = testIngredients();
+    return {
+      accessAccounts: defaultAccessCodes,
+      sections: defaultSections,
+      ingredients,
+      recipes,
+      menus: testMenus(recipes),
+      history: testHistory(ingredients)
+    };
+  }
+
+  function defaultData() {
+    const recipes = defaultRecipes;
+    return {
+      accessAccounts: defaultAccessCodes,
+      sections: defaultSections,
+      ingredients: defaultIngredients.map(normalizeIngredient),
+      recipes,
+      menus: buildDefaultMenus(recipes),
+      history: []
+    };
   }
 
   function normalizeMenu(menu) {
@@ -567,6 +754,32 @@
     setJson(keys.history, data.history || []);
   }
 
+  function applyDataBundle(data) {
+    localStorage.setItem(keys.mode, "simple");
+    setJson(keys.sections, data.sections || defaultSections);
+    setJson("restaurant_access_codes", data.accessAccounts || defaultAccessCodes);
+    setJson(keys.ingredients, (data.ingredients || []).map(normalizeIngredient));
+    setJson(keys.recipes, data.recipes || []);
+    setJson(keys.menus, (data.menus || []).map(normalizeMenu));
+    setJson(keys.history, data.history || []);
+    syncQuietly(() => apiRequest("/seed-data", {
+      method: "PUT",
+      body: JSON.stringify(data)
+    }));
+  }
+
+  function seedTestData() {
+    const data = testData();
+    applyDataBundle(data);
+    return data;
+  }
+
+  function resetDemoData() {
+    const data = defaultData();
+    applyDataBundle(data);
+    return data;
+  }
+
   function setHistory(history) {
     setJson(keys.history, history);
   }
@@ -707,6 +920,8 @@
     logoutAuth,
     canAdmin,
     startPath,
+    seedTestData,
+    resetDemoData,
     historyToCsv,
     historyFromCsv,
     recipesToCsv,
