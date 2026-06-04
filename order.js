@@ -83,8 +83,8 @@
       <div class="order-request-list">
         ${items.map((item) => `
           <label class="history-detail-grid order-request-grid history-detail-row order-request-row">
-            <strong>${I18n.itemName(item)}</strong>
             <span><input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} /></span>
+            <strong>${I18n.itemName(item)}</strong>
           </label>
         `).join("")}
       </div>
