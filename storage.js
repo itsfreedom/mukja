@@ -10,13 +10,13 @@
     menus: "restaurant_menus",
     history: "restaurant_history",
     demoSeeded: "restaurant_demo_seeded",
-    historyPrunedFromJune4: "restaurant_history_pruned_from_2026_06_04",
     memberId: "restaurant_member_id",
     auth: "restaurant_auth"
   };
   const apiState = {
     checked: false,
-    available: false
+    available: false,
+    error: ""
   };
   const demoSeedVersion = "home-memo-slots";
 
@@ -403,14 +403,28 @@
     }
     apiState.checked = true;
     apiState.available = true;
+    apiState.error = "";
     return data;
   }
 
   function syncQuietly(task) {
-    task().catch(() => {
+    task().catch((error) => {
       apiState.checked = true;
       apiState.available = false;
+      apiState.error = error?.message || "API unavailable";
     });
+  }
+
+  async function checkDbHealth() {
+    try {
+      const data = await apiRequest("/health");
+      return { ok: true, db: !!data.db, error: "" };
+    } catch (error) {
+      apiState.checked = true;
+      apiState.available = false;
+      apiState.error = error?.message || "API unavailable";
+      return { ok: false, db: false, error: apiState.error };
+    }
   }
 
   async function hydrateHistoryFromApi() {
@@ -560,21 +574,6 @@
     localStorage.setItem(keys.demoSeeded, demoSeedVersion);
   }
 
-  function pruneHistoryFromDateOnce() {
-    if (localStorage.getItem(keys.historyPrunedFromJune4)) return;
-    const cutoff = "2026-06-04";
-    const history = getJson(keys.history, []);
-    const pruned = history.filter((entry) => !entry.date || entry.date < cutoff);
-    if (pruned.length !== history.length) {
-      setJson(keys.history, pruned);
-      syncQuietly(() => apiRequest("/history", {
-        method: "PUT",
-        body: JSON.stringify({ history: pruned })
-      }));
-    }
-    localStorage.setItem(keys.historyPrunedFromJune4, "true");
-  }
-
   async function init() {
     if (!localStorage.getItem(keys.lang)) localStorage.setItem(keys.lang, "ko");
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
@@ -599,7 +598,6 @@
     await hydrateAccessAccountsFromApi();
     await hydrateIngredientsFromApi();
     await hydrateHistoryFromApi();
-    pruneHistoryFromDateOnce();
     await hydrateRecipesFromApi();
     await hydrateMenusFromApi();
     localStorage.setItem(keys.initialized, "true");
@@ -970,6 +968,7 @@
     deleteHistory,
     clearHistory,
     dbStatus: () => ({ ...apiState }),
+    checkDbHealth,
     getAuth: auth,
     getAccessAccounts: accessAccounts,
     setAccessAccounts,

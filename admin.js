@@ -8,6 +8,7 @@
   const logout = document.getElementById("logout");
   const status = document.getElementById("admin-status");
   const loginStatus = document.getElementById("login-status");
+  const dbStatus = document.getElementById("db-status");
 
   function isAuthed() {
     return Store.canAdmin();
@@ -19,12 +20,22 @@
     if (text) setTimeout(() => { status.textContent = ""; loginStatus.textContent = ""; }, 2500);
   }
 
+  async function renderDbStatus() {
+    if (!dbStatus) return;
+    dbStatus.textContent = I18n.t("checkingDb");
+    const result = await Store.checkDbHealth();
+    dbStatus.textContent = result.ok ? I18n.t("dbConnected") : `${I18n.t("dbNotConnected")} ${result.error || ""}`.trim();
+  }
+
   function showAdmin(show) {
     loginPanel.classList.toggle("hidden", show);
     adminPanel.classList.toggle("hidden", !show);
     logout.classList.toggle("hidden", !show);
     document.getElementById("login-title").textContent = I18n.t("adminAccessRequired");
-    if (show) renderAll();
+    if (show) {
+      renderAll();
+      renderDbStatus();
+    }
   }
 
   function renderOptions() {
@@ -360,8 +371,10 @@
     if (!confirm(I18n.t("confirmResetDemoData"))) return;
     Store.resetDemoData();
     setStatus(I18n.t("demoDataReset"));
+    renderDbStatus();
     renderAll();
   });
+  document.getElementById("refresh-db-status").addEventListener("click", renderDbStatus);
   document.getElementById("import-history-csv").addEventListener("change", async (event) => {
     const file = event.target.files[0];
     if (!file) return;
