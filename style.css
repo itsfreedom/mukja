@@ -444,6 +444,12 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   gap: 0;
   border-top: 1px solid rgba(184, 196, 240, 0.1);
 }
+.home-request-section .section-divider {
+  margin: 0 0 8px;
+}
+.home-request-section .item-section-list {
+  border-top: 0;
+}
 .item-row {
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);

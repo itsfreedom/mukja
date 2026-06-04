@@ -46,25 +46,42 @@
       <article class="list-card">
         <div class="list-card-header">
           <strong>${entry.date} ${entry.time || ""}</strong>
-          <a class="ghost-button compact-button" href="history.html?id=${encodeURIComponent(entry.id)}">${I18n.t("detail")}</a>
         </div>
         ${sections.map((section) => `
-          <section class="item-section">
+          <section class="item-section home-request-section">
             <h3>${I18n.sectionLabel(section)}</h3>
+            <hr class="section-divider" />
             <div class="item-section-list">
-              ${groups[section].map((item) => `
-                <div class="receive-row">
+              ${groups[section].map((item, index) => `
+                <label class="receive-row">
+                  <input type="checkbox" data-receive="${entry.id}|${section}|${index}" ${item.received ? "checked" : ""} />
                   <span class="receive-row-main">
                     <strong>${I18n.itemName(item)}</strong>
-                    <span>${I18n.targetLabel(item.target || "")}</span>
                   </span>
-                </div>
+                </label>
               `).join("")}
             </div>
           </section>
         `).join("")}
       </article>
     `;
+    list.querySelectorAll("[data-receive]").forEach((input) => {
+      input.addEventListener("change", () => {
+        const [, section, indexText] = input.dataset.receive.split("|");
+        const targetItems = groups[section] || [];
+        const changed = targetItems[Number(indexText)];
+        if (!changed) return;
+        Store.replaceHistory(Store.getHistory().map((historyEntry) => {
+          if (historyEntry.id !== entry.id) return historyEntry;
+          return {
+            ...historyEntry,
+            items: (historyEntry.items || []).map((item) =>
+              item.id === changed.id ? { ...item, received: input.checked } : item
+            )
+          };
+        }));
+      });
+    });
   }
 
   renderLatest(latestEntry());

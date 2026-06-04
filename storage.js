@@ -17,6 +17,7 @@
     checked: false,
     available: false
   };
+  const demoSeedVersion = "home-20";
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
   const defaultEmployees = [
@@ -208,7 +209,7 @@
     const rows = [];
     for (let week = 0; week < 10; week += 1) {
       for (let day = 0; day < 6; day += 1) {
-        const itemCount = 6 + ((week + day) % 5);
+        const itemCount = week === 0 && day === 5 ? 20 : 6 + ((week + day) % 5);
         const items = Array.from({ length: itemCount }, (_, index) => {
           const source = ingredients[(week * 11 + day * 5 + index * 3) % ingredients.length];
           return {
@@ -523,10 +524,12 @@
   }
 
   function seedLocalTestDataOnce() {
-    if (localStorage.getItem(keys.demoSeeded)) return;
+    const marker = localStorage.getItem(keys.demoSeeded);
+    if (marker === demoSeedVersion || marker === "manual" || marker === "reset") return;
     const history = getJson(keys.history, []);
     const menus = getJson(keys.menus, []);
-    if (history.length || menus.length > defaultMenuSeeds.length) return;
+    if (history.length && marker !== "auto") return;
+    if (menus.length > defaultMenuSeeds.length && marker !== "auto") return;
     const data = testData();
     setJson(keys.sections, data.sections);
     setJson("restaurant_access_codes", data.accessAccounts);
@@ -534,7 +537,7 @@
     setJson(keys.recipes, data.recipes);
     setJson(keys.menus, data.menus);
     setJson(keys.history, data.history);
-    localStorage.setItem(keys.demoSeeded, "auto");
+    localStorage.setItem(keys.demoSeeded, demoSeedVersion);
   }
 
   async function init() {
