@@ -81,10 +81,6 @@
   function renderItemRows(items) {
     return `
       <div class="order-request-list">
-        <div class="history-detail-grid order-request-grid history-detail-head">
-          <span>${I18n.t("items")}</span>
-          <span>요청</span>
-        </div>
         ${items.map((item) => `
           <label class="history-detail-grid order-request-grid history-detail-row order-request-row">
             <strong>${I18n.itemName(item)}</strong>
@@ -136,6 +132,7 @@
             ${categories.map((category) => `
               <section class="order-category-section">
                 <h3>${I18n.sectionLabel(category)}</h3>
+                <hr class="section-divider" />
                 ${renderItemRows(categoryGroups[category])}
               </section>
             `).join("")}

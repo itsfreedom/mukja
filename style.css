@@ -580,6 +580,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .order-request-grid {
   grid-template-columns: minmax(0, 1fr) 74px;
 }
+.order-request-grid span {
+  text-align: left;
+}
 .order-request-row {
   cursor: pointer;
 }
