@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>요청 하기</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-request-page" />
+    <link rel="stylesheet" href="style.css?v=20260604-request-restore" />
   </head>
   <body class="order-page">
     <div class="shell">
@@ -26,12 +26,14 @@
               <hr class="section-divider" />
               <section class="memo-panel admin-section">
                 <h3 data-i18n="memo">메모</h3>
+                <div id="memo-log" class="memo-log"></div>
                 <label class="field admin-section">
                   <textarea id="memo" data-i18n-placeholder="memoPlaceholder"></textarea>
                 </label>
               </section>
               <div class="button-row order-action-row admin-section">
                 <button class="button" id="save-create-message" data-i18n="save">저장</button>
+                <button class="ghost-button" id="add-order" data-i18n="addOrder">주문 추가</button>
               </div>
               <p class="status" id="status"></p>
             </div>
@@ -39,8 +41,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-request-page"></script>
-    <script src="i18n.js?v=20260604-request-page"></script>
-    <script src="order.js?v=20260604-request-page"></script>
+    <script src="storage.js?v=20260604-request-restore"></script>
+    <script src="i18n.js?v=20260604-request-restore"></script>
+    <script src="order.js?v=20260604-request-restore"></script>
   </body>
 </html>

@@ -962,8 +962,8 @@
       };
       const nav = [
         ["home", "index.html", "⌂"],
-        ["order", "order.html", "🛒"],
         ["history", "history.html", "↺"],
+        ["order", "order.html", "🛒"],
         ["menus", "menu.html", "🍚"],
         ["admin", "admin.html", "⚙"]
       ];

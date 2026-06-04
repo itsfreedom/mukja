@@ -6,104 +6,67 @@
   const title = document.querySelector("[data-home-title]");
   const subtitle = document.querySelector("[data-home-subtitle]");
   const list = document.getElementById("home-request-list");
-  const status = document.getElementById("home-status");
   const session = Store.getAuth();
 
-  function sectionFor(item) {
-    if (item.section) return item.section;
-    const matched = Store.getIngredients().find((ingredient) => ingredient.id === item.id || ingredient.name === item.name);
-    return matched?.section || "기타";
-  }
-
-  function relevantEntries() {
-    const history = Store.getHistory();
+  function visibleEntry(entry) {
+    if (!entry) return null;
     if (session?.role === "department" && session.department) {
-      return history.flatMap((entry) => {
-        const items = (entry.items || []).filter((item) => item.target === session.department);
-        return items.length ? [{ ...entry, items }] : [];
-      });
+      const items = (entry.items || []).filter((item) => item.target === session.department);
+      return items.length ? { ...entry, items } : null;
     }
-    return history;
+    return entry;
   }
 
-  function itemLine(item, canReceive) {
-    return `
-      <label class="receive-row">
-        <input type="checkbox" data-receive="${item.__entryId}|${item.__index}" ${item.received ? "checked" : ""} ${canReceive ? "" : "disabled"} />
-        <span class="receive-row-main">
-          <strong>${I18n.itemName(item)}</strong>
-          <span>${[item.quantity, item.unit, I18n.targetLabel(item.target || "")].filter(Boolean).join(" · ")}</span>
-        </span>
-      </label>
-    `;
+  function latestEntry() {
+    return Store.getHistory()
+      .map(visibleEntry)
+      .filter(Boolean)
+      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0];
   }
 
-  function departmentView(entries) {
-    title.textContent = I18n.t("receivedRequests");
-    subtitle.textContent = session?.department ? I18n.targetLabel(session.department) : "";
-    if (!entries.length) {
-      list.innerHTML = `<div class="list-card muted">${I18n.t("noDepartmentRequests")}</div>`;
+  function sectionFor(item) {
+    return item.section || "기타";
+  }
+
+  function renderLatest(entry) {
+    title.textContent = I18n.t("lastRequest");
+    subtitle.textContent = entry ? `${entry.date} ${entry.time || ""}` : "";
+    if (!entry) {
+      list.innerHTML = `<div class="list-card muted">${I18n.t("noHistory")}</div>`;
       return;
     }
-    list.innerHTML = entries.slice(0, 12).map((entry) => `
+    const groups = (entry.items || []).reduce((acc, item) => {
+      const section = sectionFor(item);
+      acc[section] = acc[section] || [];
+      acc[section].push(item);
+      return acc;
+    }, {});
+    const sections = Object.keys(groups);
+    list.innerHTML = `
       <article class="list-card">
         <div class="list-card-header">
           <strong>${entry.date} ${entry.time || ""}</strong>
           <a class="ghost-button compact-button" href="history.html?id=${encodeURIComponent(entry.id)}">${I18n.t("detail")}</a>
         </div>
-        <div class="receive-list admin-section">
-          ${(entry.items || []).map((item, index) => itemLine({ ...item, __entryId: entry.id, __index: index }, false)).join("")}
-        </div>
-        ${entry.memo ? `<p class="muted">${entry.memo}</p>` : ""}
-      </article>
-    `).join("");
-  }
-
-  function receiptView(entries) {
-    title.textContent = I18n.t("receiptStatus");
-    subtitle.textContent = I18n.t("restaurantReceiptStatus");
-    if (!entries.length) {
-      list.innerHTML = `<div class="list-card muted">${I18n.t("noHistory")}</div>`;
-      return;
-    }
-    list.innerHTML = entries.slice(0, 10).map((entry) => {
-      const items = (entry.items || []).map((item, index) => ({ ...item, __entryId: entry.id, __index: index }));
-      const received = items.filter((item) => item.received).length;
-      return `
-        <article class="list-card">
-          <div class="list-card-header">
-            <div>
-              <strong>${entry.date} ${entry.time || ""}</strong>
-              <div class="item-meta">${received}/${items.length} ${I18n.t("receivedCount")}</div>
+        ${sections.map((section) => `
+          <section class="item-section">
+            <h3>${I18n.sectionLabel(section)}</h3>
+            <div class="item-section-list">
+              ${groups[section].map((item) => `
+                <div class="receive-row">
+                  <span class="receive-row-main">
+                    <strong>${I18n.itemName(item)}</strong>
+                    <span>${I18n.targetLabel(item.target || "")}</span>
+                  </span>
+                </div>
+              `).join("")}
             </div>
-            <a class="ghost-button compact-button" href="history.html?id=${encodeURIComponent(entry.id)}">${I18n.t("detail")}</a>
-          </div>
-          <div class="receive-list admin-section">
-            ${items.map((item) => itemLine(item, true)).join("")}
-          </div>
-        </article>
-      `;
-    }).join("");
-    list.querySelectorAll("[data-receive]").forEach((input) => {
-      input.addEventListener("change", () => {
-        const [entryId, indexText] = input.dataset.receive.split("|");
-        const history = Store.getHistory();
-        const next = history.map((entry) => {
-          if (entry.id !== entryId) return entry;
-          const items = (entry.items || []).map((item, index) =>
-            index === Number(indexText) ? { ...item, received: input.checked } : item
-          );
-          return { ...entry, items };
-        });
-        Store.replaceHistory(next);
-        status.textContent = I18n.t("receivedSaved");
-        setTimeout(() => (status.textContent = ""), 1800);
-      });
-    });
+          </section>
+        `).join("")}
+      </article>
+    `;
   }
 
-  const entries = relevantEntries();
-  if (session?.role === "department") departmentView(entries);
-  else receiptView(entries);
+  renderLatest(latestEntry());
   I18n.applyI18n();
 })();
