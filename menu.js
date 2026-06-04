@@ -4,10 +4,15 @@
   AppUI.registerServiceWorker();
 
   const search = document.getElementById("menu-search");
+  const searchButton = document.getElementById("menu-search-button");
   const category = document.getElementById("menu-category");
   const list = document.getElementById("menu-list");
-  const detail = document.getElementById("menu-detail");
-  let activeId = "";
+  const modal = document.getElementById("menu-recipe-modal");
+  const modalTitle = document.getElementById("menu-recipe-title");
+  const modalMeta = document.getElementById("menu-recipe-meta");
+  const modalContent = document.getElementById("menu-recipe-content");
+  const modalClose = document.getElementById("close-menu-recipe");
+  let searchQuery = "";
   const canViewMenu = ["restaurant", "admin"].includes(Store.getAuth()?.role);
 
   function money(menu) {
@@ -22,7 +27,7 @@
   }
 
   function filteredMenus() {
-    const q = search.value.trim().toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
     return Store.getMenus().filter((menu) => {
       if (category.value && menu.category !== category.value) return false;
       if (q && !`${menu.nameKo} ${menu.nameEn} ${menu.category} ${menu.recipeName}`.toLowerCase().includes(q)) return false;
@@ -35,50 +40,59 @@
       Store.getRecipes().find((recipe) => recipe.name === menu.recipeName);
   }
 
-  function renderDetail(menu) {
-    if (!menu) {
-      detail.textContent = I18n.t("noMenus");
-      return;
-    }
-    const recipe = recipeFor(menu);
-    detail.innerHTML = `
-      <div class="list-card-header">
-        <div>
-          <h2>${I18n.menuName(menu)}</h2>
-          <div class="item-meta">${I18n.secondaryMenuName(menu)}</div>
-        </div>
-        <span class="badge">${money(menu)}</span>
-      </div>
-      <div class="menu-badges admin-section">
-        <span class="badge">${menu.category || "-"}</span>
-        ${menu.seasonal ? `<span class="badge yellow">${I18n.t("seasonalMenu")}</span>` : ""}
-        <span class="badge ${menu.discontinued ? "yellow" : "green"}">${menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu")}</span>
-        ${recipe ? `<a class="ghost-button compact-button" href="recipes.html?id=${encodeURIComponent(recipe.id)}&from=menu">${I18n.t("viewRecipes")}</a>` : ""}
-      </div>
-      ${recipe ? `
-        <h3 class="admin-section">${I18n.t("ingredients")}</h3>
+  function recipeSections(menu, recipe) {
+    if (!recipe) return `<section class="history-detail-card"><p class="muted">${I18n.t("noRecipes")}</p></section>`;
+    return `
+      <section class="history-detail-card">
+        <h2>${I18n.t("ingredients")}</h2>
         <p class="preview-box">${recipe.ingredients || "-"}</p>
-        <h3 class="admin-section">${I18n.t("steps")}</h3>
+      </section>
+      <section class="history-detail-card">
+        <h2>${I18n.t("steps")}</h2>
         <p class="preview-box">${recipe.steps || "-"}</p>
-        <h3 class="admin-section">${I18n.t("notes")}</h3>
+      </section>
+      <section class="history-detail-card">
+        <h2>${I18n.t("notes")}</h2>
         <p class="preview-box">${recipe.notes || menu.notes || "-"}</p>
-      ` : `<p class="muted admin-section">${I18n.t("noRecipes")}</p>`}
+      </section>
     `;
+  }
+
+  function openRecipe(menu) {
+    const recipe = recipeFor(menu);
+    modalTitle.textContent = I18n.menuName(menu);
+    modalMeta.textContent = I18n.secondaryMenuName(menu);
+    modalContent.innerHTML = `
+      <div class="list-card-header">
+        <span class="badge">${money(menu)}</span>
+        <div class="menu-badges">
+          <span class="badge">${menu.category || "-"}</span>
+          ${menu.seasonal ? `<span class="badge yellow">${I18n.t("seasonalMenu")}</span>` : ""}
+          <span class="badge ${menu.discontinued ? "yellow" : "green"}">${menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu")}</span>
+        </div>
+      </div>
+      ${recipeSections(menu, recipe)}
+    `;
+    modal.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+    modalClose.focus();
+  }
+
+  function closeRecipe() {
+    modal.classList.add("hidden");
+    document.body.classList.remove("modal-open");
   }
 
   function render() {
     if (!canViewMenu) {
       list.innerHTML = `<div class="list-card muted">${I18n.t("noAccess")}</div>`;
-      detail.textContent = "";
       return;
     }
     const menus = filteredMenus();
     if (!menus.length) {
-      list.innerHTML = `<div class="panel muted">${I18n.t("noMenus")}</div>`;
-      renderDetail(null);
+      list.innerHTML = `<div class="list-card muted">${I18n.t("noMenus")}</div>`;
       return;
     }
-    if (!activeId || !menus.some((menu) => menu.id === activeId)) activeId = menus[0].id;
     const groups = menus.reduce((acc, menu) => {
       const key = menu.category || "-";
       acc[key] = acc[key] || [];
@@ -90,7 +104,7 @@
         <h2>${group}</h2>
         <div class="list admin-section">
           ${groupMenus.map((menu) => `
-            <button class="list-card menu-row ${menu.id === activeId ? "is-active" : ""} ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}" type="button">
+            <button class="list-card menu-row ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}" type="button">
               <div>
                 <strong>${I18n.menuName(menu)}</strong>
                 <div class="item-meta">${I18n.secondaryMenuName(menu)}</div>
@@ -99,6 +113,7 @@
                 <strong>${money(menu)}</strong>
                 ${menu.discontinued ? `<span>${I18n.t("discontinuedMenu")}</span>` : menu.seasonal ? `<span>${I18n.t("seasonalMenu")}</span>` : ""}
               </div>
+              <span class="menu-row-arrow" aria-hidden="true">&gt;</span>
             </button>
           `).join("")}
         </div>
@@ -106,15 +121,29 @@
     `).join("");
     list.querySelectorAll("[data-menu]").forEach((button) => {
       button.addEventListener("click", () => {
-        activeId = button.dataset.menu;
-        render();
+        const menu = Store.getMenus().find((row) => row.id === button.dataset.menu);
+        if (menu) openRecipe(menu);
       });
     });
-    renderDetail(menus.find((menu) => menu.id === activeId));
   }
 
-  search.addEventListener("input", render);
+  function applySearch() {
+    searchQuery = search.value;
+    render();
+  }
+
+  searchButton.addEventListener("click", applySearch);
+  search.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") applySearch();
+  });
   category.addEventListener("change", render);
+  modalClose.addEventListener("click", closeRecipe);
+  modal.querySelectorAll("[data-close-recipe-modal]").forEach((button) => {
+    button.addEventListener("click", closeRecipe);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !modal.classList.contains("hidden")) closeRecipe();
+  });
   renderFilters();
   render();
   I18n.applyI18n();
