@@ -955,12 +955,14 @@
       if (!sidebar || !window.I18n) return;
       const session = auth();
       const isRestricted = (key) => {
+        if (key === "order") return !["restaurant", "admin"].includes(session?.role);
         if (key === "menus") return !["restaurant", "admin"].includes(session?.role);
         if (key === "admin") return session?.role !== "admin";
         return false;
       };
       const nav = [
         ["home", "index.html", "⌂"],
+        ["order", "order.html", "🛒"],
         ["history", "history.html", "↺"],
         ["menus", "menu.html", "🍚"],
         ["admin", "admin.html", "⚙"]
