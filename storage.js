@@ -642,7 +642,16 @@
         ["menus", "menu.html", "🍚"],
         ["admin", "admin.html", "⚙"]
       ];
+      const sidebarStateKey = "restaurant_sidebar_collapsed";
+      const savedSidebarState = localStorage.getItem(sidebarStateKey);
+      const sidebarCollapsed = savedSidebarState
+        ? savedSidebarState === "1"
+        : window.matchMedia("(max-width: 900px)").matches;
+      document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
       sidebar.innerHTML = `
+        <button class="sidebar-toggle" data-sidebar-toggle type="button" aria-label="메뉴 열기" aria-expanded="${!sidebarCollapsed}">
+          <span class="sidebar-toggle-icon">›</span>
+        </button>
         <div class="brand">
           <div class="brand-copy">
             <div class="brand-main-row">
@@ -665,6 +674,14 @@
         </nav>
         <div class="sidebar-footer">Static PWA · DB sync ready<br />GitHub + Netlify ready</div>
       `;
+      const sidebarToggle = sidebar.querySelector("[data-sidebar-toggle]");
+      if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", () => {
+          const collapsed = document.body.classList.toggle("sidebar-collapsed");
+          localStorage.setItem(sidebarStateKey, collapsed ? "1" : "0");
+          sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+        });
+      }
       let clock = document.querySelector("[data-layout-clock]");
       if (!clock) {
         clock = document.createElement("div");
