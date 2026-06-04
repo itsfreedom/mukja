@@ -210,6 +210,7 @@
   }
 
   function resetForm() {
+    if (!window.confirm(I18n.t("confirmResetRequest"))) return;
     selected.clear();
     els.memo.value = "";
     renderItems();

@@ -1913,3 +1913,19 @@ body {
   font-size: 0.82rem;
   line-height: 1;
 }
+
+.order-page .title-action-button.danger-button {
+  border-color: rgba(242, 107, 122, 0.56);
+  background: #d83f52;
+  color: #fff;
+  font-weight: 800;
+}
+
+.order-page .order-action-row {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.order-page .order-action-row .button {
+  width: 100%;
+}
