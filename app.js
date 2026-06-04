@@ -1,5 +1,10 @@
 (async function () {
   await Store.init();
+  const startPath = Store.startPath();
+  if (Store.getAuth() && startPath !== "index.html") {
+    window.location.href = startPath;
+    return;
+  }
   AppUI.renderSidebar("home");
   AppUI.registerServiceWorker();
 

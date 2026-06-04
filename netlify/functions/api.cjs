@@ -138,6 +138,7 @@ async function ensureSchema(client) {
     create table if not exists menus (
       id text primary key,
       recipe_id text references recipes(id) on delete set null,
+      category text,
       name_ko text not null,
       name_en text,
       seasonal boolean not null default false,
@@ -152,12 +153,15 @@ async function ensureSchema(client) {
       updated_at timestamptz not null default now()
     );
 
+    alter table menus add column if not exists category text;
+
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_order_items_order_id on order_items(order_id, item_index);
     create index if not exists idx_receipt_confirmations_item on receipt_confirmations(order_item_id, confirmed_at desc);
     create index if not exists idx_department_confirmations_item on department_confirmations(order_item_id, department, confirmed_at desc);
     create index if not exists idx_recipes_section on recipes(section, enabled);
     create index if not exists idx_menus_recipe_id on menus(recipe_id);
+    create index if not exists idx_menus_category on menus(category, discontinued);
     create index if not exists idx_menus_status on menus(discontinued, seasonal);
   `);
   return schemaReady;
@@ -347,12 +351,13 @@ async function upsertMenu(client, menu, info) {
   const price = menu.price === "" || menu.price === undefined || menu.price === null ? null : Number(menu.price);
   await client.query(`
     insert into menus (
-      id, recipe_id, name_ko, name_en, seasonal, discontinued, price, currency, notes,
+      id, recipe_id, category, name_ko, name_en, seasonal, discontinued, price, currency, notes,
       changed_by_identity_id, changed_ip, changed_user_agent, updated_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
     on conflict (id) do update set
       recipe_id = excluded.recipe_id,
+      category = excluded.category,
       name_ko = excluded.name_ko,
       name_en = excluded.name_en,
       seasonal = excluded.seasonal,
@@ -367,6 +372,7 @@ async function upsertMenu(client, menu, info) {
   `, [
     menu.id,
     menu.recipeId || null,
+    menu.category || "",
     menu.nameKo,
     menu.nameEn || "",
     Boolean(menu.seasonal),
@@ -393,6 +399,7 @@ async function listMenus(client) {
     id: row.id,
     recipeId: row.recipe_id || "",
     recipeName: row.recipe_name || "",
+    category: row.category || "",
     nameKo: row.name_ko,
     nameEn: row.name_en || "",
     seasonal: row.seasonal,
@@ -487,7 +494,6 @@ exports.handler = async (event) => {
       const { recipes } = parseBody(event);
       if (!Array.isArray(recipes)) return json(400, { ok: false, error: "recipes must be an array" });
       await client.query("begin");
-      await client.query("delete from recipes");
       for (const recipe of recipes) await upsertRecipe(client, recipe, info);
       await client.query("commit");
       return json(200, { ok: true });
@@ -505,7 +511,6 @@ exports.handler = async (event) => {
       const { menus } = parseBody(event);
       if (!Array.isArray(menus)) return json(400, { ok: false, error: "menus must be an array" });
       await client.query("begin");
-      await client.query("delete from menus");
       for (const menu of menus) await upsertMenu(client, menu, info);
       await client.query("commit");
       return json(200, { ok: true });
@@ -521,14 +526,12 @@ exports.handler = async (event) => {
 
     const menuDeleteMatch = path.match(/^\/menus\/([^/]+)$/);
     if (method === "DELETE" && menuDeleteMatch) {
-      await client.query("delete from menus where id = $1", [decodeURIComponent(menuDeleteMatch[1])]);
-      return json(200, { ok: true });
+      return json(405, { ok: false, error: "Menus cannot be deleted. Mark discontinued instead." });
     }
 
     const recipeDeleteMatch = path.match(/^\/recipes\/([^/]+)$/);
     if (method === "DELETE" && recipeDeleteMatch) {
-      await client.query("delete from recipes where id = $1", [decodeURIComponent(recipeDeleteMatch[1])]);
-      return json(200, { ok: true });
+      return json(405, { ok: false, error: "Recipes cannot be deleted. Disable instead." });
     }
 
     const deleteMatch = path.match(/^\/history\/([^/]+)$/);

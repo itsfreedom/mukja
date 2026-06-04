@@ -1,15 +1,17 @@
-const CACHE_NAME = "mokja-alley-v23";
+const CACHE_NAME = "mokja-alley-v24";
 const ASSETS = [
   "index.html",
   "reset-cache.html",
   "order.html",
   "history.html",
+  "menu.html",
   "admin.html",
   "recipes.html",
   "style.css",
   "app.js",
   "order.js",
   "history.js",
+  "menu.js",
   "admin.js",
   "recipes.js",
   "storage.js",

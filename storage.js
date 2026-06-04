@@ -7,6 +7,7 @@
     sections: "restaurant_sections",
     ingredients: "restaurant_ingredients",
     recipes: "restaurant_recipes",
+    menus: "restaurant_menus",
     history: "restaurant_history",
     memberId: "restaurant_member_id",
     auth: "restaurant_auth"
@@ -54,9 +55,35 @@
     recipe("불고기", "반조리", "달콤짭짤한 고기 메뉴", "소고기, 양파, 간장, 설탕, 대파", "1. 고기를 양념에 재웁니다.\n2. 양파와 함께 볶습니다.\n3. 국물이 졸아들면 마무리합니다.", "너무 오래 볶으면 질겨질 수 있습니다."),
     recipe("샐러드", "야채", "가벼운 곁들임 메뉴", "양상추, 치즈, 소스, 계란", "1. 야채를 씻고 물기를 제거합니다.\n2. 재료를 먹기 좋게 담습니다.\n3. 소스를 따로 제공합니다.", "소스는 배식 직전에 넣습니다.")
   ];
+  const defaultMenuSeeds = [
+    { recipeName: "김치볶음밥", category: "식사", nameKo: "김치볶음밥", nameEn: "Kimchi Fried Rice", price: "13.99" },
+    { recipeName: "제육볶음", category: "식사", nameKo: "제육볶음", nameEn: "Spicy Pork", price: "15.99" },
+    { recipeName: "된장찌개", category: "찌개", nameKo: "된장찌개", nameEn: "Soybean Paste Stew", price: "14.99" },
+    { recipeName: "불고기", category: "식사", nameKo: "불고기", nameEn: "Bulgogi", price: "16.99" },
+    { recipeName: "샐러드", category: "사이드", nameKo: "샐러드", nameEn: "Salad", price: "8.99", seasonal: true }
+  ];
 
   function recipe(name, section, description, ingredients, steps, notes) {
     return { id: id("recipe"), name, section, description, ingredients, steps, notes, imageUrl: "", enabled: true, updatedAt: today() };
+  }
+
+  function buildDefaultMenus(recipes) {
+    return defaultMenuSeeds.map((menu) => {
+      const recipeRow = recipes.find((recipe) => recipe.name === menu.recipeName);
+      return {
+        id: `menu-${menu.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
+        recipeId: recipeRow?.id || "",
+        recipeName: recipeRow?.name || menu.recipeName,
+        category: menu.category,
+        nameKo: menu.nameKo,
+        nameEn: menu.nameEn,
+        seasonal: Boolean(menu.seasonal),
+        discontinued: false,
+        price: menu.price,
+        currency: "CAD",
+        notes: ""
+      };
+    });
   }
 
   function id(prefix) {
@@ -120,6 +147,12 @@
     const session = auth();
     if (session?.role === "department" && session.department) return [session.department];
     return defaultTargets.slice();
+  }
+
+  function startPath(session = auth()) {
+    if (session?.role === "admin") return "admin.html";
+    if (session?.role === "department") return "order.html";
+    return "index.html";
   }
 
   async function apiRequest(path, options = {}) {
@@ -189,6 +222,25 @@
     }
   }
 
+  async function hydrateMenusFromApi() {
+    const localMenus = getJson(keys.menus, []);
+    try {
+      const data = await apiRequest("/menus");
+      const remoteMenus = Array.isArray(data.menus) ? data.menus : [];
+      if (remoteMenus.length) {
+        setJson(keys.menus, remoteMenus);
+      } else if (localMenus.length) {
+        await apiRequest("/menus", {
+          method: "PUT",
+          body: JSON.stringify({ menus: localMenus })
+        });
+      }
+    } catch {
+      apiState.checked = true;
+      apiState.available = false;
+    }
+  }
+
   function normalizeTarget(item) {
     if (!item) return item;
     if (item.target === "마트") return { ...item, target: item.section === "야채" ? "야채" : "그로서리" };
@@ -220,6 +272,7 @@
     if (!localStorage.getItem(keys.sections) || shouldResetSections(getJson(keys.sections, []))) setJson(keys.sections, defaultSections);
     if (!localStorage.getItem(keys.employees)) setJson(keys.employees, defaultEmployees);
     if (!localStorage.getItem(keys.recipes)) setJson(keys.recipes, defaultRecipes);
+    if (!localStorage.getItem(keys.menus)) setJson(keys.menus, buildDefaultMenus(getJson(keys.recipes, defaultRecipes)));
     if (!localStorage.getItem(keys.history)) setJson(keys.history, []);
     if (!localStorage.getItem(keys.ingredients)) {
       try {
@@ -233,6 +286,7 @@
     }
     await hydrateHistoryFromApi();
     await hydrateRecipesFromApi();
+    await hydrateMenusFromApi();
     localStorage.setItem(keys.initialized, "true");
   }
 
@@ -416,6 +470,7 @@
       sections: getJson(keys.sections, []),
       ingredients: getJson(keys.ingredients, []),
       recipes: getJson(keys.recipes, []),
+      menus: getJson(keys.menus, []),
       history: getJson(keys.history, [])
     };
   }
@@ -430,6 +485,7 @@
     setJson(keys.sections, data.sections || []);
     setJson(keys.ingredients, data.ingredients || []);
     setJson(keys.recipes, data.recipes || []);
+    setJson(keys.menus, data.menus || []);
     setJson(keys.history, data.history || []);
   }
 
@@ -485,8 +541,41 @@
   }
 
   function deleteRecipe(idValue) {
-    setJson(keys.recipes, getJson(keys.recipes, []).filter((recipe) => recipe.id !== idValue));
-    syncQuietly(() => apiRequest(`/recipes/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+    const recipes = getJson(keys.recipes, []).map((recipe) =>
+      recipe.id === idValue ? { ...recipe, enabled: false, updatedAt: today() } : recipe
+    );
+    setRecipes(recipes);
+  }
+
+  function setMenus(menus) {
+    setJson(keys.menus, menus);
+    syncQuietly(() => apiRequest("/menus", {
+      method: "PUT",
+      body: JSON.stringify({ menus })
+    }));
+  }
+
+  function saveMenu(menu) {
+    const menus = getJson(keys.menus, []);
+    const next = menus.some((row) => row.id === menu.id)
+      ? menus.map((row) => row.id === menu.id ? menu : row)
+      : [...menus, menu];
+    setJson(keys.menus, next);
+    syncQuietly(() => apiRequest("/menus", {
+      method: "POST",
+      body: JSON.stringify({ menu })
+    }));
+  }
+
+  function discontinueMenu(idValue) {
+    const menus = getJson(keys.menus, []).map((menu) =>
+      menu.id === idValue ? { ...menu, discontinued: true } : menu
+    );
+    setMenus(menus);
+  }
+
+  function menuCategories() {
+    return Array.from(new Set(getJson(keys.menus, []).map((menu) => menu.category).filter(Boolean)));
   }
 
   window.Store = {
@@ -509,6 +598,11 @@
     setRecipes,
     saveRecipe,
     deleteRecipe,
+    getMenus: () => getJson(keys.menus, []),
+    setMenus,
+    saveMenu,
+    discontinueMenu,
+    getMenuCategories: menuCategories,
     getHistory: () => getJson(keys.history, []),
     setHistory,
     addHistory: saveHistoryEntry,
@@ -521,6 +615,7 @@
     authenticate,
     logoutAuth,
     canAdmin,
+    startPath,
     historyToCsv,
     historyFromCsv,
     recipesToCsv,
@@ -536,10 +631,9 @@
       if (!sidebar || !window.I18n) return;
       const session = auth();
       const nav = [
-        ["home", "index.html", "⌂"],
         ["order", "order.html", "□"],
-        ["recipes", "recipes.html", "☰"],
         ["history", "history.html", "◷"],
+        ["menus", "menu.html", "☰"],
         ["admin", "admin.html", "⚙"]
       ];
       sidebar.innerHTML = `
@@ -629,8 +723,9 @@
         gate.querySelector("[data-auth-form]").addEventListener("submit", (event) => {
           event.preventDefault();
           const input = gate.querySelector("input[name='password']");
-          if (authenticate(input.value)) {
-            window.location.reload();
+          const session = authenticate(input.value);
+          if (session) {
+            window.location.href = startPath(session);
             return;
           }
           gate.querySelector("[data-auth-status]").textContent = I18n.t("wrongPassword");

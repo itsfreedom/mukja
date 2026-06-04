@@ -107,7 +107,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 
 .nav, .language-box { display: grid; gap: 7px; }
 .nav {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
 }
 .nav-link, .lang-button {
@@ -514,6 +514,32 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .list-card { border: 1px solid rgba(184, 196, 240, 0.12); border-radius: 13px; padding: 14px; background: rgba(255, 255, 255, 0.035); }
 .list-card.is-active { border-color: rgba(130, 168, 255, 0.38); background: var(--accent-soft); }
 .list-card-header { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.menu-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.menu-row-price {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  color: #d9e3ff;
+  font-size: 0.86rem;
+}
+.menu-row-price span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.menu-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .simple-history-list {
   display: grid;
   gap: 0;
@@ -831,7 +857,7 @@ td { color: #dbe2ff; font-size: 0.9rem; }
 
 @media (max-width: 520px) {
   .brand-title { font-size: 0.96rem; }
-  .nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .button, .ghost-button, .danger-button { width: 100%; }
   .list-card-header {
     display: grid;
@@ -928,7 +954,7 @@ body {
   z-index: 100;
   width: min(calc(100vw - 20px), 410px);
   transform: translateX(-50%);
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
   padding: 6px;
   border: 1px solid var(--border);

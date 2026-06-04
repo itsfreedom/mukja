@@ -111,7 +111,6 @@
               <td class="button-row">
                 <button class="ghost-button" data-edit-recipe="${recipe.id}">${I18n.t("edit")}</button>
                 <button class="ghost-button" data-toggle-recipe="${recipe.id}">${recipe.enabled ? I18n.t("disabled") : I18n.t("enabled")}</button>
-                <button class="danger-button" data-delete-recipe="${recipe.id}">${I18n.t("delete")}</button>
               </td>
             </tr>
           `).join("")}
@@ -177,9 +176,6 @@
       const rows = Store.getRecipes();
       const recipe = rows.find((row) => row.id === button.dataset.toggleRecipe);
       recipe.enabled = !recipe.enabled; recipe.updatedAt = Store.today(); Store.setRecipes(rows); renderAll();
-    });
-    document.querySelectorAll("[data-delete-recipe]").forEach((button) => button.onclick = () => {
-      Store.setRecipes(Store.getRecipes().filter((row) => row.id !== button.dataset.deleteRecipe)); renderAll();
     });
   }
 
@@ -293,7 +289,14 @@
       const rows = Store.recipesFromCsv(await file.text());
       if (!rows.length) throw new Error("empty csv");
       if (!confirm(I18n.t("confirmCsvImport"))) return;
-      Store.setRecipes(rows);
+      const current = Store.getRecipes();
+      const merged = [...current];
+      rows.forEach((row) => {
+        const index = merged.findIndex((recipe) => recipe.id === row.id);
+        if (index >= 0) merged[index] = { ...merged[index], ...row };
+        else merged.push(row);
+      });
+      Store.setRecipes(merged);
       setStatus(I18n.t("csvImportDone"));
       renderAll();
     } catch {
