@@ -372,7 +372,6 @@
   }
 
   function startPath(session = auth()) {
-    if (session?.role === "admin") return "admin.html";
     return "index.html";
   }
 
@@ -1092,6 +1091,7 @@
           const input = gate.querySelector("input[name='password']");
           const session = authenticate(input.value);
           if (session) {
+            localStorage.setItem("restaurant_sidebar_collapsed", "1");
             window.location.href = startPath(session);
             return;
           }
