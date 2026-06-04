@@ -61,6 +61,15 @@
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
 
+  function memoVisible(memo) {
+    if (!memo) return false;
+    if (session?.role !== "department" || !session.department) return true;
+    if (memo.role === "admin") return true;
+    if (memo.department === session.department) return true;
+    if (memo.role === "restaurant" && !memo.department) return (memo.text || "").startsWith(session.department);
+    return false;
+  }
+
   function targetFor(item) {
     return item.target || "그로서리";
   }
@@ -99,7 +108,7 @@
   }
 
   function renderMemoPanel(entry) {
-    const memos = Array.isArray(entry.memos) ? entry.memos : [];
+    const memos = (Array.isArray(entry.memos) ? entry.memos : []).filter(memoVisible);
     return `
       <section class="memo-panel home-memo-panel admin-section">
         <h3>타부서에서 작성한 메모 <span>수정 불가</span></h3>

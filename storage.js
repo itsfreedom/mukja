@@ -17,7 +17,7 @@
     checked: false,
     available: false
   };
-  const demoSeedVersion = "home-20c";
+  const demoSeedVersion = "home-memo-admin";
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
   const defaultEmployees = [
@@ -235,14 +235,24 @@
           target: "",
           memo: notes[(week + day) % notes.length],
           message: targets.map((target) => `[${target}] ${items.filter((item) => item.target === target).map((item) => item.nameKo).join(", ")}`).join("\n"),
-          memos: targets.map((target, index) => ({
-            id: `memo-test-${week}-${day}-${index}`,
-            role: index % 2 ? "department" : "restaurant",
-            department: index % 2 ? target : "",
-            authorLabel: index % 2 ? target : "레스토랑",
-            text: `${target} 테스트 메모 ${week + 1}-${day + 1}`,
-            createdAt: `${dateForHistory(week, day)}T${String(10 + index).padStart(2, "0")}:00:00.000Z`
-          })),
+          memos: [
+            {
+              id: `memo-test-admin-${week}-${day}`,
+              role: "admin",
+              department: "",
+              authorLabel: "관리자",
+              text: `관리자 확인 메모 ${week + 1}-${day + 1}`,
+              createdAt: `${dateForHistory(week, day)}T09:30:00.000Z`
+            },
+            ...targets.map((target, index) => ({
+              id: `memo-test-${week}-${day}-${index}`,
+              role: index % 2 ? "department" : "restaurant",
+              department: target,
+              authorLabel: index % 2 ? target : "레스토랑",
+              text: `${target} 테스트 메모 ${week + 1}-${day + 1}`,
+              createdAt: `${dateForHistory(week, day)}T${String(10 + index).padStart(2, "0")}:00:00.000Z`
+            }))
+          ],
           items
         });
       }
@@ -528,9 +538,10 @@
     const history = getJson(keys.history, []);
     const latest = history.slice().sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0];
     if (marker === demoSeedVersion && (latest?.items || []).length >= 20) return;
+    const canRefreshDemoData = !marker || ["auto", "manual", "reset"].includes(marker) || /^home-/.test(marker);
     const menus = getJson(keys.menus, []);
-    if (history.length && (latest?.items || []).length >= 20 && !["auto", "manual"].includes(marker || "")) return;
-    if (menus.length > defaultMenuSeeds.length && !["auto", "manual"].includes(marker || "") && (latest?.items || []).length >= 20) return;
+    if (history.length && (latest?.items || []).length >= 20 && !canRefreshDemoData) return;
+    if (menus.length > defaultMenuSeeds.length && !canRefreshDemoData && (latest?.items || []).length >= 20) return;
     const data = testData();
     setJson(keys.sections, data.sections);
     setJson("restaurant_access_codes", data.accessAccounts);
