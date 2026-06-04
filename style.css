@@ -776,6 +776,16 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   background: transparent;
   color: var(--text);
 }
+.receive-row.has-restaurant-receive {
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+}
+.receive-row input[disabled] {
+  cursor: default;
+  opacity: 0.42;
+}
+.restaurant-receive-check {
+  justify-self: end;
+}
 .receive-row-main {
   min-width: 0;
   display: flex;

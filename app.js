@@ -129,14 +129,16 @@
   }
 
   function renderRows(items) {
+    const showRestaurantReceive = session?.role === "restaurant";
     return `
       <div class="item-section-list">
         ${items.map((item) => `
-          <label class="receive-row">
-            <input type="checkbox" data-receive="${item.id}" ${item.received ? "checked" : ""} />
+          <label class="receive-row ${showRestaurantReceive ? "has-restaurant-receive" : ""}">
+            <input type="checkbox" data-receive="${item.id}" ${item.received ? "checked" : ""} ${showRestaurantReceive ? "disabled" : ""} />
             <span class="receive-row-main">
               <strong>${I18n.itemName(item)}</strong>
             </span>
+            ${showRestaurantReceive ? `<input class="restaurant-receive-check" type="checkbox" data-restaurant-receive="${item.id}" ${item.restaurantReceived ? "checked" : ""} aria-label="${I18n.itemName(item)} 입고 확인" />` : ""}
           </label>
         `).join("")}
       </div>
@@ -233,6 +235,14 @@
         );
       });
     });
+    list.querySelectorAll("[data-restaurant-receive]").forEach((input) => {
+      input.addEventListener("change", () => {
+        const itemId = input.dataset.restaurantReceive;
+        draftItems = draftItems.map((item) =>
+          item.id === itemId ? { ...item, restaurantReceived: input.checked } : item
+        );
+      });
+    });
     document.getElementById("home-save")?.addEventListener("click", saveCurrent);
     document.getElementById("home-reset")?.addEventListener("click", resetDraft);
     I18n.applyI18n();
@@ -275,10 +285,19 @@
   }
 
   function resetDraft() {
-    draftItems = draftItems.map((item) => ({ ...item, received: false }));
+    draftItems = draftItems.map((item) =>
+      session?.role === "restaurant"
+        ? { ...item, restaurantReceived: false }
+        : { ...item, received: false }
+    );
     const memo = document.getElementById("home-memo");
     if (memo) memo.value = "";
-    list.querySelectorAll("[data-receive]").forEach((input) => {
+    if (session?.role !== "restaurant") {
+      list.querySelectorAll("[data-receive]").forEach((input) => {
+        input.checked = false;
+      });
+    }
+    list.querySelectorAll("[data-restaurant-receive]").forEach((input) => {
       input.checked = false;
     });
     setStatus("초기화했습니다.");
