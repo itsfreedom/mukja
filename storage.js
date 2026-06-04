@@ -3,13 +3,6 @@
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
     mode: "restaurant_mode",
-    employees: "restaurant_employees",
-    sections: "restaurant_sections",
-    ingredients: "restaurant_ingredients",
-    recipes: "restaurant_recipes",
-    menus: "restaurant_menus",
-    history: "restaurant_history",
-    demoSeeded: "restaurant_demo_seeded",
     memberId: "restaurant_member_id",
     auth: "restaurant_auth"
   };
@@ -18,7 +11,15 @@
     available: false,
     error: ""
   };
-  const demoSeedVersion = "home-memo-slots";
+  const dataState = {
+    employees: [],
+    sections: [],
+    accessAccounts: {},
+    ingredients: [],
+    recipes: [],
+    menus: [],
+    history: []
+  };
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
   const defaultEmployees = [
@@ -275,6 +276,7 @@
     return {
       accessAccounts: defaultAccessCodes,
       sections: defaultSections,
+      employees: defaultEmployees,
       ingredients,
       recipes,
       menus: testMenus(recipes),
@@ -287,6 +289,7 @@
     return {
       accessAccounts: defaultAccessCodes,
       sections: defaultSections,
+      employees: defaultEmployees,
       ingredients: defaultIngredients.map(normalizeIngredient),
       recipes,
       menus: buildDefaultMenus(recipes),
@@ -329,6 +332,19 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function clearLegacyLocalData() {
+    [
+      "restaurant_access_codes",
+      "restaurant_employees",
+      "restaurant_sections",
+      "restaurant_ingredients",
+      "restaurant_recipes",
+      "restaurant_menus",
+      "restaurant_history",
+      "restaurant_demo_seeded"
+    ].forEach((key) => localStorage.removeItem(key));
+  }
+
   function memberId() {
     let value = localStorage.getItem(keys.memberId);
     if (!value) {
@@ -343,12 +359,12 @@
   }
 
   function accessAccounts() {
-    return getJson("restaurant_access_codes", defaultAccessCodes);
+    return Object.keys(dataState.accessAccounts).length ? dataState.accessAccounts : defaultAccessCodes;
   }
 
   function setAccessAccounts(accounts) {
     const next = accounts || defaultAccessCodes;
-    setJson("restaurant_access_codes", next);
+    dataState.accessAccounts = next;
     syncQuietly(() => apiRequest("/access-accounts", {
       method: "PUT",
       body: JSON.stringify({ accessAccounts: next })
@@ -431,7 +447,7 @@
     try {
       const data = await apiRequest("/history");
       const remoteHistory = Array.isArray(data.history) ? data.history : [];
-      setJson(keys.history, remoteHistory);
+      dataState.history = remoteHistory;
     } catch (error) {
       apiState.checked = true;
       apiState.available = false;
@@ -440,16 +456,40 @@
   }
 
   async function hydrateAccessAccountsFromApi() {
-    const localAccounts = accessAccounts();
     try {
       const data = await apiRequest("/access-accounts");
       const remoteAccounts = data.accessAccounts && typeof data.accessAccounts === "object" ? data.accessAccounts : {};
       if (Object.keys(remoteAccounts).length) {
-        setJson("restaurant_access_codes", remoteAccounts);
-      } else if (Object.keys(localAccounts).length) {
+        dataState.accessAccounts = remoteAccounts;
+      } else {
+        dataState.accessAccounts = defaultAccessCodes;
         await apiRequest("/access-accounts", {
           method: "PUT",
-          body: JSON.stringify({ accessAccounts: localAccounts })
+          body: JSON.stringify({ accessAccounts: defaultAccessCodes })
+        });
+      }
+    } catch {
+      apiState.checked = true;
+      apiState.available = false;
+      dataState.accessAccounts = defaultAccessCodes;
+    }
+  }
+
+  async function hydrateSettingsFromApi() {
+    try {
+      const data = await apiRequest("/settings");
+      const settings = data.settings && typeof data.settings === "object" ? data.settings : {};
+      dataState.sections = Array.isArray(settings.sections) && settings.sections.length ? settings.sections : defaultSections.slice();
+      dataState.employees = Array.isArray(settings.employees) && settings.employees.length ? settings.employees : defaultEmployees.slice();
+      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees)) {
+        await apiRequest("/settings", {
+          method: "PUT",
+          body: JSON.stringify({
+            settings: {
+              sections: dataState.sections,
+              employees: dataState.employees
+            }
+          })
         });
       }
     } catch {
@@ -458,17 +498,29 @@
     }
   }
 
+  function syncSettings() {
+    syncQuietly(() => apiRequest("/settings", {
+      method: "PUT",
+      body: JSON.stringify({
+        settings: {
+          sections: dataState.sections,
+          employees: dataState.employees
+        }
+      })
+    }));
+  }
+
   async function hydrateRecipesFromApi() {
-    const localRecipes = getJson(keys.recipes, []);
     try {
       const data = await apiRequest("/recipes");
       const remoteRecipes = Array.isArray(data.recipes) ? data.recipes : [];
       if (remoteRecipes.length) {
-        setJson(keys.recipes, remoteRecipes);
-      } else if (localRecipes.length) {
+        dataState.recipes = remoteRecipes;
+      } else {
+        dataState.recipes = defaultRecipes.slice();
         await apiRequest("/recipes", {
           method: "PUT",
-          body: JSON.stringify({ recipes: localRecipes })
+          body: JSON.stringify({ recipes: dataState.recipes })
         });
       }
     } catch {
@@ -478,16 +530,17 @@
   }
 
   async function hydrateMenusFromApi() {
-    const localMenus = getJson(keys.menus, []);
     try {
       const data = await apiRequest("/menus");
       const remoteMenus = Array.isArray(data.menus) ? data.menus.map(normalizeMenu) : [];
       if (remoteMenus.length) {
-        setJson(keys.menus, remoteMenus);
-      } else if (localMenus.length) {
+        dataState.menus = remoteMenus;
+      } else {
+        const sourceRecipes = dataState.recipes.length ? dataState.recipes : defaultRecipes;
+        dataState.menus = buildDefaultMenus(sourceRecipes).map(normalizeMenu);
         await apiRequest("/menus", {
           method: "PUT",
-          body: JSON.stringify({ menus: localMenus.map(normalizeMenu) })
+          body: JSON.stringify({ menus: dataState.menus })
         });
       }
     } catch {
@@ -497,16 +550,16 @@
   }
 
   async function hydrateIngredientsFromApi() {
-    const localIngredients = getJson(keys.ingredients, []);
     try {
       const data = await apiRequest("/ingredients");
       const remoteIngredients = Array.isArray(data.ingredients) ? data.ingredients.map(normalizeIngredient) : [];
       if (remoteIngredients.length) {
-        setJson(keys.ingredients, remoteIngredients);
-      } else if (localIngredients.length) {
+        dataState.ingredients = remoteIngredients;
+      } else {
+        dataState.ingredients = defaultIngredients.map(normalizeIngredient);
         await apiRequest("/ingredients", {
           method: "PUT",
-          body: JSON.stringify({ ingredients: localIngredients.map(normalizeIngredient) })
+          body: JSON.stringify({ ingredients: dataState.ingredients })
         });
       }
     } catch {
@@ -543,52 +596,19 @@
     };
   }
 
-  function shouldResetSections(sections) {
-    const oldSections = ["반조리", "야채", "반찬", "소스", "식재료", "냉장", "냉동", "기타"];
-    return !Array.isArray(sections) || sections.length === 0 || oldSections.every((section) => sections.includes(section));
-  }
-
-  function seedLocalTestDataOnce() {
-    const marker = localStorage.getItem(keys.demoSeeded);
-    const history = getJson(keys.history, []);
-    const latest = history.slice().sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0];
-    if (marker === demoSeedVersion && (latest?.items || []).length >= 20) return;
-    const canRefreshDemoData = !marker || ["auto", "manual", "reset"].includes(marker) || /^home-/.test(marker);
-    const menus = getJson(keys.menus, []);
-    if (history.length && (latest?.items || []).length >= 20 && !canRefreshDemoData) return;
-    if (menus.length > defaultMenuSeeds.length && !canRefreshDemoData && (latest?.items || []).length >= 20) return;
-    const data = testData();
-    setJson(keys.sections, data.sections);
-    setJson("restaurant_access_codes", data.accessAccounts);
-    setJson(keys.ingredients, data.ingredients);
-    setJson(keys.recipes, data.recipes);
-    setJson(keys.menus, data.menus);
-    setJson(keys.history, data.history);
-    localStorage.setItem(keys.demoSeeded, demoSeedVersion);
-  }
-
   async function init() {
     if (!localStorage.getItem(keys.lang)) localStorage.setItem(keys.lang, "ko");
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
-    if (!localStorage.getItem("restaurant_access_codes")) setJson("restaurant_access_codes", defaultAccessCodes);
-    if (!localStorage.getItem(keys.sections) || shouldResetSections(getJson(keys.sections, []))) setJson(keys.sections, defaultSections);
-    if (!localStorage.getItem(keys.employees)) setJson(keys.employees, defaultEmployees);
-    if (!localStorage.getItem(keys.recipes)) setJson(keys.recipes, defaultRecipes);
-    if (!localStorage.getItem(keys.menus)) setJson(keys.menus, buildDefaultMenus(getJson(keys.recipes, defaultRecipes)));
-    else setJson(keys.menus, getJson(keys.menus, []).map(normalizeMenu));
-    if (!localStorage.getItem(keys.history)) setJson(keys.history, []);
-    if (!localStorage.getItem(keys.ingredients)) {
-      try {
-        const response = await fetch("data/items.json", { cache: "no-store" });
-        setJson(keys.ingredients, (await response.json()).map(normalizeIngredient));
-      } catch {
-        setJson(keys.ingredients, defaultIngredients);
-      }
-    } else {
-      setJson(keys.ingredients, getJson(keys.ingredients, []).map(normalizeIngredient));
-    }
-    seedLocalTestDataOnce();
+    clearLegacyLocalData();
+    dataState.employees = defaultEmployees.slice();
+    dataState.sections = defaultSections.slice();
+    dataState.accessAccounts = defaultAccessCodes;
+    dataState.ingredients = defaultIngredients.map(normalizeIngredient);
+    dataState.recipes = defaultRecipes.slice();
+    dataState.menus = buildDefaultMenus(dataState.recipes).map(normalizeMenu);
+    dataState.history = [];
     await hydrateAccessAccountsFromApi();
+    await hydrateSettingsFromApi();
     await hydrateIngredientsFromApi();
     await hydrateHistoryFromApi();
     await hydrateRecipesFromApi();
@@ -776,13 +796,13 @@
     return {
       mode: localStorage.getItem(keys.mode) || "simple",
       lang: localStorage.getItem(keys.lang) || "ko",
-      employees: getJson(keys.employees, []),
-      sections: getJson(keys.sections, []),
+      employees: dataState.employees.slice(),
+      sections: dataState.sections.slice(),
       accessAccounts: accessAccounts(),
-      ingredients: getJson(keys.ingredients, []),
-      recipes: getJson(keys.recipes, []),
-      menus: getJson(keys.menus, []),
-      history: getJson(keys.history, [])
+      ingredients: dataState.ingredients.map(normalizeIngredient),
+      recipes: dataState.recipes.slice(),
+      menus: dataState.menus.map(normalizeMenu),
+      history: dataState.history.slice()
     };
   }
 
@@ -792,24 +812,27 @@
     }
     localStorage.setItem(keys.mode, data.mode || "simple");
     localStorage.setItem(keys.lang, data.lang || "ko");
-    setJson(keys.employees, data.employees || []);
-    setJson(keys.sections, data.sections || []);
-    setAccessAccounts(data.accessAccounts || defaultAccessCodes);
-    setIngredients(data.ingredients || []);
-    setJson(keys.recipes, data.recipes || []);
-    setJson(keys.menus, data.menus || []);
-    setJson(keys.history, data.history || []);
+    dataState.employees = data.employees || [];
+    dataState.sections = data.sections || defaultSections.slice();
+    applyDataBundle({
+      accessAccounts: data.accessAccounts || defaultAccessCodes,
+      sections: dataState.sections,
+      ingredients: data.ingredients || [],
+      recipes: data.recipes || [],
+      menus: data.menus || [],
+      history: data.history || []
+    });
   }
 
-  function applyDataBundle(data, marker) {
+  function applyDataBundle(data) {
     localStorage.setItem(keys.mode, "simple");
-    setJson(keys.sections, data.sections || defaultSections);
-    setJson("restaurant_access_codes", data.accessAccounts || defaultAccessCodes);
-    setJson(keys.ingredients, (data.ingredients || []).map(normalizeIngredient));
-    setJson(keys.recipes, data.recipes || []);
-    setJson(keys.menus, (data.menus || []).map(normalizeMenu));
-    setJson(keys.history, data.history || []);
-    if (marker) localStorage.setItem(keys.demoSeeded, marker);
+    dataState.sections = data.sections || defaultSections.slice();
+    dataState.employees = data.employees || defaultEmployees.slice();
+    dataState.accessAccounts = data.accessAccounts || defaultAccessCodes;
+    dataState.ingredients = (data.ingredients || []).map(normalizeIngredient);
+    dataState.recipes = data.recipes || [];
+    dataState.menus = (data.menus || []).map(normalizeMenu);
+    dataState.history = data.history || [];
     syncQuietly(() => apiRequest("/seed-data", {
       method: "PUT",
       body: JSON.stringify(data)
@@ -818,22 +841,22 @@
 
   function seedTestData() {
     const data = testData();
-    applyDataBundle(data, "manual");
+    applyDataBundle(data);
     return data;
   }
 
   function resetDemoData() {
     const data = defaultData();
-    applyDataBundle(data, "reset");
+    applyDataBundle(data);
     return data;
   }
 
   function setHistory(history) {
-    setJson(keys.history, history);
+    dataState.history = Array.isArray(history) ? history : [];
   }
 
   function saveHistoryEntry(entry) {
-    const history = getJson(keys.history, []);
+    const history = dataState.history;
     setHistory([entry, ...history.filter((row) => row.id !== entry.id)]);
     syncQuietly(() => apiRequest("/history", {
       method: "POST",
@@ -850,7 +873,7 @@
   }
 
   function deleteHistory(idValue) {
-    setHistory(getJson(keys.history, []).filter((entry) => entry.id !== idValue));
+    setHistory(dataState.history.filter((entry) => entry.id !== idValue));
     syncQuietly(() => apiRequest(`/history/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
   }
 
@@ -860,19 +883,19 @@
   }
 
   function setRecipes(recipes) {
-    setJson(keys.recipes, recipes);
+    dataState.recipes = Array.isArray(recipes) ? recipes : [];
     syncQuietly(() => apiRequest("/recipes", {
       method: "PUT",
-      body: JSON.stringify({ recipes })
+      body: JSON.stringify({ recipes: dataState.recipes })
     }));
   }
 
   function saveRecipe(recipe) {
-    const recipes = getJson(keys.recipes, []);
+    const recipes = dataState.recipes;
     const next = recipes.some((row) => row.id === recipe.id)
       ? recipes.map((row) => row.id === recipe.id ? recipe : row)
       : [...recipes, recipe];
-    setJson(keys.recipes, next);
+    dataState.recipes = next;
     syncQuietly(() => apiRequest("/recipes", {
       method: "POST",
       body: JSON.stringify({ recipe })
@@ -880,15 +903,15 @@
   }
 
   function deleteRecipe(idValue) {
-    const recipes = getJson(keys.recipes, []).map((recipe) =>
+    const recipes = dataState.recipes.map((recipe) =>
       recipe.id === idValue ? { ...recipe, enabled: false, updatedAt: today() } : recipe
     );
     setRecipes(recipes);
   }
 
   function setMenus(menus) {
-    const normalized = menus.map(normalizeMenu);
-    setJson(keys.menus, normalized);
+    const normalized = (menus || []).map(normalizeMenu);
+    dataState.menus = normalized;
     syncQuietly(() => apiRequest("/menus", {
       method: "PUT",
       body: JSON.stringify({ menus: normalized })
@@ -896,8 +919,8 @@
   }
 
   function setIngredients(ingredients) {
-    const normalized = ingredients.map(normalizeIngredient);
-    setJson(keys.ingredients, normalized);
+    const normalized = (ingredients || []).map(normalizeIngredient);
+    dataState.ingredients = normalized;
     syncQuietly(() => apiRequest("/ingredients", {
       method: "PUT",
       body: JSON.stringify({ ingredients: normalized })
@@ -906,11 +929,11 @@
 
   function saveMenu(menu) {
     const normalizedMenu = normalizeMenu(menu);
-    const menus = getJson(keys.menus, []);
+    const menus = dataState.menus;
     const next = menus.some((row) => row.id === normalizedMenu.id)
       ? menus.map((row) => row.id === normalizedMenu.id ? normalizedMenu : row)
       : [...menus, normalizedMenu];
-    setJson(keys.menus, next);
+    dataState.menus = next;
     syncQuietly(() => apiRequest("/menus", {
       method: "POST",
       body: JSON.stringify({ menu: normalizedMenu })
@@ -918,14 +941,14 @@
   }
 
   function discontinueMenu(idValue) {
-    const menus = getJson(keys.menus, []).map((menu) =>
+    const menus = dataState.menus.map((menu) =>
       menu.id === idValue ? { ...menu, discontinued: true } : menu
     );
     setMenus(menus);
   }
 
   function menuCategories() {
-    return Array.from(new Set(getJson(keys.menus, []).map((menu) => menu.category).filter(Boolean)));
+    return Array.from(new Set(dataState.menus.map((menu) => menu.category).filter(Boolean)));
   }
 
   window.Store = {
@@ -936,24 +959,30 @@
     nowTime,
     getMode: () => localStorage.getItem(keys.mode) || "simple",
     setMode: (mode) => localStorage.setItem(keys.mode, mode),
-    getEmployees: () => getJson(keys.employees, []),
-    setEmployees: (v) => setJson(keys.employees, v),
-    getSections: () => getJson(keys.sections, defaultSections),
-    setSections: (v) => setJson(keys.sections, v),
+    getEmployees: () => dataState.employees.slice(),
+    setEmployees: (v) => {
+      dataState.employees = Array.isArray(v) ? v : [];
+      syncSettings();
+    },
+    getSections: () => dataState.sections.length ? dataState.sections.slice() : defaultSections.slice(),
+    setSections: (v) => {
+      dataState.sections = Array.isArray(v) ? v : defaultSections.slice();
+      syncSettings();
+    },
     getTargets: () => defaultTargets.slice(),
     getAllowedTargets: allowedTargets,
-    getIngredients: () => getJson(keys.ingredients, []).map(normalizeIngredient),
+    getIngredients: () => dataState.ingredients.map(normalizeIngredient),
     setIngredients,
-    getRecipes: () => getJson(keys.recipes, []),
+    getRecipes: () => dataState.recipes.slice(),
     setRecipes,
     saveRecipe,
     deleteRecipe,
-    getMenus: () => getJson(keys.menus, []).map(normalizeMenu),
+    getMenus: () => dataState.menus.map(normalizeMenu),
     setMenus,
     saveMenu,
     discontinueMenu,
     getMenuCategories: menuCategories,
-    getHistory: () => getJson(keys.history, []),
+    getHistory: () => dataState.history.slice(),
     setHistory,
     addHistory: saveHistoryEntry,
     saveHistoryEntry,

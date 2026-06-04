@@ -75,6 +75,15 @@ async function ensureSchema(client) {
       updated_at timestamptz not null default now()
     );
 
+    create table if not exists app_settings (
+      setting_key text primary key,
+      setting_value jsonb not null,
+      changed_by_identity_id text references access_identities(id) on delete set null,
+      changed_ip text,
+      changed_user_agent text,
+      updated_at timestamptz not null default now()
+    );
+
     create table if not exists orders (
       id text primary key,
       order_date text not null,
@@ -305,8 +314,34 @@ async function listAccessAccounts(client) {
   }, {});
 }
 
+async function upsertSetting(client, key, value, info) {
+  if (!key) throw new Error("Invalid setting key");
+  await client.query(`
+    insert into app_settings (
+      setting_key, setting_value, changed_by_identity_id, changed_ip, changed_user_agent, updated_at
+    )
+    values ($1, $2::jsonb, $3, $4, $5, now())
+    on conflict (setting_key) do update set
+      setting_value = excluded.setting_value,
+      changed_by_identity_id = excluded.changed_by_identity_id,
+      changed_ip = excluded.changed_ip,
+      changed_user_agent = excluded.changed_user_agent,
+      updated_at = now()
+  `, [key, JSON.stringify(value), info.memberId, info.ip, info.userAgent]);
+}
+
+async function listSettings(client) {
+  const rows = await client.query("select setting_key, setting_value from app_settings");
+  return rows.rows.reduce((settings, row) => {
+    settings[row.setting_key] = row.setting_value;
+    return settings;
+  }, {});
+}
+
 async function replaceSeedData(client, data, info) {
   const accessAccounts = data.accessAccounts || {};
+  const sections = Array.isArray(data.sections) ? data.sections : [];
+  const employees = Array.isArray(data.employees) ? data.employees : [];
   const ingredients = Array.isArray(data.ingredients) ? data.ingredients : [];
   const recipes = Array.isArray(data.recipes) ? data.recipes : [];
   const menus = Array.isArray(data.menus) ? data.menus : [];
@@ -316,9 +351,12 @@ async function replaceSeedData(client, data, info) {
   await client.query("delete from recipes");
   await client.query("delete from ingredients");
   await client.query("delete from access_accounts");
+  await client.query("delete from app_settings");
   for (const [password, account] of Object.entries(accessAccounts)) {
     await upsertAccessAccount(client, password, account, info);
   }
+  await upsertSetting(client, "sections", sections, info);
+  await upsertSetting(client, "employees", employees, info);
   for (const recipe of recipes) await upsertRecipe(client, recipe, info);
   for (const ingredient of ingredients) await upsertIngredient(client, ingredient, info);
   for (const menu of menus) await upsertMenu(client, menu, info);
@@ -673,6 +711,10 @@ exports.handler = async (event) => {
       return json(200, { ok: true, accessAccounts: await listAccessAccounts(client) });
     }
 
+    if (method === "GET" && path === "/settings") {
+      return json(200, { ok: true, settings: await listSettings(client) });
+    }
+
     if (method === "GET" && path === "/history") {
       return json(200, { ok: true, history: await listHistory(client) });
     }
@@ -706,6 +748,19 @@ exports.handler = async (event) => {
       await client.query("delete from access_accounts");
       for (const [password, account] of Object.entries(accessAccounts)) {
         await upsertAccessAccount(client, password, account, info);
+      }
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "PUT" && path === "/settings") {
+      const { settings } = parseBody(event);
+      if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+        return json(400, { ok: false, error: "settings must be an object" });
+      }
+      await client.query("begin");
+      for (const [key, value] of Object.entries(settings)) {
+        await upsertSetting(client, key, value, info);
       }
       await client.query("commit");
       return json(200, { ok: true });
