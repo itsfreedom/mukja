@@ -1818,6 +1818,23 @@ body {
   accent-color: #8b8e98;
   opacity: 1;
 }
+.detail-check-shell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+}
+.detail-check-shell.is-readonly.is-checked::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 10px;
+  border: solid #ff3f56;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
 
 .menu-category-group {
   display: grid;

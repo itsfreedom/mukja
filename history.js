@@ -118,7 +118,8 @@
   function checkCell(item, field) {
     const checked = item[field] ? "checked" : "";
     const disabled = session?.role === "admin" ? "" : "disabled";
-    return `<input type="checkbox" data-detail-check="${item.id}|${field}" ${checked} ${disabled} />`;
+    const stateClass = `${checked ? "is-checked" : ""} ${disabled ? "is-readonly" : "is-editable"}`.trim();
+    return `<span class="detail-check-shell ${stateClass}"><input type="checkbox" data-detail-check="${item.id}|${field}" ${checked} ${disabled} /></span>`;
   }
 
   function renderDetailGroups(entry) {
