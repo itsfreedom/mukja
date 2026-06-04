@@ -56,10 +56,41 @@
     `).join("");
   }
 
-  function sectionOrder(groups) {
-    const configured = Store.getSections().filter((section) => groups[section]);
-    const extra = Object.keys(groups).filter((section) => !configured.includes(section)).sort();
-    return [...configured, ...extra];
+  function targetFor(item) {
+    return item.target || "그로서리";
+  }
+
+  function categoryFor(item) {
+    const target = targetFor(item);
+    const section = item.section || "기타";
+    if (target === "그로서리" && section === "식재료") return "상온";
+    if (target === "그로서리" && ["상온", "냉장", "냉동", "기타"].includes(section)) return section;
+    if (target === "그로서리") return "기타";
+    if (target === "야채") return "야채";
+    if (["반조리", "소스", "반찬", "냉장", "냉동", "기타"].includes(section)) return section;
+    return "기타";
+  }
+
+  function orderedKeys(groups, order) {
+    return [
+      ...order.filter((key) => groups[key]),
+      ...Object.keys(groups).filter((key) => !order.includes(key))
+    ];
+  }
+
+  function renderItemRows(items) {
+    return `
+      <div class="item-section-list">
+        ${items.map((item) => `
+          <label class="item-row request-item-row">
+            <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
+            <span class="item-main">
+              <span class="item-name">${I18n.itemName(item)}</span>
+            </span>
+          </label>
+        `).join("")}
+      </div>
+    `;
   }
 
   function renderItems() {
@@ -71,36 +102,46 @@
       return;
     }
 
+    const targetOrder = ["카페테리아", "야채", "그로서리"];
+    const categoryOrders = {
+      "카페테리아": ["반조리", "소스", "반찬", "냉장", "냉동", "기타"],
+      "야채": ["야채"],
+      "그로서리": ["상온", "냉장", "냉동", "기타"]
+    };
     const groups = Store.getIngredients()
       .filter((item) => item.enabled)
       .reduce((acc, item) => {
-        const section = item.section || "기타";
-        acc[section] = acc[section] || [];
-        acc[section].push(item);
+        const target = targetFor(item);
+        const category = categoryFor(item);
+        acc[target] = acc[target] || {};
+        acc[target][category] = acc[target][category] || [];
+        acc[target][category].push(item);
         return acc;
       }, {});
 
-    const sections = sectionOrder(groups);
-    if (!sections.length) {
+    const targets = orderedKeys(groups, targetOrder);
+    if (!targets.length) {
       els.list.innerHTML = `<div class="list-card muted">${I18n.t("noItems")}</div>`;
       return;
     }
 
-    els.list.innerHTML = sections.map((section) => `
-      <section class="item-section">
-        <h3>${I18n.sectionLabel(section)}</h3>
-        <div class="item-section-list">
-          ${groups[section].map((item) => `
-            <label class="item-row request-item-row">
-              <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
-              <span class="item-main">
-                <span class="item-name">${I18n.itemName(item)}</span>
-              </span>
-            </label>
-          `).join("")}
-        </div>
+    els.list.innerHTML = targets.map((target) => {
+      const categoryGroups = groups[target];
+      const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
+      return `
+        <section class="order-target-group">
+          <h2>${I18n.targetLabel(target)}</h2>
+          <div class="order-target-card">
+            ${categories.map((category) => `
+              <section class="item-section">
+                <h3>${I18n.sectionLabel(category)}</h3>
+                ${renderItemRows(categoryGroups[category])}
+              </section>
+            `).join("")}
+          </div>
       </section>
-    `).join("");
+      `;
+    }).join("");
 
     els.list.querySelectorAll("[data-item]").forEach((input) => {
       input.addEventListener("change", () => {

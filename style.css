@@ -547,6 +547,28 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
     linear-gradient(to bottom, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72))
     right 2px top 6px / 3px calc(100% - 12px) no-repeat;
 }
+.order-target-group {
+  display: grid;
+  gap: 8px;
+}
+.order-target-group + .order-target-group {
+  margin-top: 16px;
+}
+.order-target-group > h2 {
+  color: #eef3ff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0 2px;
+}
+.order-target-card {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(184, 196, 240, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px;
+}
 .request-target {
   display: grid;
   gap: 8px;
