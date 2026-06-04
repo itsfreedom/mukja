@@ -1,5 +1,6 @@
 (async function () {
   await Store.init();
+  localStorage.setItem("restaurant_sidebar_collapsed", "0");
   AppUI.renderSidebar("history");
   AppUI.registerServiceWorker();
 
@@ -144,17 +145,6 @@
 
   closeDetail.addEventListener("click", () => {
     window.location.href = `history.html?week=${weekOffset}`;
-  });
-  document.getElementById("clear-all").classList.toggle("hidden", !["restaurant", "admin"].includes(Store.getAuth()?.role));
-  document.getElementById("download-all").addEventListener("click", () => {
-    Store.downloadText("request-history-all.csv", Store.historyToCsv(visibleHistory()), "text/csv;charset=utf-8");
-  });
-  document.getElementById("clear-all").addEventListener("click", () => {
-    if (!["restaurant", "admin"].includes(Store.getAuth()?.role)) return;
-    if (confirm(I18n.t("confirmClear"))) {
-      Store.clearHistory();
-      renderList();
-    }
   });
 
   if (detailId) renderDetail();

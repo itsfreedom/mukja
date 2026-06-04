@@ -1679,8 +1679,8 @@ body {
   grid-template-columns: repeat(9, minmax(34px, auto));
   gap: 6px;
   align-items: center;
-  justify-content: start;
-  margin-bottom: 18px;
+  justify-content: center;
+  margin: 16px auto 0;
 }
 
 .pager button,
