@@ -6,6 +6,7 @@
   const session = Store.getAuth();
   const canCreateRequest = ["restaurant", "admin"].includes(session?.role);
   const selected = new Set();
+  let editingEntry = null;
   const els = {
     list: document.getElementById("items-list"),
     memo: document.getElementById("memo"),
@@ -21,6 +22,14 @@
 
   function itemKey(item) {
     return item.id || `${item.target}|${item.section}|${item.nameKo || item.name}`;
+  }
+
+  function sameAuthor(memo) {
+    if (!memo) return false;
+    if (memo.role && memo.role === session?.role) return true;
+    if (memo.department && memo.department === session?.department) return true;
+    if (memo.authorLabel && memo.authorLabel === session?.label) return true;
+    return false;
   }
 
   function memoLabel(memo) {
@@ -51,6 +60,22 @@
       ...order.filter((key) => groups[key]),
       ...Object.keys(groups).filter((key) => !order.includes(key))
     ];
+  }
+
+  function latestRequestEntry() {
+    return Store.getHistory()
+      .slice()
+      .sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`))[0] || null;
+  }
+
+  function loadLatestRequest() {
+    if (!canCreateRequest) return;
+    editingEntry = latestRequestEntry();
+    selected.clear();
+    (editingEntry?.items || []).forEach((item) => selected.add(itemKey(item)));
+    const memos = Array.isArray(editingEntry?.memos) ? editingEntry.memos : [];
+    const editableMemo = memos.find(sameAuthor);
+    els.memo.value = editableMemo?.text || (!memos.length ? editingEntry?.memo || "" : "");
   }
 
   function renderItemRows(items) {
@@ -156,13 +181,18 @@
     if (!canCreateRequest) return;
     const items = selectedItems();
     const memo = memoEntry();
-    if (!items.length && !memo) {
+    if (!items.length && !memo && !editingEntry) {
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
-    const memos = memo ? [memo] : [];
+    const existingMemos = Array.isArray(editingEntry?.memos) ? editingEntry.memos : [];
+    const memos = [
+      ...existingMemos.filter((row) => !sameAuthor(row)),
+      ...(memo ? [memo] : [])
+    ];
     const entry = {
-      id: Store.id("history"),
+      ...(editingEntry || {}),
+      id: editingEntry?.id || Store.id("history"),
       date: Store.today(),
       time: Store.nowTime(),
       mode: "simple",
@@ -175,7 +205,7 @@
     };
     entry.memo = memoText(memos);
     Store.saveHistoryEntry(entry);
-    resetForm();
+    editingEntry = entry;
     setStatus(I18n.t("saved"));
   }
 
@@ -187,6 +217,7 @@
 
   els.save.addEventListener("click", () => saveRequest());
   els.reset.addEventListener("click", resetForm);
+  loadLatestRequest();
   renderItems();
   I18n.applyI18n();
 })();

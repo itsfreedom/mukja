@@ -580,6 +580,15 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .order-request-row {
   cursor: pointer;
 }
+.order-page .order-request-row {
+  min-height: 44px;
+  padding: 8px 2px;
+  border: 0;
+  border-bottom: 1px solid rgba(184, 196, 240, 0.1);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .order-page .order-request-row:has(input:checked) .receive-row-main strong {
   color: var(--text);
   text-decoration: none;
@@ -1914,4 +1923,19 @@ body {
   h1 {
     font-size: 1.52rem;
   }
+}
+
+.order-page .list-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-page .title-action-button {
+  width: auto;
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1;
 }
