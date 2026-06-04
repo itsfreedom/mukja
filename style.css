@@ -542,44 +542,10 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   margin-top: 0;
   background: transparent;
 }
-.order-target-group {
-  display: grid;
-  gap: 8px;
-}
-.order-target-group + .order-target-group {
-  margin-top: 16px;
-}
-.order-target-group > h2 {
-  color: #eef3ff;
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.2;
-  padding: 0 2px;
-}
-.order-target-card {
-  gap: 18px;
-}
-.order-category-section {
-  display: grid;
-  gap: 10px;
-}
-.order-category-section h3 {
-  color: #d9e3ff;
-  font-size: 0.92rem;
-  font-weight: 800;
-}
-.order-request-list {
-  display: grid;
-  gap: 8px;
-}
-.order-request-row {
+.order-page .receive-row {
   cursor: pointer;
 }
-.order-page .order-request-row {
-  min-height: 46px;
-  padding: 10px 14px;
-}
-.order-page .order-request-row:has(input:checked) .receive-row-main strong {
+.order-page .receive-row:has(input:checked) .receive-row-main strong {
   color: var(--text);
   text-decoration: none;
   opacity: 1;

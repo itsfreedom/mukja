@@ -80,9 +80,9 @@
 
   function renderItemRows(items) {
     return `
-      <div class="order-request-list">
+      <div class="item-section-list">
         ${items.map((item) => `
-          <label class="receive-row order-request-row">
+          <label class="receive-row">
             <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
             <span class="receive-row-main">
               <strong>${I18n.itemName(item)}</strong>
@@ -128,11 +128,11 @@
       const categoryGroups = groups[target];
       const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
       return `
-        <section class="order-target-group">
+        <section class="home-target-group">
           <h2>${I18n.targetLabel(target)}</h2>
-          <div class="history-detail-card order-target-card">
+          <div class="home-target-section">
             ${categories.map((category) => `
-              <section class="order-category-section">
+              <section class="item-section home-request-section">
                 <h3>${I18n.sectionLabel(category)}</h3>
                 <hr class="section-divider" />
                 ${renderItemRows(categoryGroups[category])}
