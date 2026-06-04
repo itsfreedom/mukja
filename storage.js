@@ -17,7 +17,7 @@
     checked: false,
     available: false
   };
-  const demoSeedVersion = "home-memo-admin";
+  const demoSeedVersion = "home-memo-slots";
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
   const defaultEmployees = [
@@ -241,14 +241,22 @@
               role: "admin",
               department: "",
               authorLabel: "관리자",
-              text: `관리자 확인 메모 ${week + 1}-${day + 1}`,
+              text: `관리자 테스트 메모 ${week + 1}-${day + 1}`,
               createdAt: `${dateForHistory(week, day)}T09:30:00.000Z`
             },
-            ...targets.map((target, index) => ({
-              id: `memo-test-${week}-${day}-${index}`,
-              role: index % 2 ? "department" : "restaurant",
+            {
+              id: `memo-test-restaurant-${week}-${day}`,
+              role: "restaurant",
+              department: "",
+              authorLabel: "레스토랑",
+              text: `레스토랑 테스트 메모 ${week + 1}-${day + 1}`,
+              createdAt: `${dateForHistory(week, day)}T09:40:00.000Z`
+            },
+            ...["카페테리아", "야채", "그로서리"].map((target, index) => ({
+              id: `memo-test-dept-${week}-${day}-${index}`,
+              role: "department",
               department: target,
-              authorLabel: index % 2 ? target : "레스토랑",
+              authorLabel: target,
               text: `${target} 테스트 메모 ${week + 1}-${day + 1}`,
               createdAt: `${dateForHistory(week, day)}T${String(10 + index).padStart(2, "0")}:00:00.000Z`
             }))

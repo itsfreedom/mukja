@@ -44,30 +44,66 @@
     return I18n.t("memo");
   }
 
-  function memoEntry(text) {
+  function memoSlot(memo) {
+    if (memo.role === "admin" || memo.authorLabel === "관리자") return "admin";
+    if (memo.role === "restaurant" || memo.authorLabel === "레스토랑") return "restaurant";
+    if (memo.department === "카페테리아" || memo.authorLabel === "카페테리아") return "cafeteria";
+    if (memo.department === "야채" || memo.authorLabel === "야채") return "vegetable";
+    if (memo.department === "그로서리" || memo.authorLabel === "그로서리") return "grocery";
+    return "other";
+  }
+
+  function sessionMemoSlot() {
+    if (session?.role === "admin") return "admin";
+    if (session?.role === "restaurant") return "restaurant";
+    if (session?.department === "카페테리아") return "cafeteria";
+    if (session?.department === "야채") return "vegetable";
+    if (session?.department === "그로서리") return "grocery";
+    return "other";
+  }
+
+  function memoSlotInfo(slot) {
+    return {
+      admin: { role: "admin", department: "", label: "관리자" },
+      restaurant: { role: "restaurant", department: "", label: "레스토랑" },
+      cafeteria: { role: "department", department: "카페테리아", label: "카페테리아" },
+      vegetable: { role: "department", department: "야채", label: "야채" },
+      grocery: { role: "department", department: "그로서리", label: "그로서리" }
+    }[slot] || { role: session?.role || "", department: session?.department || "", label: session?.label || "" };
+  }
+
+  function orderedMemos(memos) {
+    const slotOrder = ["admin", "restaurant", "cafeteria", "vegetable", "grocery"];
+    const bySlot = new Map();
+    memos.forEach((memo) => {
+      const slot = memoSlot(memo);
+      if (!bySlot.has(slot)) bySlot.set(slot, memo);
+    });
+    return slotOrder.map((slot) => bySlot.get(slot)).filter(Boolean);
+  }
+
+  function currentMemo(memos) {
+    const slot = sessionMemoSlot();
+    return memos.find((memo) => memoSlot(memo) === slot) || null;
+  }
+
+  function memoEntry(text, existingMemo = null) {
     const trimmed = text.trim();
     if (!trimmed) return null;
+    const slotInfo = memoSlotInfo(sessionMemoSlot());
     return {
-      id: Store.id("memo"),
-      role: session?.role || "",
-      department: session?.department || "",
-      authorLabel: session?.label || "",
+      id: existingMemo?.id || Store.id("memo"),
+      role: slotInfo.role,
+      department: slotInfo.department,
+      authorLabel: slotInfo.label,
       text: trimmed,
-      createdAt: new Date().toISOString()
+      createdAt: existingMemo?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
   }
 
   function memoText(memos) {
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
-  }
-
-  function memoVisible(memo) {
-    if (!memo) return false;
-    if (session?.role !== "department" || !session.department) return true;
-    if (memo.role === "admin") return true;
-    if (memo.department === session.department) return true;
-    if (memo.role === "restaurant" && !memo.department) return (memo.text || "").startsWith(session.department);
-    return false;
   }
 
   function targetFor(item) {
@@ -108,12 +144,14 @@
   }
 
   function renderMemoPanel(entry) {
-    const memos = (Array.isArray(entry.memos) ? entry.memos : []).filter(memoVisible);
+    const allMemos = orderedMemos(Array.isArray(entry.memos) ? entry.memos : []);
+    const current = currentMemo(allMemos);
+    const readonlyMemos = allMemos.filter((memo) => memoSlot(memo) !== sessionMemoSlot());
     return `
       <section class="memo-panel home-memo-panel admin-section">
         <h3>타부서에서 작성한 메모 <span>수정 불가</span></h3>
         <div class="memo-log">
-          ${memos.length ? memos.map((memo) => `
+          ${readonlyMemos.length ? readonlyMemos.map((memo) => `
             <article class="memo-entry">
               <div class="memo-entry-meta">
                 <strong>${memoLabel(memo)}</strong>
@@ -125,7 +163,7 @@
         </div>
         <label class="field">
           <span>메모 추가</span>
-          <textarea id="home-memo" data-i18n-placeholder="memoPlaceholder"></textarea>
+          <textarea id="home-memo" data-i18n-placeholder="memoPlaceholder">${current?.text || ""}</textarea>
         </label>
         <div class="button-row home-action-row">
           <button class="button" id="home-save" type="button">저장</button>
@@ -204,8 +242,14 @@
 
   function buildEntry({ snapshot = false } = {}) {
     if (!currentEntry) return null;
-    const memo = memoEntry(document.getElementById("home-memo")?.value || "");
-    const memos = [...(Array.isArray(currentEntry.memos) ? currentEntry.memos : []), ...(memo ? [memo] : [])];
+    const currentSlot = sessionMemoSlot();
+    const baseMemos = orderedMemos(Array.isArray(currentEntry.memos) ? currentEntry.memos : []);
+    const existingMemo = baseMemos.find((memo) => memoSlot(memo) === currentSlot);
+    const memo = memoEntry(document.getElementById("home-memo")?.value || "", existingMemo);
+    const memos = [
+      ...baseMemos.filter((row) => memoSlot(row) !== currentSlot),
+      ...(memo ? [memo] : [])
+    ];
     const entry = {
       ...currentEntry,
       id: snapshot ? Store.id("history") : currentEntry.id,
