@@ -116,6 +116,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   font-weight: 700;
   line-height: 1.25;
   padding: 0 4px;
+  text-align: right;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
