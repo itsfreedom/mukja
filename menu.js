@@ -113,7 +113,11 @@
                 <strong>${money(menu)}</strong>
                 ${menu.discontinued ? `<span>${I18n.t("discontinuedMenu")}</span>` : menu.seasonal ? `<span>${I18n.t("seasonalMenu")}</span>` : ""}
               </div>
-              <span class="menu-row-arrow" aria-hidden="true">&gt;</span>
+              <span class="menu-row-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
             </button>
           `).join("")}
         </div>

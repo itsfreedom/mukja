@@ -709,6 +709,15 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font-size: 1.02rem;
   font-weight: 900;
 }
+.menu-row-arrow svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .menu-badges {
   display: flex;
   flex-wrap: wrap;
@@ -1910,12 +1919,27 @@ body {
 }
 
 .menu-filter-panel {
-  display: block;
+  border: 1px solid rgba(184, 196, 240, 0.13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 12px;
 }
 
 .menu-filter-stack {
   display: grid;
-  gap: 13px;
+  gap: 10px;
+}
+
+.menu-filter-stack .field {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.menu-filter-stack .field > span {
+  margin: 0;
+  line-height: 1;
 }
 
 .menu-search-row {
@@ -1925,12 +1949,17 @@ body {
   align-items: center;
 }
 
+.menu-search-row input,
 .menu-search-row .button {
-  min-height: 44px;
+  min-height: 38px;
+}
+
+.menu-search-row .button {
+  padding: 7px 12px;
 }
 
 .menu-category-field select {
-  min-height: 50px;
+  min-height: 56px;
   font-size: 0.98rem;
 }
 
