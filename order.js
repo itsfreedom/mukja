@@ -80,13 +80,15 @@
 
   function renderItemRows(items) {
     return `
-      <div class="item-section-list">
+      <div class="order-request-list">
+        <div class="history-detail-grid order-request-grid history-detail-head">
+          <span>${I18n.t("items")}</span>
+          <span>요청</span>
+        </div>
         ${items.map((item) => `
-          <label class="item-row request-item-row">
-            <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
-            <span class="item-main">
-              <span class="item-name">${I18n.itemName(item)}</span>
-            </span>
+          <label class="history-detail-grid order-request-grid history-detail-row order-request-row">
+            <strong>${I18n.itemName(item)}</strong>
+            <span><input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} /></span>
           </label>
         `).join("")}
       </div>
@@ -109,7 +111,6 @@
       "그로서리": ["상온", "냉장", "냉동", "기타"]
     };
     const groups = Store.getIngredients()
-      .filter((item) => item.enabled)
       .reduce((acc, item) => {
         const target = targetFor(item);
         const category = categoryFor(item);
@@ -131,9 +132,9 @@
       return `
         <section class="order-target-group">
           <h2>${I18n.targetLabel(target)}</h2>
-          <div class="order-target-card">
+          <div class="history-detail-card order-target-card">
             ${categories.map((category) => `
-              <section class="item-section">
+              <section class="order-category-section">
                 <h3>${I18n.sectionLabel(category)}</h3>
                 ${renderItemRows(categoryGroups[category])}
               </section>

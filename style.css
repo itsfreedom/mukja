@@ -562,12 +562,26 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   padding: 0 2px;
 }
 .order-target-card {
+  gap: 14px;
+}
+.order-category-section {
   display: grid;
-  gap: 12px;
-  border: 1px solid rgba(184, 196, 240, 0.15);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 14px;
+  gap: 8px;
+}
+.order-category-section h3 {
+  color: #d9e3ff;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+.order-request-list {
+  display: grid;
+  gap: 0;
+}
+.order-request-grid {
+  grid-template-columns: minmax(0, 1fr) 74px;
+}
+.order-request-row {
+  cursor: pointer;
 }
 .request-target {
   display: grid;
