@@ -36,7 +36,7 @@
       korean: "한국어",
       english: "English",
       createRequest: "주문하기",
-      requestList: "요청 리스트",
+      requestList: "요청 목록",
       viewRecipes: "레시피 보기",
       quickLinks: "빠른 메뉴",
       orderTitle: "재료 요청",

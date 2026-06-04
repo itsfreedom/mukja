@@ -630,10 +630,16 @@
       const sidebar = document.querySelector("[data-layout-sidebar]");
       if (!sidebar || !window.I18n) return;
       const session = auth();
+      const isRestricted = (key) => {
+        if (key === "home") return session?.role === "department";
+        if (key === "admin") return session?.role !== "admin";
+        return false;
+      };
       const nav = [
-        ["order", "order.html", "□"],
-        ["history", "history.html", "◷"],
-        ["menus", "menu.html", "☰"],
+        ["home", "index.html", "⌂"],
+        ["order", "order.html", "🛒"],
+        ["history", "history.html", "↺"],
+        ["menus", "menu.html", "🍚"],
         ["admin", "admin.html", "⚙"]
       ];
       sidebar.innerHTML = `
@@ -641,8 +647,10 @@
           <div class="brand-copy">
             <div class="brand-main-row">
               <img class="brand-mark" src="assets/mokja-logo.jpg" alt="" />
-              <div class="brand-title">${I18n.t("appName")}</div>
-              ${session ? `<div class="brand-role">${I18n.roleLabel(session.label)}</div>` : ""}
+              <div class="brand-heading">
+                <div class="brand-title">${I18n.t("appName")}</div>
+                ${session ? `<div class="brand-role">${I18n.roleLabel(session.label)}</div>` : ""}
+              </div>
               <button class="lang-toggle" data-lang-toggle type="button" aria-label="${I18n.t("language")}">${I18n.lang() === "ko" ? "🇺🇸" : "🇰🇷"}</button>
               ${session ? `<button class="header-logout" type="button" data-auth-logout aria-label="${I18n.t("logout")}">⎋</button>` : ""}
             </div>
@@ -650,7 +658,7 @@
         </div>
         <nav class="nav">
           ${nav.map(([key, href, icon]) => `
-            <a class="nav-link ${active === key ? "is-active" : ""}" href="${href}">
+            <a class="nav-link ${active === key ? "is-active" : ""} ${isRestricted(key) ? "is-restricted" : ""}" href="${isRestricted(key) ? "#" : href}" ${isRestricted(key) ? 'aria-disabled="true"' : ""}>
               <span class="nav-icon">${icon}</span><span>${I18n.t(key)}</span>
             </a>
           `).join("")}

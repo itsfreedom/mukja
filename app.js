@@ -1,7 +1,7 @@
 (async function () {
   await Store.init();
   const startPath = Store.startPath();
-  if (Store.getAuth() && startPath !== "index.html") {
+  if (Store.getAuth()?.role === "department" && startPath !== "index.html") {
     window.location.href = startPath;
     return;
   }
