@@ -1,4 +1,4 @@
-const CACHE_NAME = "mokja-alley-v34";
+const CACHE_NAME = "mokja-alley-v35";
 const ASSETS = [
   "index.html",
   "reset-cache.html",
@@ -35,18 +35,36 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) return;
+  if (requestUrl.pathname.startsWith("/api/")) return;
+
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
+      fetch(new Request(event.request, { cache: "reload" }))
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("index.html", copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
           return response;
         })
-        .catch(() => caches.match("index.html"))
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("index.html")))
     );
     return;
   }
+
+  if (["document", "script", "style"].includes(event.request.destination)) {
+    event.respondWith(
+      fetch(new Request(event.request, { cache: "reload" }))
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     fetch(event.request).then((response) => {
       const copy = response.clone();

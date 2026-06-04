@@ -13,4 +13,19 @@
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
-    Cache-Control = "no-cache"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/reset-cache.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
