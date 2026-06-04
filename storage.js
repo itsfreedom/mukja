@@ -355,7 +355,33 @@
   }
 
   function auth() {
-    return getJson(keys.auth, null);
+    const session = getJson(keys.auth, null);
+    if (!session) return null;
+    const normalized = normalizeSession(session);
+    if (JSON.stringify(normalized) !== JSON.stringify(session)) setJson(keys.auth, normalized);
+    return normalized;
+  }
+
+  function normalizeTargetName(value) {
+    const text = String(value || "").trim().toLowerCase();
+    if (!text) return "";
+    if (["카페테리아", "cafeteria", "cafe", "café"].includes(text)) return "카페테리아";
+    if (["야채", "vegetable", "vegetables", "veggie", "veggies"].includes(text)) return "야채";
+    if (["그로서리", "grocery", "groceries"].includes(text)) return "그로서리";
+    return String(value || "").trim();
+  }
+
+  function normalizeSession(session) {
+    if (!session || typeof session !== "object") return null;
+    const department = normalizeTargetName(session.department || session.label);
+    if (session.role === "department") {
+      return {
+        ...session,
+        department,
+        label: normalizeTargetName(session.label || department) || department
+      };
+    }
+    return session;
   }
 
   function accessAccounts() {
@@ -374,10 +400,10 @@
   function authenticate(password) {
     const account = accessAccounts()[String(password || "").trim()];
     if (!account) return null;
-    const session = {
+    const session = normalizeSession({
       ...account,
       signedInAt: new Date().toISOString()
-    };
+    });
     setJson(keys.auth, session);
     return session;
   }
@@ -972,6 +998,7 @@
       syncSettings();
     },
     getTargets: () => defaultTargets.slice(),
+    normalizeTargetName,
     getAllowedTargets: allowedTargets,
     getIngredients: () => dataState.ingredients.map(normalizeIngredient),
     setIngredients,

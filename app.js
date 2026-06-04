@@ -14,7 +14,8 @@
   function visibleEntry(entry) {
     if (!entry) return null;
     if (session?.role === "department" && session.department) {
-      const items = (entry.items || []).filter((item) => item.target === session.department);
+      const department = Store.normalizeTargetName(session.department);
+      const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
       return items.length ? { ...entry, items } : null;
     }
     return entry;

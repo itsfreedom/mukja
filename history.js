@@ -20,7 +20,8 @@
     const session = Store.getAuth();
     return Store.getHistory().flatMap((entry) => {
       if (session?.role !== "department" || !session.department) return [entry];
-      const items = (entry.items || []).filter((item) => item.target === session.department);
+      const department = Store.normalizeTargetName(session.department);
+      const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
       return items.length ? [{ ...entry, items }] : [];
     });
   }
