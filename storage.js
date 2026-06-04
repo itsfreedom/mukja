@@ -9,8 +9,7 @@
     recipes: "restaurant_recipes",
     history: "restaurant_history",
     memberId: "restaurant_member_id",
-    adminPassword: "restaurant_admin_password",
-    adminAuthed: "restaurant_admin_authed"
+    auth: "restaurant_auth"
   };
   const apiState = {
     checked: false,
@@ -23,6 +22,13 @@
     { id: "emp-2", name: "직원2", enabled: true }
   ];
   const defaultTargets = ["카페테리아", "야채", "그로서리"];
+  const accessCodes = {
+    c1234: { role: "department", department: "카페테리아", label: "카페테리아" },
+    v1234: { role: "department", department: "야채", label: "야채" },
+    g1234: { role: "department", department: "그로서리", label: "그로서리" },
+    m1234: { role: "restaurant", department: "", label: "레스토랑" },
+    madmin: { role: "admin", department: "", label: "관리자" }
+  };
   const defaultIngredients = [
     { id: "item-donkatsu", name: "돈까스", section: "반조리", unit: "개", target: "카페테리아", enabled: true },
     { id: "item-mandu", name: "만두", section: "반조리", unit: "봉", target: "카페테리아", enabled: true },
@@ -87,12 +93,44 @@
     return value;
   }
 
+  function auth() {
+    return getJson(keys.auth, null);
+  }
+
+  function authenticate(password) {
+    const account = accessCodes[String(password || "").trim()];
+    if (!account) return null;
+    const session = {
+      ...account,
+      signedInAt: new Date().toISOString()
+    };
+    setJson(keys.auth, session);
+    return session;
+  }
+
+  function logoutAuth() {
+    localStorage.removeItem(keys.auth);
+  }
+
+  function canAdmin() {
+    return auth()?.role === "admin";
+  }
+
+  function allowedTargets() {
+    const session = auth();
+    if (session?.role === "department" && session.department) return [session.department];
+    return defaultTargets.slice();
+  }
+
   async function apiRequest(path, options = {}) {
+    const session = auth();
     const response = await fetch(`/api${path}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
         "X-Mukja-Member-Id": memberId(),
+        "X-Mukja-Role": session?.role || "anonymous",
+        "X-Mukja-Department": session?.department || "",
         ...(options.headers || {})
       },
       cache: "no-store"
@@ -358,8 +396,7 @@
       sections: getJson(keys.sections, []),
       ingredients: getJson(keys.ingredients, []),
       recipes: getJson(keys.recipes, []),
-      history: getJson(keys.history, []),
-      adminPassword: localStorage.getItem(keys.adminPassword) || ""
+      history: getJson(keys.history, [])
     };
   }
 
@@ -374,7 +411,6 @@
     setJson(keys.ingredients, data.ingredients || []);
     setJson(keys.recipes, data.recipes || []);
     setJson(keys.history, data.history || []);
-    if (data.adminPassword !== undefined) localStorage.setItem(keys.adminPassword, data.adminPassword);
   }
 
   function setHistory(history) {
@@ -421,6 +457,7 @@
     getSections: () => getJson(keys.sections, defaultSections),
     setSections: (v) => setJson(keys.sections, v),
     getTargets: () => defaultTargets.slice(),
+    getAllowedTargets: allowedTargets,
     getIngredients: () => getJson(keys.ingredients, []),
     setIngredients: (v) => setJson(keys.ingredients, v),
     getRecipes: () => getJson(keys.recipes, []),
@@ -433,6 +470,10 @@
     deleteHistory,
     clearHistory,
     dbStatus: () => ({ ...apiState }),
+    getAuth: auth,
+    authenticate,
+    logoutAuth,
+    canAdmin,
     historyToCsv,
     historyFromCsv,
     recipesToCsv,
@@ -446,6 +487,7 @@
     renderSidebar(active) {
       const sidebar = document.querySelector("[data-layout-sidebar]");
       if (!sidebar || !window.I18n) return;
+      const session = auth();
       const nav = [
         ["home", "index.html", "⌂"],
         ["order", "order.html", "□"],
@@ -463,6 +505,12 @@
             </div>
           </div>
         </div>
+        ${session ? `
+          <div class="role-strip">
+            <span>${I18n.t("currentRole")}: ${I18n.roleLabel(session.label)}</span>
+            <button type="button" data-auth-logout>${I18n.t("logout")}</button>
+          </div>
+        ` : ""}
         <nav class="nav">
           ${nav.map(([key, href, icon]) => `
             <a class="nav-link ${active === key ? "is-active" : ""}" href="${href}">
@@ -502,6 +550,49 @@
           localStorage.setItem(keys.lang, I18n.lang() === "ko" ? "en" : "ko");
           window.location.reload();
         });
+      }
+      const logout = sidebar.querySelector("[data-auth-logout]");
+      if (logout) {
+        logout.addEventListener("click", () => {
+          logoutAuth();
+          window.location.reload();
+        });
+      }
+      if (!session) {
+        document.body.classList.add("auth-locked");
+        let gate = document.querySelector("[data-auth-gate]");
+        if (!gate) {
+          gate = document.createElement("div");
+          gate.className = "auth-gate";
+          gate.setAttribute("data-auth-gate", "");
+          document.body.appendChild(gate);
+        }
+        gate.innerHTML = `
+          <form class="auth-card" data-auth-form>
+            <img class="auth-logo" src="assets/mokja-logo.jpg" alt="" />
+            <h1>${I18n.t("appName")}</h1>
+            <label class="field">
+              <span>${I18n.t("accessPassword")}</span>
+              <input name="password" type="password" autocomplete="current-password" inputmode="text" />
+            </label>
+            <button class="button" type="submit">${I18n.t("enter")}</button>
+            <p class="status" data-auth-status></p>
+          </form>
+        `;
+        gate.querySelector("[data-auth-form]").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const input = gate.querySelector("input[name='password']");
+          if (authenticate(input.value)) {
+            window.location.reload();
+            return;
+          }
+          gate.querySelector("[data-auth-status]").textContent = I18n.t("wrongPassword");
+          input.select();
+        });
+        setTimeout(() => gate.querySelector("input")?.focus(), 80);
+      } else {
+        document.body.classList.remove("auth-locked");
+        document.querySelector("[data-auth-gate]")?.remove();
       }
       I18n.applyI18n();
     },

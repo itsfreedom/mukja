@@ -10,11 +10,7 @@
   const loginStatus = document.getElementById("login-status");
 
   function isAuthed() {
-    return sessionStorage.getItem(Store.keys.adminAuthed) === "true";
-  }
-
-  function hasPassword() {
-    return Boolean(localStorage.getItem(Store.keys.adminPassword));
+    return Store.canAdmin();
   }
 
   function setStatus(text) {
@@ -27,7 +23,7 @@
     loginPanel.classList.toggle("hidden", show);
     adminPanel.classList.toggle("hidden", !show);
     logout.classList.toggle("hidden", !show);
-    document.getElementById("login-title").textContent = hasPassword() ? I18n.t("login") : I18n.t("setPassword");
+    document.getElementById("login-title").textContent = I18n.t("adminAccessRequired");
     if (show) renderAll();
   }
 
@@ -202,18 +198,14 @@
 
   document.getElementById("admin-login").addEventListener("click", () => {
     const input = document.getElementById("admin-password").value;
-    if (!hasPassword()) {
-      localStorage.setItem(Store.keys.adminPassword, input);
-      sessionStorage.setItem(Store.keys.adminAuthed, "true");
+    if (input.trim() === "madmin" && Store.authenticate(input)?.role === "admin") {
       showAdmin(true);
-    } else if (input === localStorage.getItem(Store.keys.adminPassword)) {
-      sessionStorage.setItem(Store.keys.adminAuthed, "true");
-      showAdmin(true);
-    } else {
-      setStatus(I18n.t("wrongPassword"));
+      window.location.reload();
+      return;
     }
+    setStatus(I18n.t("wrongPassword"));
   });
-  logout.addEventListener("click", () => { sessionStorage.removeItem(Store.keys.adminAuthed); showAdmin(false); });
+  logout.addEventListener("click", () => { Store.logoutAuth(); window.location.reload(); });
   document.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => { Store.setMode(button.dataset.mode); renderAll(); }));
   document.getElementById("add-employee").addEventListener("click", () => {
     const name = document.getElementById("employee-name").value.trim();
@@ -266,13 +258,6 @@
   });
   document.getElementById("recipe-search").addEventListener("input", renderRecipes);
   document.getElementById("recipe-filter").addEventListener("change", renderRecipes);
-  document.getElementById("change-password").addEventListener("click", () => {
-    const value = document.getElementById("new-password").value;
-    if (!value) return;
-    localStorage.setItem(Store.keys.adminPassword, value);
-    document.getElementById("new-password").value = "";
-    setStatus(I18n.t("saved"));
-  });
   document.getElementById("export-settings").addEventListener("click", () => {
     Store.downloadText("restaurant-request-settings.json", JSON.stringify(Store.exportSettings(), null, 2), "application/json;charset=utf-8");
     setStatus(I18n.t("exportDone"));

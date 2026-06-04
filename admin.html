@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>관리자</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-db-sync" />
+    <link rel="stylesheet" href="style.css?v=20260604-role-auth" />
   </head>
   <body>
     <div class="shell">
@@ -23,7 +23,7 @@
           </header>
 
           <section id="login-panel" class="panel">
-            <h2 id="login-title" data-i18n="login">로그인</h2>
+              <h2 id="login-title" data-i18n="adminAccessRequired">관리자 비밀번호가 필요합니다.</h2>
             <div class="form-grid admin-section">
               <label class="field">
                 <span data-i18n="password">비밀번호</span>
@@ -141,10 +141,8 @@
             </section>
 
             <section class="panel admin-section">
-              <h2 data-i18n="changePassword">비밀번호 변경</h2>
+              <h2 data-i18n="dataManagement">CSV 데이터 관리</h2>
               <div class="button-row admin-section">
-                <input id="new-password" type="password" data-i18n-placeholder="newPassword" />
-                <button id="change-password" class="ghost-button" data-i18n="save">저장</button>
                 <button id="export-settings" class="ghost-button" data-i18n="exportSettings">설정 내보내기</button>
                 <label class="ghost-button">
                   <span data-i18n="importSettings">설정 가져오기</span>
@@ -157,8 +155,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260604-db-sync"></script>
-    <script src="i18n.js?v=20260604-db-sync"></script>
-    <script src="admin.js?v=20260604-db-sync"></script>
+    <script src="storage.js?v=20260604-role-auth"></script>
+    <script src="i18n.js?v=20260604-role-auth"></script>
+    <script src="admin.js?v=20260604-role-auth"></script>
   </body>
 </html>

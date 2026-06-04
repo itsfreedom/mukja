@@ -8,7 +8,18 @@
 
   function rows() {
     const date = dateFilter.value;
-    return Store.getHistory().filter((entry) => !date || entry.date === date);
+    const session = Store.getAuth();
+    return Store.getHistory().flatMap((entry) => {
+      if (date && entry.date !== date) return [];
+      if (session?.role !== "department" || !session.department) return [entry];
+      const items = entry.items.filter((item) => item.target === session.department);
+      return items.length ? [{ ...entry, items }] : [];
+    });
+  }
+
+  function canManageHistory() {
+    const role = Store.getAuth()?.role;
+    return role === "restaurant" || role === "admin";
   }
 
   function render() {
@@ -36,7 +47,7 @@
                   <strong>${entry.time} · ${entry.mode === "simple" ? I18n.t("simpleMode") : I18n.t("normalMode")}</strong>
                   ${entry.mode === "simple" ? "" : `<div class="item-meta">${entry.employee || "-"} · ${entry.items.map((item) => I18n.targetLabel(item.target)).filter(Boolean).join(", ")}</div>`}
                 </div>
-                <button class="danger-button" data-delete="${entry.id}" type="button">${I18n.t("delete")}</button>
+                ${canManageHistory() ? `<button class="danger-button" data-delete="${entry.id}" type="button">${I18n.t("delete")}</button>` : ""}
               </div>
               ${entry.mode === "simple" ? `
                 <div class="simple-history-list admin-section">
@@ -68,15 +79,17 @@
   }
 
   dateFilter.addEventListener("change", render);
+  document.getElementById("clear-all").classList.toggle("hidden", !canManageHistory());
   document.getElementById("download-date").addEventListener("click", () => {
     const date = dateFilter.value || Store.today();
-    const selected = Store.getHistory().filter((entry) => entry.date === date);
+    const selected = rows().filter((entry) => entry.date === date);
     Store.downloadText(`ingredient-request-${date}.csv`, Store.historyToCsv(selected), "text/csv;charset=utf-8");
   });
   document.getElementById("download-all").addEventListener("click", () => {
-    Store.downloadText("ingredient-request-all.csv", Store.historyToCsv(Store.getHistory()), "text/csv;charset=utf-8");
+    Store.downloadText("ingredient-request-all.csv", Store.historyToCsv(rows()), "text/csv;charset=utf-8");
   });
   document.getElementById("clear-all").addEventListener("click", () => {
+    if (!canManageHistory()) return;
     if (confirm(I18n.t("confirmClear"))) {
       Store.clearHistory();
       render();

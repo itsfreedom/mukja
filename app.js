@@ -46,12 +46,18 @@
     const history = Store.getHistory();
     const latest = history[0]?.id === "sample-last-order" ? sampleLastOrder() : history[0] || sampleLastOrder();
     const simple = latest.mode === "simple";
+    const role = Store.getAuth()?.role;
+    const department = Store.getAuth()?.department;
+    const canSaveReceived = role === "restaurant" || role === "admin";
+    const visibleItems = role === "department" && department
+      ? latest.items.filter((item) => item.target === department)
+      : latest.items;
     const sections = Store.getSections().filter((section) =>
-      latest.items.some((item) => sectionFor(item) === section)
+      visibleItems.some((item) => sectionFor(item) === section)
     );
     lastOrderDate.textContent = latest.date || "";
 
-    const groups = latest.items.reduce((acc, item) => {
+    const groups = visibleItems.reduce((acc, item) => {
       const section = sectionFor(item);
       acc[section] = acc[section] || [];
       acc[section].push(item);
@@ -69,7 +75,7 @@
                 const index = orderedItems.findIndex((candidate) => candidate.name === item.name && candidate.displaySection === section);
                 return `
                   <label class="receive-row">
-                    <input type="checkbox" data-receive-index="${index}" ${item.received ? "checked" : ""} />
+                    <input type="checkbox" data-receive-index="${index}" ${item.received ? "checked" : ""} ${canSaveReceived ? "" : "disabled"} />
                     <span class="receive-row-main">
                       <strong>${item.name}</strong>
                       ${simple ? "" : `<span>${[item.quantity, item.unit].filter(Boolean).join(" ")} · ${I18n.targetLabel(item.target || "")}</span>`}
@@ -81,10 +87,10 @@
           </section>
         `).join("")}
       </div>
-      <button id="save-received" class="button" type="button">${I18n.t("saveReceived")}</button>
+      ${canSaveReceived ? `<button id="save-received" class="button" type="button">${I18n.t("saveReceived")}</button>` : ""}
       <p id="received-status" class="status"></p>
     `;
-    document.getElementById("save-received").addEventListener("click", () => {
+    document.getElementById("save-received")?.addEventListener("click", () => {
       const checkedKeys = new Set(
         Array.from(lastOrderList.querySelectorAll("[data-receive-index]:checked")).map((input) => {
           const item = orderedItems[Number(input.dataset.receiveIndex)];

@@ -52,7 +52,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  position: static;
+  position: relative;
   height: auto;
 }
 
@@ -168,6 +168,68 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   line-height: 1;
 }
 .sidebar-footer { display: none; }
+.role-strip {
+  position: absolute;
+  left: 56px;
+  right: 10px;
+  top: 47px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+  padding: 2px 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.role-strip button {
+  min-height: 24px;
+  border: 1px solid rgba(184, 196, 240, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #d9e3ff;
+  padding: 3px 9px;
+  cursor: pointer;
+  font-size: 0.68rem;
+}
+
+.auth-locked .main-frame,
+.auth-locked .layout-clock {
+  display: none;
+}
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  align-items: center;
+  padding: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(92, 117, 255, 0.18), transparent 28%),
+    rgba(8, 10, 21, 0.96);
+}
+.auth-card {
+  width: min(100%, 390px);
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(19, 26, 47, 0.96), rgba(13, 17, 32, 0.96));
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+.auth-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #e7e6d1;
+}
+.auth-card h1 {
+  font-size: 1.42rem;
+}
 
 .main-frame { min-width: 0; }
 .main-surface {
@@ -692,6 +754,10 @@ td { color: #dbe2ff; font-size: 0.9rem; }
     position: sticky;
     top: 18px;
     height: calc(100dvh - 36px);
+  }
+  .role-strip {
+    position: static;
+    min-height: 34px;
   }
   .brand { gap: 13px; padding: 4px 6px 12px; }
   .brand-mark { width: 42px; height: 42px; border-radius: 14px; }

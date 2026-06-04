@@ -84,10 +84,11 @@
       noRecipes: "표시할 레시피가 없습니다.",
       login: "로그인",
       logout: "로그아웃",
+      accessPassword: "입장 비밀번호",
+      enter: "입장",
+      currentRole: "현재 권한",
+      adminAccessRequired: "관리자 비밀번호가 필요합니다.",
       password: "비밀번호",
-      setPassword: "관리자 비밀번호 설정",
-      changePassword: "비밀번호 변경",
-      newPassword: "새 비밀번호",
       unlockAdmin: "관리자 열기",
       wrongPassword: "비밀번호가 올바르지 않습니다.",
       adminNote: "이 비밀번호는 실수 방지용이며 실제 보안 기능이 아닙니다.",
@@ -206,10 +207,11 @@
       noRecipes: "No recipes to show.",
       login: "Login",
       logout: "Logout",
+      accessPassword: "Access Password",
+      enter: "Enter",
+      currentRole: "Current Role",
+      adminAccessRequired: "Admin password is required.",
       password: "Password",
-      setPassword: "Set Admin Password",
-      changePassword: "Change Password",
-      newPassword: "New Password",
       unlockAdmin: "Open Admin",
       wrongPassword: "Password is incorrect.",
       adminNote: "This password only prevents accidental edits. It is not real security.",
@@ -273,6 +275,26 @@
     return (sectionLabels[lang()] && sectionLabels[lang()][section]) || section;
   }
 
+  function roleLabel(role) {
+    const labels = {
+      ko: {
+        "카페테리아": "카페테리아",
+        "야채": "야채",
+        "그로서리": "그로서리",
+        "레스토랑": "레스토랑",
+        "관리자": "관리자"
+      },
+      en: {
+        "카페테리아": "Cafeteria",
+        "야채": "Vegetables",
+        "그로서리": "Grocery",
+        "레스토랑": "Restaurant",
+        "관리자": "Admin"
+      }
+    };
+    return labels[lang()]?.[role] || role;
+  }
+
   function applyI18n() {
     document.documentElement.lang = lang();
     document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -286,5 +308,5 @@
     });
   }
 
-  window.I18n = { translations, lang, t, targetLabel, sectionLabel, applyI18n };
+  window.I18n = { translations, lang, t, targetLabel, sectionLabel, roleLabel, applyI18n };
 })();

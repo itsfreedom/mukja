@@ -132,6 +132,8 @@ function clientIp(event) {
 function clientInfo(event) {
   return {
     memberId: header(event, "x-mukja-member-id") || "anonymous",
+    role: header(event, "x-mukja-role") || "anonymous",
+    department: header(event, "x-mukja-department"),
     ip: clientIp(event),
     userAgent: header(event, "user-agent")
   };
@@ -140,13 +142,15 @@ function clientInfo(event) {
 async function recordAccess(client, event, path) {
   const info = clientInfo(event);
   await client.query(`
-    insert into members (id, last_ip, last_user_agent)
-    values ($1, $2, $3)
+    insert into members (id, role, display_name, last_ip, last_user_agent)
+    values ($1, $2, $3, $4, $5)
     on conflict (id) do update set
       last_seen_at = now(),
+      role = excluded.role,
+      display_name = excluded.display_name,
       last_ip = excluded.last_ip,
       last_user_agent = excluded.last_user_agent
-  `, [info.memberId, info.ip, info.userAgent]);
+  `, [info.memberId, info.role, info.department || info.role, info.ip, info.userAgent]);
   await client.query(`
     insert into access_logs (member_id, path, method, ip_address, user_agent)
     values ($1, $2, $3, $4, $5)

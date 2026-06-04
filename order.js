@@ -26,7 +26,7 @@
   }
 
   function renderFilters() {
-    els.target.innerHTML = Store.getTargets().map((target) => `<option value="${target}">${I18n.targetLabel(target)}</option>`).join("");
+    els.target.innerHTML = Store.getAllowedTargets().map((target) => `<option value="${target}">${I18n.targetLabel(target)}</option>`).join("");
     const employees = Store.getEmployees().filter((emp) => emp.enabled);
     els.employee.innerHTML = employees.map((emp) => `<option value="${emp.name}">${emp.name}</option>`).join("");
   }
