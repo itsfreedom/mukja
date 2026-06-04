@@ -1,0 +1,17 @@
+{
+  "name": "먹자 골목 관리",
+  "short_name": "먹자관리",
+  "description": "Mokja Alley ingredient request and recipe management PWA",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#080a15",
+  "theme_color": "#080a15",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%235d76ff'/%3E%3Ctext x='96' y='119' font-size='76' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'%3ER%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

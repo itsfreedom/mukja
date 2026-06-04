@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080a15" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>관리자</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css?v=20260604-order-scroll" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" data-layout-sidebar></aside>
+      <main class="main-frame">
+        <div class="main-surface">
+          <header class="page-header">
+            <div>
+              <p class="eyebrow" data-i18n="appName">식당 재료 요청</p>
+              <h1 data-i18n="admin">관리자</h1>
+            </div>
+            <button id="logout" class="ghost-button hidden" data-i18n="logout">로그아웃</button>
+          </header>
+
+          <section id="login-panel" class="panel">
+            <h2 id="login-title" data-i18n="login">로그인</h2>
+            <div class="form-grid admin-section">
+              <label class="field">
+                <span data-i18n="password">비밀번호</span>
+                <input id="admin-password" type="password" />
+              </label>
+              <div class="field">
+                <span class="field-label">&nbsp;</span>
+                <button id="admin-login" class="button" data-i18n="unlockAdmin">관리자 열기</button>
+              </div>
+            </div>
+            <p id="login-status" class="status"></p>
+          </section>
+
+          <section id="admin-panel" class="hidden">
+            <section class="panel">
+              <div class="list-card-header">
+                <h2 data-i18n="modeSetting">모드 설정</h2>
+                <span class="badge" id="current-mode"></span>
+              </div>
+              <div class="button-row admin-section">
+                <button class="ghost-button" data-mode="simple" data-i18n="simpleMode">간편모드</button>
+                <button class="ghost-button" data-mode="normal" data-i18n="normalMode">일반모드</button>
+              </div>
+            </section>
+
+            <div class="admin-grid admin-section">
+              <section class="panel">
+                <h2 data-i18n="employeeManagement">직원 관리</h2>
+                <div id="employee-list" class="list admin-section"></div>
+                <div class="button-row admin-section">
+                  <input id="employee-name" data-i18n-placeholder="name" />
+                  <button id="add-employee" class="button" data-i18n="add">추가</button>
+                </div>
+              </section>
+
+              <section class="panel">
+                <h2 data-i18n="sectionManagement">섹션 관리</h2>
+                <div id="section-list" class="list admin-section"></div>
+                <div class="button-row admin-section">
+                  <input id="section-name" data-i18n-placeholder="section" />
+                  <button id="add-section" class="button" data-i18n="add">추가</button>
+                </div>
+              </section>
+            </div>
+
+            <section class="panel admin-section">
+              <h2 data-i18n="ingredientManagement">재료 관리</h2>
+              <div class="form-grid admin-section">
+                <input id="ingredient-name" data-i18n-placeholder="name" />
+                <select id="ingredient-section"></select>
+                <input id="ingredient-unit" data-i18n-placeholder="unit" />
+                <select id="ingredient-target">
+                  <option value="카페테리아">카페테리아</option>
+                  <option value="야채">야채</option>
+                  <option value="그로서리">그로서리</option>
+                </select>
+                <button id="add-ingredient" class="button" data-i18n="add">추가</button>
+              </div>
+              <div id="ingredient-list" class="table-wrap admin-section"></div>
+            </section>
+
+            <section class="panel admin-section">
+              <h2 data-i18n="recipeManagement">레시피 관리</h2>
+              <div class="form-grid admin-section">
+                <input id="recipe-name" data-i18n-placeholder="name" />
+                <select id="recipe-section"></select>
+                <input id="recipe-description" data-i18n-placeholder="description" />
+                <input id="recipe-image" data-i18n-placeholder="imageUrl" />
+              </div>
+              <div class="form-grid admin-section">
+                <textarea id="recipe-ingredients" data-i18n-placeholder="ingredients"></textarea>
+                <textarea id="recipe-steps" data-i18n-placeholder="steps"></textarea>
+                <textarea id="recipe-notes" data-i18n-placeholder="notes"></textarea>
+              </div>
+              <div class="button-row admin-section">
+                <button id="add-recipe" class="button" data-i18n="add">추가</button>
+                <input id="recipe-search" data-i18n-placeholder="searchRecipes" />
+                <select id="recipe-filter"></select>
+              </div>
+              <div id="recipe-list" class="table-wrap admin-section"></div>
+            </section>
+
+            <section class="panel admin-section">
+              <h2 data-i18n="dataManagement">CSV 데이터 관리</h2>
+              <div class="admin-grid admin-section">
+                <div class="list-card">
+                  <div class="list-card-header">
+                    <div>
+                      <strong data-i18n="orderCsv">주문 리스트 CSV</strong>
+                    </div>
+                  </div>
+                  <div class="button-row admin-section">
+                    <button id="export-history-csv" class="ghost-button" data-i18n="exportOrderCsv">주문 리스트 CSV 내보내기</button>
+                    <label class="ghost-button">
+                      <span data-i18n="importOrderCsv">주문 리스트 CSV 가져오기</span>
+                      <input id="import-history-csv" type="file" accept=".csv,text/csv" class="hidden" />
+                    </label>
+                  </div>
+                </div>
+                <div class="list-card">
+                  <div class="list-card-header">
+                    <div>
+                      <strong data-i18n="recipeCsv">레시피 CSV</strong>
+                    </div>
+                  </div>
+                  <div class="button-row admin-section">
+                    <button id="export-recipes-csv" class="ghost-button" data-i18n="exportRecipeCsv">레시피 CSV 내보내기</button>
+                    <label class="ghost-button">
+                      <span data-i18n="importRecipeCsv">레시피 CSV 가져오기</span>
+                      <input id="import-recipes-csv" type="file" accept=".csv,text/csv" class="hidden" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel admin-section">
+              <h2 data-i18n="changePassword">비밀번호 변경</h2>
+              <div class="button-row admin-section">
+                <input id="new-password" type="password" data-i18n-placeholder="newPassword" />
+                <button id="change-password" class="ghost-button" data-i18n="save">저장</button>
+                <button id="export-settings" class="ghost-button" data-i18n="exportSettings">설정 내보내기</button>
+                <label class="ghost-button">
+                  <span data-i18n="importSettings">설정 가져오기</span>
+                  <input id="import-settings" type="file" accept="application/json" class="hidden" />
+                </label>
+              </div>
+              <p id="admin-status" class="status"></p>
+            </section>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script src="storage.js?v=20260604-order-scroll"></script>
+    <script src="i18n.js?v=20260604-order-scroll"></script>
+    <script src="admin.js?v=20260604-order-scroll"></script>
+  </body>
+</html>

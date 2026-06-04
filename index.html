@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080a15" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>먹자 골목 관리</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css?v=20260604-order-scroll" />
+  </head>
+  <body class="home-page">
+    <div class="shell">
+      <aside class="sidebar" data-layout-sidebar></aside>
+      <main class="main-frame">
+        <div class="main-surface">
+          <section class="admin-section home-last-order">
+            <div class="last-order-header">
+              <div>
+                <div class="last-order-title-row">
+                  <h2 data-i18n="lastOrder">마지막 주문 내역</h2>
+                  <span id="last-order-date" class="last-order-date"></span>
+                </div>
+              </div>
+              <a class="more-link" href="history.html" data-i18n="more">more...</a>
+            </div>
+            <div id="last-order-list" class="section-history-list admin-section"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <script src="storage.js?v=20260604-order-scroll"></script>
+    <script src="i18n.js?v=20260604-order-scroll"></script>
+    <script src="app.js?v=20260604-order-scroll"></script>
+  </body>
+</html>

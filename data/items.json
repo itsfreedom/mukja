@@ -1,0 +1,18 @@
+[
+  { "id": "item-donkatsu", "name": "돈까스", "section": "반조리", "unit": "개", "target": "카페테리아", "enabled": true },
+  { "id": "item-mandu", "name": "만두", "section": "반조리", "unit": "봉", "target": "카페테리아", "enabled": true },
+  { "id": "item-onion", "name": "양파", "section": "야채", "unit": "kg", "target": "야채", "enabled": true },
+  { "id": "item-potato", "name": "감자", "section": "야채", "unit": "박스", "target": "야채", "enabled": true },
+  { "id": "item-green-onion", "name": "대파", "section": "야채", "unit": "단", "target": "야채", "enabled": true },
+  { "id": "item-kimchi", "name": "김치", "section": "반찬", "unit": "kg", "target": "카페테리아", "enabled": true },
+  { "id": "item-danmuji", "name": "단무지", "section": "반찬", "unit": "팩", "target": "카페테리아", "enabled": true },
+  { "id": "item-oil", "name": "식용유", "section": "소스", "unit": "통", "target": "카페테리아", "enabled": true },
+  { "id": "item-soy-sauce", "name": "간장", "section": "소스", "unit": "병", "target": "카페테리아", "enabled": true },
+  { "id": "item-eggs", "name": "계란", "section": "냉장", "unit": "판", "target": "카페테리아", "enabled": true },
+  { "id": "item-flour", "name": "밀가루", "section": "식재료", "unit": "kg", "target": "그로서리", "enabled": true },
+  { "id": "item-milk", "name": "우유", "section": "냉장", "unit": "L", "target": "카페테리아", "enabled": true },
+  { "id": "item-cheese", "name": "치즈", "section": "냉장", "unit": "팩", "target": "카페테리아", "enabled": true },
+  { "id": "item-frozen-mandu", "name": "냉동만두", "section": "냉동", "unit": "봉", "target": "카페테리아", "enabled": true },
+  { "id": "item-frozen-potato", "name": "냉동감자", "section": "냉동", "unit": "봉", "target": "그로서리", "enabled": true },
+  { "id": "item-other", "name": "기타요청", "section": "기타", "unit": "개", "target": "그로서리", "enabled": true }
+]
