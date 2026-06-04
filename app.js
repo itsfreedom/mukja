@@ -44,9 +44,6 @@
     const sections = Object.keys(groups);
     list.innerHTML = `
       <article class="list-card">
-        <div class="list-card-header">
-          <strong>${entry.date} ${entry.time || ""}</strong>
-        </div>
         ${sections.map((section) => `
           <section class="item-section home-request-section">
             <h3>${I18n.sectionLabel(section)}</h3>

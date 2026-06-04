@@ -17,7 +17,7 @@
     checked: false,
     available: false
   };
-  const demoSeedVersion = "home-20";
+  const demoSeedVersion = "home-20b";
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
   const defaultEmployees = [
