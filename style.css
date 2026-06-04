@@ -565,7 +565,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font-weight: 700;
 }
 .home-action-row {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .memo-panel {
   display: grid;

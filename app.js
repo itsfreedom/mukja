@@ -167,7 +167,6 @@
         </label>
         <div class="button-row home-action-row">
           <button class="button" id="home-save" type="button">저장</button>
-          <button class="ghost-button" id="home-update" type="button">수정</button>
           <button class="danger-button" id="home-reset" type="button">초기화</button>
         </div>
       </section>
@@ -234,13 +233,12 @@
         );
       });
     });
-    document.getElementById("home-save")?.addEventListener("click", saveSnapshot);
-    document.getElementById("home-update")?.addEventListener("click", updateCurrent);
+    document.getElementById("home-save")?.addEventListener("click", saveCurrent);
     document.getElementById("home-reset")?.addEventListener("click", resetDraft);
     I18n.applyI18n();
   }
 
-  function buildEntry({ snapshot = false } = {}) {
+  function buildEntry() {
     if (!currentEntry) return null;
     const currentSlot = sessionMemoSlot();
     const baseMemos = orderedMemos(Array.isArray(currentEntry.memos) ? currentEntry.memos : []);
@@ -252,9 +250,6 @@
     ];
     const entry = {
       ...currentEntry,
-      id: snapshot ? Store.id("history") : currentEntry.id,
-      date: snapshot ? Store.today() : currentEntry.date,
-      time: snapshot ? Store.nowTime() : currentEntry.time,
       items: draftItems.map((item) => ({ ...item })),
       memos,
       memo: memoText(memos)
@@ -267,14 +262,7 @@
     setStatus(I18n.t("saved"));
   }
 
-  function saveSnapshot() {
-    const entry = buildEntry({ snapshot: true });
-    if (!entry) return;
-    Store.saveHistoryEntry(entry);
-    refreshFrom(entry);
-  }
-
-  function updateCurrent() {
+  function saveCurrent() {
     const entry = buildEntry();
     if (!entry) return;
     Store.saveHistoryEntry(entry);
