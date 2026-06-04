@@ -1812,7 +1812,40 @@ body {
   width: 18px;
   height: 18px;
   min-height: 18px;
-  accent-color: #82a8ff;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid rgba(184, 196, 240, 0.72);
+  border-radius: 4px;
+  background: #2d3448;
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.history-detail-row input[type="checkbox"]::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+}
+.history-detail-row input[type="checkbox"]:checked {
+  border-color: #82a8ff;
+  background: #4f7dff;
+}
+.history-detail-row input[type="checkbox"]:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+.history-detail-row input[type="checkbox"]:disabled {
+  border-color: #a5a7af;
+  background: #8b8e98;
+  cursor: default;
+  opacity: 1;
+}
+.history-detail-row input[type="checkbox"]:disabled:checked::after {
+  border-color: #ff4d5f;
 }
 
 .menu-category-group {
