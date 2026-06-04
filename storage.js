@@ -428,21 +428,14 @@
   }
 
   async function hydrateHistoryFromApi() {
-    const localHistory = getJson(keys.history, []);
     try {
       const data = await apiRequest("/history");
       const remoteHistory = Array.isArray(data.history) ? data.history : [];
-      if (remoteHistory.length) {
-        setJson(keys.history, remoteHistory);
-      } else if (localHistory.length) {
-        await apiRequest("/history", {
-          method: "PUT",
-          body: JSON.stringify({ history: localHistory })
-        });
-      }
-    } catch {
+      setJson(keys.history, remoteHistory);
+    } catch (error) {
       apiState.checked = true;
       apiState.available = false;
+      apiState.error = error?.message || "API unavailable";
     }
   }
 
