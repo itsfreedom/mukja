@@ -345,86 +345,6 @@
     ].forEach((key) => localStorage.removeItem(key));
   }
 
-  function legacyLocalData() {
-    return {
-      accessAccounts: getJson("restaurant_access_codes", null),
-      employees: getJson("restaurant_employees", null),
-      sections: getJson("restaurant_sections", null),
-      ingredients: getJson("restaurant_ingredients", null),
-      recipes: getJson("restaurant_recipes", null),
-      menus: getJson("restaurant_menus", null),
-      history: getJson("restaurant_history", null)
-    };
-  }
-
-  function hasLegacyLocalData(data) {
-    return Boolean(
-      (data.accessAccounts && typeof data.accessAccounts === "object" && Object.keys(data.accessAccounts).length) ||
-      (Array.isArray(data.employees) && data.employees.length) ||
-      (Array.isArray(data.sections) && data.sections.length) ||
-      (Array.isArray(data.ingredients) && data.ingredients.length) ||
-      (Array.isArray(data.recipes) && data.recipes.length) ||
-      (Array.isArray(data.menus) && data.menus.length) ||
-      (Array.isArray(data.history) && data.history.length)
-    );
-  }
-
-  function mergeRowsById(remoteRows, legacyRows, normalize = (row) => row) {
-    const rows = new Map();
-    (Array.isArray(remoteRows) ? remoteRows : []).forEach((row) => {
-      if (row?.id) rows.set(row.id, normalize(row));
-    });
-    (Array.isArray(legacyRows) ? legacyRows : []).forEach((row) => {
-      if (row?.id) rows.set(row.id, normalize(row));
-    });
-    return Array.from(rows.values());
-  }
-
-  function mergeHistory(remoteRows, legacyRows) {
-    const realLegacyRows = (Array.isArray(legacyRows) ? legacyRows : []).filter((entry) =>
-      entry?.id && !String(entry.id).startsWith("history-test-")
-    );
-    return mergeRowsById(remoteRows, realLegacyRows)
-      .sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`));
-  }
-
-  async function migrateLegacyLocalData() {
-    const legacy = legacyLocalData();
-    if (!hasLegacyLocalData(legacy)) {
-      clearLegacyLocalData();
-      return false;
-    }
-    const migrated = {
-      accessAccounts: {
-        ...dataState.accessAccounts,
-        ...(legacy.accessAccounts && typeof legacy.accessAccounts === "object" ? legacy.accessAccounts : {})
-      },
-      employees: mergeRowsById(dataState.employees, legacy.employees),
-      sections: Array.from(new Set([
-        ...dataState.sections,
-        ...(Array.isArray(legacy.sections) ? legacy.sections : [])
-      ])).filter(Boolean),
-      ingredients: mergeRowsById(dataState.ingredients, legacy.ingredients, normalizeIngredient),
-      recipes: mergeRowsById(dataState.recipes, legacy.recipes),
-      menus: mergeRowsById(dataState.menus, legacy.menus, normalizeMenu),
-      history: mergeHistory(dataState.history, legacy.history)
-    };
-    await apiRequest("/seed-data", {
-      method: "PUT",
-      body: JSON.stringify(migrated)
-    });
-    dataState.accessAccounts = migrated.accessAccounts;
-    dataState.employees = migrated.employees;
-    dataState.sections = migrated.sections;
-    dataState.ingredients = migrated.ingredients;
-    dataState.recipes = migrated.recipes;
-    dataState.menus = migrated.menus;
-    dataState.history = migrated.history;
-    clearLegacyLocalData();
-    window.dispatchEvent(new CustomEvent("store:migrated"));
-    return true;
-  }
-
   function memberId() {
     let value = localStorage.getItem(keys.memberId);
     if (!value) {
@@ -692,11 +612,7 @@
     await hydrateHistoryFromApi();
     await hydrateRecipesFromApi();
     await hydrateMenusFromApi();
-    migrateLegacyLocalData().catch((error) => {
-      apiState.checked = true;
-      apiState.available = false;
-      apiState.error = error?.message || "Legacy migration failed";
-    });
+    clearLegacyLocalData();
     localStorage.setItem(keys.initialized, "true");
   }
 
