@@ -170,6 +170,25 @@
     }
   }
 
+  async function hydrateRecipesFromApi() {
+    const localRecipes = getJson(keys.recipes, []);
+    try {
+      const data = await apiRequest("/recipes");
+      const remoteRecipes = Array.isArray(data.recipes) ? data.recipes : [];
+      if (remoteRecipes.length) {
+        setJson(keys.recipes, remoteRecipes);
+      } else if (localRecipes.length) {
+        await apiRequest("/recipes", {
+          method: "PUT",
+          body: JSON.stringify({ recipes: localRecipes })
+        });
+      }
+    } catch {
+      apiState.checked = true;
+      apiState.available = false;
+    }
+  }
+
   function normalizeTarget(item) {
     if (!item) return item;
     if (item.target === "마트") return { ...item, target: item.section === "야채" ? "야채" : "그로서리" };
@@ -213,6 +232,7 @@
       setJson(keys.ingredients, getJson(keys.ingredients, []).map(normalizeIngredient));
     }
     await hydrateHistoryFromApi();
+    await hydrateRecipesFromApi();
     localStorage.setItem(keys.initialized, "true");
   }
 
@@ -444,6 +464,31 @@
     syncQuietly(() => apiRequest("/history", { method: "DELETE" }));
   }
 
+  function setRecipes(recipes) {
+    setJson(keys.recipes, recipes);
+    syncQuietly(() => apiRequest("/recipes", {
+      method: "PUT",
+      body: JSON.stringify({ recipes })
+    }));
+  }
+
+  function saveRecipe(recipe) {
+    const recipes = getJson(keys.recipes, []);
+    const next = recipes.some((row) => row.id === recipe.id)
+      ? recipes.map((row) => row.id === recipe.id ? recipe : row)
+      : [...recipes, recipe];
+    setJson(keys.recipes, next);
+    syncQuietly(() => apiRequest("/recipes", {
+      method: "POST",
+      body: JSON.stringify({ recipe })
+    }));
+  }
+
+  function deleteRecipe(idValue) {
+    setJson(keys.recipes, getJson(keys.recipes, []).filter((recipe) => recipe.id !== idValue));
+    syncQuietly(() => apiRequest(`/recipes/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+  }
+
   window.Store = {
     keys,
     init,
@@ -461,7 +506,9 @@
     getIngredients: () => getJson(keys.ingredients, []),
     setIngredients: (v) => setJson(keys.ingredients, v),
     getRecipes: () => getJson(keys.recipes, []),
-    setRecipes: (v) => setJson(keys.recipes, v),
+    setRecipes,
+    saveRecipe,
+    deleteRecipe,
     getHistory: () => getJson(keys.history, []),
     setHistory,
     addHistory: saveHistoryEntry,
