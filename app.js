@@ -154,7 +154,7 @@
       "그로서리": ["상온", "냉장", "냉동", "기타"]
     };
     const targetGroups = draftItems.reduce((acc, item) => {
-      const target = isDepartment ? "요청 품목" : targetFor(item);
+      const target = isDepartment ? (session.department || targetFor(item)) : targetFor(item);
       const category = categoryFor(item);
       acc[target] = acc[target] || {};
       acc[target][category] = acc[target][category] || [];
@@ -168,9 +168,11 @@
           const categoryGroups = targetGroups[target];
           const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
           return `
-            <section class="home-target-section">
-              ${isDepartment ? "" : `<h2>${I18n.targetLabel(target)}</h2>`}
-              ${categories.map((category) => renderCategorySection(category, categoryGroups[category])).join("")}
+            <section class="home-target-group">
+              <h2>${I18n.targetLabel(target)}</h2>
+              <div class="home-target-section">
+                ${categories.map((category) => renderCategorySection(category, categoryGroups[category])).join("")}
+              </div>
             </section>
           `;
         }).join("")}

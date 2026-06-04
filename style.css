@@ -527,6 +527,20 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font-size: 1rem;
   padding-top: 10px;
 }
+.home-target-group {
+  display: grid;
+  gap: 8px;
+}
+.home-target-group + .home-target-group {
+  margin-top: 16px;
+}
+.home-target-group > h2 {
+  color: #eef3ff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0 2px;
+}
 .home-target-section {
   display: grid;
   gap: 12px;
@@ -534,15 +548,6 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
   padding: 14px;
-}
-.home-target-section + .home-target-section {
-  margin-top: 12px;
-}
-.home-target-section > h2 {
-  color: #eef3ff;
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.2;
 }
 .home-memo-panel {
   margin-top: 18px;
