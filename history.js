@@ -1,6 +1,5 @@
 (async function () {
   await Store.init();
-  localStorage.setItem("restaurant_sidebar_collapsed", "0");
   AppUI.renderSidebar("history");
   AppUI.registerServiceWorker();
 
@@ -9,10 +8,13 @@
   const weekView = document.getElementById("history-week-view");
   const detailView = document.getElementById("history-detail");
   const closeDetail = document.getElementById("close-detail");
+  const pageTitle = document.getElementById("history-page-title");
+  const pageMeta = document.getElementById("history-page-meta");
   const list = document.getElementById("history-list");
   const pager = document.getElementById("week-pager");
   const pageParam = Number(params.get("week") || "0");
   let weekOffset = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
+  const session = Store.getAuth();
 
   function visibleHistory() {
     const session = Store.getAuth();
@@ -91,12 +93,70 @@
         ${entries.map((entry, index) => `
           <a class="history-row" href="history.html?id=${encodeURIComponent(entry.id)}&week=${weekOffset}">
             <span>${index + 1}</span>
-            <strong>${entry.date} ${entry.time || ""}</strong>
+            <strong>${entry.date}</strong>
             <span class="history-arrow">&gt;</span>
           </a>
         `).join("")}
       </div>
     `;
+  }
+
+  function groupItemsByTarget(items) {
+    const order = ["카페테리아", "야채", "그로서리"];
+    const groups = items.reduce((acc, item) => {
+      const target = item.target || "기타";
+      acc[target] = acc[target] || [];
+      acc[target].push(item);
+      return acc;
+    }, {});
+    return [
+      ...order.filter((target) => groups[target]).map((target) => [target, groups[target]]),
+      ...Object.keys(groups).filter((target) => !order.includes(target)).map((target) => [target, groups[target]])
+    ];
+  }
+
+  function checkCell(item, field) {
+    const checked = item[field] ? "checked" : "";
+    const disabled = session?.role === "admin" ? "" : "disabled";
+    return `<input type="checkbox" data-detail-check="${item.id}|${field}" ${checked} ${disabled} />`;
+  }
+
+  function renderDetailGroups(entry) {
+    return groupItemsByTarget(entry.items || []).map(([target, items]) => `
+      <section class="history-detail-card">
+        <h2>${I18n.targetLabel(target)}</h2>
+        <div class="history-detail-grid history-detail-head">
+          <span>${I18n.t("items")}</span>
+          <span>출고 확인</span>
+          <span>입고 확인</span>
+        </div>
+        ${items.map((item) => `
+          <div class="history-detail-grid history-detail-row">
+            <strong>${I18n.itemName(item)}</strong>
+            <span>${checkCell(item, "received")}</span>
+            <span>${checkCell(item, "restaurantReceived")}</span>
+          </div>
+        `).join("")}
+      </section>
+    `).join("");
+  }
+
+  function bindDetailChecks(entry) {
+    detailView.querySelectorAll("[data-detail-check]").forEach((input) => {
+      input.addEventListener("change", () => {
+        if (session?.role !== "admin") return;
+        const [itemId, field] = input.dataset.detailCheck.split("|");
+        const nextEntry = {
+          ...entry,
+          items: (entry.items || []).map((item) =>
+            item.id === itemId ? { ...item, [field]: input.checked } : item
+          )
+        };
+        Store.saveHistoryEntry(nextEntry);
+        entry.items = nextEntry.items;
+        alert("수정되었습니다.");
+      });
+    });
   }
 
   function renderDetail() {
@@ -108,31 +168,12 @@
     weekView.classList.add("hidden");
     detailView.classList.remove("hidden");
     closeDetail.classList.remove("hidden");
+    pageTitle.textContent = "상세 내역";
+    pageTitle.removeAttribute("data-i18n");
+    pageMeta.textContent = `${entry.date} ${entry.time || ""}`.trim();
     detailView.innerHTML = `
-      <article class="list-card">
-        <div class="list-card-header">
-          <div>
-            <h2>${entry.date} ${entry.time || ""}</h2>
-            <div class="item-meta">${entry.mode === "simple" ? I18n.t("simpleMode") : I18n.t("normalMode")}</div>
-          </div>
-          <span class="badge">${(entry.items || []).length}</span>
-        </div>
-        <div class="table-wrap admin-section">
-          <table>
-            <thead><tr><th>${I18n.t("items")}</th><th>${I18n.t("quantity")}</th><th>${I18n.t("unit")}</th><th>${I18n.t("target")}</th><th>${I18n.t("received")}</th></tr></thead>
-            <tbody>
-              ${(entry.items || []).map((item) => `
-                <tr>
-                  <td>${I18n.itemName(item)}</td>
-                  <td>${item.quantity || ""}</td>
-                  <td>${item.unit || ""}</td>
-                  <td>${I18n.targetLabel(item.target || "")}</td>
-                  <td>${item.received ? "Y" : ""}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
+      <article class="history-detail-content">
+        ${renderDetailGroups(entry)}
         <h3 class="admin-section">${I18n.t("memo")}</h3>
         <div class="memo-log">
           ${Array.isArray(entry.memos) && entry.memos.length
@@ -141,6 +182,7 @@
         </div>
       </article>
     `;
+    bindDetailChecks(entry);
   }
 
   closeDetail.addEventListener("click", () => {

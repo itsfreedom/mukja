@@ -1035,6 +1035,11 @@
           sidebarToggle.setAttribute("aria-label", collapsed ? "메뉴 열기" : "메뉴 닫기");
         });
       }
+      sidebar.querySelectorAll(".nav-link:not(.is-restricted)").forEach((link) => {
+        link.addEventListener("click", () => {
+          localStorage.setItem(sidebarStateKey, "1");
+        });
+      });
       let clock = document.querySelector("[data-layout-clock]");
       if (!clock) {
         clock = document.createElement("div");

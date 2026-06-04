@@ -252,9 +252,38 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 }
 
 .page-header {
-  display: grid;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
+}
+.page-title-stack {
+  display: grid;
+  gap: 4px;
+}
+.page-title-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.icon-close-button {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(184, 196, 240, 0.15);
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
 }
 .home-title-row {
   display: flex;
@@ -1096,7 +1125,9 @@ body {
 }
 
 .page-header {
-  display: grid;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -1730,6 +1761,57 @@ body {
 .history-arrow {
   color: var(--muted);
   text-align: center;
+}
+
+.history-detail-content {
+  display: grid;
+  gap: 14px;
+}
+.history-detail-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(184, 196, 240, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 14px;
+}
+.history-detail-card h2 {
+  color: #eef3ff;
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+.history-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px 74px;
+  gap: 8px;
+  align-items: center;
+}
+.history-detail-head {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(184, 196, 240, 0.12);
+}
+.history-detail-head span:not(:first-child),
+.history-detail-row span {
+  text-align: center;
+}
+.history-detail-row {
+  min-height: 42px;
+  border-bottom: 1px solid rgba(184, 196, 240, 0.08);
+}
+.history-detail-row:last-child {
+  border-bottom: 0;
+}
+.history-detail-row strong {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.history-detail-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
 }
 
 .menu-category-group {

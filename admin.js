@@ -27,14 +27,6 @@
     if (show) renderAll();
   }
 
-  function renderMode() {
-    const mode = Store.getMode();
-    document.getElementById("current-mode").textContent = mode === "simple" ? I18n.t("simpleMode") : I18n.t("normalMode");
-    document.querySelectorAll("[data-mode]").forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.mode === mode);
-    });
-  }
-
   function renderOptions() {
     const options = Store.getSections().map((s) => `<option value="${s}">${I18n.sectionLabel(s)}</option>`).join("");
     document.getElementById("ingredient-section").innerHTML = options;
@@ -140,7 +132,6 @@
   }
 
   function renderAll() {
-    renderMode();
     renderOptions();
     renderAccessAccounts();
     renderSections();
@@ -262,7 +253,6 @@
     setStatus(I18n.t("wrongPassword"));
   });
   logout.addEventListener("click", () => { Store.logoutAuth(); window.location.reload(); });
-  document.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => { Store.setMode(button.dataset.mode); renderAll(); }));
   document.getElementById("add-access").addEventListener("click", () => {
     const password = document.getElementById("access-password").value.trim();
     const role = document.getElementById("access-role").value;
