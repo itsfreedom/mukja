@@ -1053,7 +1053,7 @@
       };
       const nav = [
         ["home", "index.html", "H"],
-        ["history", "history.html", "H"],
+        ["history", "history.html", "L"],
         ["order", "order.html", "D"],
         ["menus", "menu.html", "M"],
         ["admin", "admin.html", "A"]
