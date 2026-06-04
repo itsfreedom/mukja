@@ -303,6 +303,16 @@
     setStatus("초기화했습니다.");
   }
 
+  async function refreshLatestFromDb() {
+    await Store.refreshHistory();
+    renderLatest(latestEntry());
+  }
+
+  window.addEventListener("focus", refreshLatestFromDb);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshLatestFromDb();
+  });
+
   renderLatest(latestEntry());
   I18n.applyI18n();
 })();

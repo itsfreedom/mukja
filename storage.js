@@ -448,10 +448,12 @@
       const data = await apiRequest("/history");
       const remoteHistory = Array.isArray(data.history) ? data.history : [];
       dataState.history = remoteHistory;
+      return remoteHistory;
     } catch (error) {
       apiState.checked = true;
       apiState.available = false;
       apiState.error = error?.message || "API unavailable";
+      return dataState.history;
     }
   }
 
@@ -983,6 +985,7 @@
     discontinueMenu,
     getMenuCategories: menuCategories,
     getHistory: () => dataState.history.slice(),
+    refreshHistory: hydrateHistoryFromApi,
     setHistory,
     addHistory: saveHistoryEntry,
     saveHistoryEntry,
@@ -1158,8 +1161,13 @@
     },
     registerServiceWorker() {
       if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
-        navigator.serviceWorker.register("service-worker.js", { updateViaCache: "none" })
-          .then((registration) => registration.update())
+        const clearCaches = () => {
+          if (!window.caches) return Promise.resolve();
+          return caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
+        };
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+          .then(clearCaches)
           .catch(() => {});
       }
     }
