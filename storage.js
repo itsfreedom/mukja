@@ -525,11 +525,11 @@
 
   function seedLocalTestDataOnce() {
     const marker = localStorage.getItem(keys.demoSeeded);
-    if (marker === demoSeedVersion || marker === "manual" || marker === "reset") return;
+    if (marker === demoSeedVersion || marker === "reset") return;
     const history = getJson(keys.history, []);
     const menus = getJson(keys.menus, []);
-    if (history.length && marker !== "auto") return;
-    if (menus.length > defaultMenuSeeds.length && marker !== "auto") return;
+    if (history.length && !["auto", "manual"].includes(marker || "")) return;
+    if (menus.length > defaultMenuSeeds.length && !["auto", "manual"].includes(marker || "")) return;
     const data = testData();
     setJson(keys.sections, data.sections);
     setJson("restaurant_access_codes", data.accessAccounts);
