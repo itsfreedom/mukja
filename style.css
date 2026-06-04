@@ -936,15 +936,13 @@ td { color: #dbe2ff; font-size: 0.9rem; }
   .action-card-title strong { font-size: 1.34rem; }
 }
 
-/* Mobile-first app frame: keep the UI phone-sized even on desktop browsers. */
+/* Responsive app frame */
 html,
 body {
   min-height: 100dvh;
 }
 
 body {
-  display: flex;
-  justify-content: center;
   background:
     radial-gradient(circle at top left, rgba(92, 117, 255, 0.18), transparent 26%),
     radial-gradient(circle at top right, rgba(143, 94, 212, 0.12), transparent 24%),
@@ -952,13 +950,9 @@ body {
 }
 
 .shell {
-  width: min(100%, 430px);
-  max-width: 430px;
+  width: 100%;
+  max-width: none;
   min-height: 100dvh;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin: 0 auto;
-  padding: 10px;
   padding-bottom: calc(94px + env(safe-area-inset-bottom));
 }
 
@@ -978,11 +972,11 @@ body {
 .brand-mark {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: 999px;
 }
 
 .brand-title {
-  font-size: 0.96rem;
+  font-size: 1.16rem;
 }
 
 .language-box {
@@ -1010,7 +1004,7 @@ body {
   left: 50%;
   bottom: max(10px, env(safe-area-inset-bottom));
   z-index: 100;
-  width: min(calc(100vw - 20px), 410px);
+  width: min(calc(100vw - 20px), 560px);
   transform: translateX(-50%);
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 5px;
@@ -1115,4 +1109,196 @@ h1 {
 
 table {
   min-width: 560px;
+}
+
+@media (min-width: 760px) {
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 22px;
+    padding: 18px;
+    padding-bottom: 18px;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 18px;
+    height: calc(100dvh - 36px);
+    border-radius: 24px;
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .brand {
+    gap: 13px;
+    padding: 4px 6px 12px;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .brand-title {
+    font-size: 1.16rem;
+  }
+
+  .nav {
+    position: static;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    transform: none;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .nav-link {
+    min-height: 44px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    font-size: 1rem;
+    text-align: left;
+  }
+
+  .nav-icon {
+    width: 26px;
+    font-size: 1.25rem;
+  }
+
+  .sidebar-footer {
+    display: block;
+  }
+
+  .main-surface {
+    min-height: calc(100dvh - 36px);
+    border-radius: 28px;
+    padding: 24px;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .header-stack {
+    justify-items: end;
+  }
+
+  h1 {
+    font-size: clamp(1.7rem, 4vw, 2.7rem);
+  }
+
+  .home-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 14px;
+  }
+
+  .dashboard-grid,
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .split {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    gap: 14px;
+  }
+
+  .admin-grid,
+  .section-history-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .card,
+  .action-card,
+  .panel {
+    border-radius: 16px;
+    padding: 18px;
+  }
+
+  .action-card {
+    min-height: 86px;
+  }
+
+  .action-card-title strong {
+    font-size: 1.34rem;
+  }
+
+  .button,
+  .ghost-button,
+  .danger-button {
+    width: auto;
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .item-row {
+    grid-template-columns: 28px minmax(0, 1fr) 92px 86px;
+    min-height: auto;
+    padding: 12px;
+  }
+
+  .item-row .normal-only {
+    grid-column: auto;
+  }
+
+  .section-history-item {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .list-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .order-page .item-list {
+    max-height: min(52dvh, 620px);
+  }
+
+  .home-page .shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-bottom: 18px;
+  }
+
+  .home-page .sidebar {
+    height: calc(100dvh - 36px);
+    padding: 20px 16px;
+  }
+
+  .home-page .main-surface {
+    height: auto;
+    min-height: calc(100dvh - 36px);
+    overflow: visible;
+  }
+}
+
+@media (min-width: 1180px) {
+  .shell {
+    max-width: 1280px;
+  }
 }
