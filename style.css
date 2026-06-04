@@ -2003,10 +2003,99 @@ body {
 
 .recipe-modal-header {
   margin-bottom: 16px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
 }
 
 body.modal-open {
   overflow: hidden;
+}
+
+.recipe-detail-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.recipe-detail-title-row h2 {
+  font-size: 1.25rem;
+  line-height: 1.2;
+}
+
+.recipe-detail-section {
+  gap: 10px;
+}
+
+.recipe-measured-list {
+  display: grid;
+  gap: 7px;
+}
+
+.recipe-measured-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(76px, auto);
+  gap: 12px;
+  align-items: center;
+  min-height: 36px;
+  border-bottom: 1px solid rgba(184, 196, 240, 0.08);
+}
+
+.recipe-measured-row:last-child {
+  border-bottom: 0;
+}
+
+.recipe-measured-row strong {
+  font-weight: 500;
+}
+
+.recipe-measured-row span {
+  color: #d9e3ff;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.recipe-step-list {
+  display: grid;
+  gap: 12px;
+}
+
+.recipe-step-row {
+  display: grid;
+  gap: 10px;
+}
+
+.recipe-step-row img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 196, 240, 0.12);
+}
+
+.recipe-step-row > div {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.recipe-step-row span {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(130, 168, 255, 0.16);
+  color: #d9e3ff;
+  font-weight: 900;
+}
+
+.recipe-step-row p {
+  margin: 2px 0 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 
 .is-disabled {

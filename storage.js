@@ -123,8 +123,95 @@
     ["제육볶음", "식사", "제육 도시락", "Spicy Pork Lunch Box", "18.99"]
   ];
 
-  function recipe(name, section, description, ingredients, steps, notes) {
-    return { id: id("recipe"), name, section, description, ingredients, steps, notes, imageUrl: "", enabled: true, updatedAt: today() };
+  function splitLineParts(line) {
+    const parts = String(line || "").split("|").map((part) => part.trim());
+    return [parts[0] || "", parts.slice(1).join(" | ") || ""];
+  }
+
+  function parseRecipeItems(value) {
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => ({
+          name: String(item?.name || "").trim(),
+          amount: String(item?.amount || item?.quantity || "").trim()
+        }))
+        .filter((item) => item.name);
+    }
+    return String(value || "")
+      .split(/\n|,/)
+      .map((line) => {
+        const [name, amount] = splitLineParts(line);
+        return { name, amount };
+      })
+      .filter((item) => item.name);
+  }
+
+  function parseRecipeSteps(value) {
+    if (Array.isArray(value)) {
+      return value
+        .map((step) => ({
+          text: String(step?.text || step?.description || "").trim(),
+          imageUrl: String(step?.imageUrl || step?.image || "").trim()
+        }))
+        .filter((step) => step.text || step.imageUrl);
+    }
+    return String(value || "")
+      .split(/\n+/)
+      .map((line) => {
+        const [text, imageUrl] = splitLineParts(line.replace(/^\s*\d+[.)]\s*/, ""));
+        return { text, imageUrl };
+      })
+      .filter((step) => step.text || step.imageUrl);
+  }
+
+  function recipeItemsToLines(items) {
+    return parseRecipeItems(items).map((item) => [item.name, item.amount].filter(Boolean).join(" | ")).join("\n");
+  }
+
+  function recipeStepsToLines(steps) {
+    return parseRecipeSteps(steps).map((step) => [step.text, step.imageUrl].filter(Boolean).join(" | ")).join("\n");
+  }
+
+  function legacyStepsText(steps) {
+    return parseRecipeSteps(steps).map((step, index) => `${index + 1}. ${step.text}`).join("\n");
+  }
+
+  function normalizeRecipe(recipe) {
+    if (!recipe) return recipe;
+    const ingredientItems = parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const seasoningItems = parseRecipeItems(recipe.seasoningItems?.length ? recipe.seasoningItems : (recipe.seasonings || ""));
+    const stepItems = parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    return {
+      ...recipe,
+      section: recipe.section || "기타",
+      description: recipe.description || "",
+      ingredients: recipe.ingredients || recipeItemsToLines(ingredientItems),
+      seasonings: recipe.seasonings || recipeItemsToLines(seasoningItems),
+      steps: recipe.steps || legacyStepsText(stepItems),
+      notes: recipe.notes || "",
+      imageUrl: recipe.imageUrl || "",
+      ingredientItems,
+      seasoningItems,
+      stepItems,
+      enabled: recipe.enabled !== false,
+      updatedAt: recipe.updatedAt || today()
+    };
+  }
+
+  function recipe(name, section, description, ingredients, steps, notes, seasonings = "") {
+    return normalizeRecipe({
+      id: id("recipe"),
+      name,
+      section,
+      description,
+      ingredients,
+      seasonings,
+      steps,
+      notes,
+      imageUrl: "",
+      enabled: true,
+      updatedAt: today()
+    });
   }
 
   function buildDefaultMenus(recipes) {
@@ -544,9 +631,9 @@
       const data = await apiRequest("/recipes");
       const remoteRecipes = Array.isArray(data.recipes) ? data.recipes : [];
       if (remoteRecipes.length) {
-        dataState.recipes = remoteRecipes;
+        dataState.recipes = remoteRecipes.map(normalizeRecipe);
       } else {
-        dataState.recipes = defaultRecipes.slice();
+        dataState.recipes = defaultRecipes.map(normalizeRecipe);
         await apiRequest("/recipes", {
           method: "PUT",
           body: JSON.stringify({ recipes: dataState.recipes })
@@ -632,7 +719,7 @@
     dataState.sections = defaultSections.slice();
     dataState.accessAccounts = defaultAccessCodes;
     dataState.ingredients = defaultIngredients.map(normalizeIngredient);
-    dataState.recipes = defaultRecipes.slice();
+    dataState.recipes = defaultRecipes.map(normalizeRecipe);
     dataState.menus = buildDefaultMenus(dataState.recipes).map(normalizeMenu);
     dataState.history = [];
     await hydrateAccessAccountsFromApi();
@@ -713,7 +800,7 @@
   }
 
   function recipesToCsv(rows) {
-    const header = ["id", "name", "section", "description", "ingredients", "steps", "notes", "imageUrl", "enabled", "updatedAt"];
+    const header = ["id", "name", "section", "description", "ingredients", "seasonings", "steps", "stepItems", "notes", "imageUrl", "enabled", "updatedAt"];
     const lines = [header.map(csvEscape).join(",")];
     rows.forEach((recipe) => {
       lines.push([
@@ -721,8 +808,10 @@
         recipe.name,
         recipe.section,
         recipe.description,
-        recipe.ingredients,
-        recipe.steps,
+        recipeItemsToLines(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients),
+        recipeItemsToLines(recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings),
+        recipeStepsToLines(recipe.stepItems?.length ? recipe.stepItems : recipe.steps),
+        JSON.stringify(recipe.stepItems || []),
         recipe.notes,
         recipe.imageUrl,
         recipe.enabled ? "true" : "false",
@@ -796,18 +885,23 @@
     return rows.slice(1).flatMap((row) => {
       const name = field(row, map, ["name", "이름", "Name"]);
       if (!name) return [];
-      return [{
+      return [normalizeRecipe({
         id: field(row, map, ["id"]) || id("recipe"),
         name,
         section: field(row, map, ["section", "섹션", "Section"]) || "기타",
         description: field(row, map, ["description", "설명", "Description"]),
         ingredients: field(row, map, ["ingredients", "재료", "Ingredients"]),
+        seasonings: field(row, map, ["seasonings", "양념", "Seasonings"]),
         steps: field(row, map, ["steps", "조리 순서", "Steps"]),
+        stepItems: (() => {
+          try { return JSON.parse(field(row, map, ["stepItems", "step_items", "Step Items"]) || "[]"); }
+          catch (_) { return []; }
+        })(),
         notes: field(row, map, ["notes", "메모", "Notes"]),
         imageUrl: field(row, map, ["imageUrl", "이미지 URL"]),
         enabled: field(row, map, ["enabled", "사용"]) !== "false",
         updatedAt: field(row, map, ["updatedAt", "수정일"]) || today()
-      }];
+      })];
     });
   }
 
@@ -829,7 +923,7 @@
       sections: dataState.sections.slice(),
       accessAccounts: accessAccounts(),
       ingredients: dataState.ingredients.map(normalizeIngredient),
-      recipes: dataState.recipes.slice(),
+      recipes: dataState.recipes.map(normalizeRecipe),
       menus: dataState.menus.map(normalizeMenu),
       history: dataState.history.slice()
     };
@@ -847,7 +941,7 @@
       accessAccounts: data.accessAccounts || defaultAccessCodes,
       sections: dataState.sections,
       ingredients: data.ingredients || [],
-      recipes: data.recipes || [],
+      recipes: (data.recipes || []).map(normalizeRecipe),
       menus: data.menus || [],
       history: data.history || []
     });
@@ -859,7 +953,7 @@
     dataState.employees = data.employees || defaultEmployees.slice();
     dataState.accessAccounts = data.accessAccounts || defaultAccessCodes;
     dataState.ingredients = (data.ingredients || []).map(normalizeIngredient);
-    dataState.recipes = data.recipes || [];
+    dataState.recipes = (data.recipes || []).map(normalizeRecipe);
     dataState.menus = (data.menus || []).map(normalizeMenu);
     dataState.history = data.history || [];
     syncQuietly(() => apiRequest("/seed-data", {
@@ -912,7 +1006,7 @@
   }
 
   function setRecipes(recipes) {
-    dataState.recipes = Array.isArray(recipes) ? recipes : [];
+    dataState.recipes = Array.isArray(recipes) ? recipes.map(normalizeRecipe) : [];
     syncQuietly(() => apiRequest("/recipes", {
       method: "PUT",
       body: JSON.stringify({ recipes: dataState.recipes })
@@ -920,14 +1014,15 @@
   }
 
   function saveRecipe(recipe) {
+    const normalized = normalizeRecipe(recipe);
     const recipes = dataState.recipes;
-    const next = recipes.some((row) => row.id === recipe.id)
-      ? recipes.map((row) => row.id === recipe.id ? recipe : row)
-      : [...recipes, recipe];
+    const next = recipes.some((row) => row.id === normalized.id)
+      ? recipes.map((row) => row.id === normalized.id ? normalized : row)
+      : [...recipes, normalized];
     dataState.recipes = next;
     syncQuietly(() => apiRequest("/recipes", {
       method: "POST",
-      body: JSON.stringify({ recipe })
+      body: JSON.stringify({ recipe: normalized })
     }));
   }
 
@@ -1003,7 +1098,7 @@
     getAllowedTargets: allowedTargets,
     getIngredients: () => dataState.ingredients.map(normalizeIngredient),
     setIngredients,
-    getRecipes: () => dataState.recipes.slice(),
+    getRecipes: () => dataState.recipes.map(normalizeRecipe),
     setRecipes,
     saveRecipe,
     deleteRecipe,
@@ -1035,6 +1130,11 @@
     historyFromCsv,
     recipesToCsv,
     recipesFromCsv,
+    normalizeRecipe,
+    parseRecipeItems,
+    parseRecipeSteps,
+    recipeItemsToLines,
+    recipeStepsToLines,
     downloadText,
     exportSettings,
     importSettings

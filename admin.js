@@ -119,7 +119,7 @@
     const section = document.getElementById("recipe-filter").value;
     return Store.getRecipes().filter((recipe) => {
       if (section && recipe.section !== section) return false;
-      if (q && !`${recipe.name} ${recipe.description} ${recipe.ingredients}`.toLowerCase().includes(q)) return false;
+      if (q && !`${recipe.name} ${recipe.description} ${recipe.ingredients} ${recipe.seasonings}`.toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -236,8 +236,9 @@
     document.getElementById("recipe-section").value = recipe.section;
     document.getElementById("recipe-description").value = recipe.description || "";
     document.getElementById("recipe-image").value = recipe.imageUrl || "";
-    document.getElementById("recipe-ingredients").value = recipe.ingredients || "";
-    document.getElementById("recipe-steps").value = recipe.steps || "";
+    document.getElementById("recipe-ingredients").value = Store.recipeItemsToLines(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    document.getElementById("recipe-seasonings").value = Store.recipeItemsToLines(recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings);
+    document.getElementById("recipe-steps").value = Store.recipeStepsToLines(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
     document.getElementById("recipe-notes").value = recipe.notes || "";
     document.getElementById("add-recipe").dataset.editing = id;
   }
@@ -334,9 +335,13 @@
       section: document.getElementById("recipe-section").value,
       description: document.getElementById("recipe-description").value.trim(),
       ingredients: document.getElementById("recipe-ingredients").value.trim(),
+      seasonings: document.getElementById("recipe-seasonings").value.trim(),
       steps: document.getElementById("recipe-steps").value.trim(),
       notes: document.getElementById("recipe-notes").value.trim(),
       imageUrl: document.getElementById("recipe-image").value.trim(),
+      ingredientItems: Store.parseRecipeItems(document.getElementById("recipe-ingredients").value),
+      seasoningItems: Store.parseRecipeItems(document.getElementById("recipe-seasonings").value),
+      stepItems: Store.parseRecipeSteps(document.getElementById("recipe-steps").value),
       enabled: true,
       updatedAt: Store.today()
     };
@@ -344,7 +349,7 @@
     const rows = Store.getRecipes();
     Store.setRecipes(id ? rows.map((row) => row.id === id ? { ...row, ...recipe, enabled: row.enabled } : row) : [...rows, recipe]);
     event.currentTarget.dataset.editing = "";
-    ["recipe-name", "recipe-description", "recipe-ingredients", "recipe-steps", "recipe-notes", "recipe-image"].forEach((field) => document.getElementById(field).value = "");
+    ["recipe-name", "recipe-description", "recipe-ingredients", "recipe-seasonings", "recipe-steps", "recipe-notes", "recipe-image"].forEach((field) => document.getElementById(field).value = "");
     renderAll();
   });
   document.getElementById("recipe-search").addEventListener("input", renderRecipes);

@@ -10,6 +10,7 @@
   const modal = document.getElementById("menu-recipe-modal");
   const modalTitle = document.getElementById("menu-recipe-title");
   const modalMeta = document.getElementById("menu-recipe-meta");
+  const modalStatus = document.getElementById("menu-recipe-status");
   const modalContent = document.getElementById("menu-recipe-content");
   const modalClose = document.getElementById("close-menu-recipe");
   let searchQuery = "";
@@ -40,21 +41,52 @@
       Store.getRecipes().find((recipe) => recipe.name === menu.recipeName);
   }
 
+  function measuredList(title, items) {
+    const rows = Store.parseRecipeItems(items);
+    return `
+      <section class="history-detail-card recipe-detail-section">
+        <h2>${title}</h2>
+        ${rows.length ? `
+          <div class="recipe-measured-list">
+            ${rows.map((item) => `
+              <div class="recipe-measured-row">
+                <strong>${item.name}</strong>
+                <span>${item.amount || "-"}</span>
+              </div>
+            `).join("")}
+          </div>
+        ` : `<p class="muted">-</p>`}
+      </section>
+    `;
+  }
+
+  function stepList(recipe) {
+    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    return `
+      <section class="history-detail-card recipe-detail-section">
+        <h2>${I18n.t("steps")}</h2>
+        <div class="recipe-step-list">
+          ${rows.length ? rows.map((step, index) => `
+            <article class="recipe-step-row">
+              ${step.imageUrl ? `<img src="${step.imageUrl}" alt="${recipe.name} ${index + 1}" />` : ""}
+              <div>
+                <span>${index + 1}</span>
+                <p>${step.text || "-"}</p>
+              </div>
+            </article>
+          `).join("") : `<p class="muted">-</p>`}
+        </div>
+      </section>
+    `;
+  }
+
   function recipeSections(menu, recipe) {
     if (!recipe) return `<section class="history-detail-card"><p class="muted">${I18n.t("noRecipes")}</p></section>`;
     return `
-      <section class="history-detail-card">
-        <h2>${I18n.t("ingredients")}</h2>
-        <p class="preview-box">${recipe.ingredients || "-"}</p>
-      </section>
-      <section class="history-detail-card">
-        <h2>${I18n.t("steps")}</h2>
-        <p class="preview-box">${recipe.steps || "-"}</p>
-      </section>
-      <section class="history-detail-card">
-        <h2>${I18n.t("notes")}</h2>
-        <p class="preview-box">${recipe.notes || menu.notes || "-"}</p>
-      </section>
+      ${measuredList(I18n.t("ingredients"), recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients)}
+      ${measuredList(I18n.t("seasonings"), recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings)}
+      ${stepList(recipe)}
+      ${(recipe.notes || menu.notes) ? `<section class="history-detail-card recipe-detail-section"><h2>${I18n.t("notes")}</h2><p class="preview-box">${recipe.notes || menu.notes}</p></section>` : ""}
     `;
   }
 
@@ -62,15 +94,9 @@
     const recipe = recipeFor(menu);
     modalTitle.textContent = I18n.menuName(menu);
     modalMeta.textContent = I18n.secondaryMenuName(menu);
+    modalStatus.textContent = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
+    modalStatus.className = `badge ${menu.discontinued ? "yellow" : "green"}`;
     modalContent.innerHTML = `
-      <div class="list-card-header">
-        <span class="badge">${money(menu)}</span>
-        <div class="menu-badges">
-          <span class="badge">${menu.category || "-"}</span>
-          ${menu.seasonal ? `<span class="badge yellow">${I18n.t("seasonalMenu")}</span>` : ""}
-          <span class="badge ${menu.discontinued ? "yellow" : "green"}">${menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu")}</span>
-        </div>
-      </div>
       ${recipeSections(menu, recipe)}
     `;
     modal.classList.remove("hidden");
