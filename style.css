@@ -542,6 +542,24 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font-weight: 800;
   line-height: 1.2;
 }
+.home-memo-panel {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(184, 196, 240, 0.16);
+}
+.home-memo-panel > h3 {
+  color: #d9e3ff;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+.home-memo-panel > h3 span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.home-action-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 .memo-panel {
   display: grid;
   gap: 10px;
