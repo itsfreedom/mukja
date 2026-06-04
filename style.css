@@ -1369,9 +1369,19 @@ body {
 
 .sidebar-toggle-icon {
   display: block;
-  font-size: 1.86rem;
-  font-weight: 900;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(180deg);
+  transition: transform 180ms ease;
+}
+
+.sidebar-collapsed .sidebar-toggle-icon {
+  transform: rotate(0);
 }
 
 .brand {
@@ -1518,42 +1528,58 @@ body {
   width: auto;
 }
 
-.card,
-.panel,
-.list-card,
-.metric-card,
-.section-history-card,
-.memo-entry {
+.panel {
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
 
-.card,
-.panel,
-.list-card,
-.metric-card,
-.section-history-card {
+.panel {
   padding: 0;
 }
 
 .list-card,
 .metric-card,
 .section-history-card,
-.memo-entry,
-.item-row,
-.receive-row {
-  border-bottom: 1px solid rgba(184, 196, 240, 0.11);
+.memo-entry {
+  border: 1px solid rgba(184, 196, 240, 0.13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
 }
 
 .list-card {
-  padding: 14px 0;
+  padding: 14px;
 }
 
 .list-card.is-active {
-  background: rgba(93, 118, 255, 0.1);
+  background: var(--accent-soft);
   border-color: rgba(130, 168, 255, 0.2);
+}
+
+.item-row,
+.simple .item-row,
+.receive-row {
+  border: 1px solid rgba(184, 196, 240, 0.12);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.simple .item-row {
+  min-height: 48px;
+  padding: 10px 12px;
+}
+
+.receive-row {
+  padding: 10px 12px;
+}
+
+.item-section-list,
+.receive-list,
+.simple-history-list {
+  border-top: 0;
+  gap: 8px;
 }
 
 .item-list,

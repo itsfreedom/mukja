@@ -648,11 +648,12 @@
         ? savedSidebarState === "1"
         : window.matchMedia("(max-width: 900px)").matches;
       document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
-      const toggleText = sidebarCollapsed ? "&gt;" : "&lt;";
       const toggleLabel = sidebarCollapsed ? "메뉴 열기" : "메뉴 닫기";
       sidebar.innerHTML = `
         <button class="sidebar-toggle" data-sidebar-toggle type="button" aria-label="${toggleLabel}" aria-expanded="${!sidebarCollapsed}">
-          <span class="sidebar-toggle-icon">${toggleText}</span>
+          <svg class="sidebar-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
         </button>
         <div class="brand">
           <div class="brand-copy">
@@ -685,8 +686,6 @@
           localStorage.setItem(sidebarStateKey, collapsed ? "1" : "0");
           sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
           sidebarToggle.setAttribute("aria-label", collapsed ? "메뉴 열기" : "메뉴 닫기");
-          const icon = sidebarToggle.querySelector(".sidebar-toggle-icon");
-          if (icon) icon.textContent = collapsed ? ">" : "<";
         });
       }
       let clock = document.querySelector("[data-layout-clock]");
