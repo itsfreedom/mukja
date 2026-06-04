@@ -317,8 +317,8 @@
   };
 
   const sectionLabels = {
-    ko: { "반조리": "반조리", "야채": "야채", "반찬": "반찬", "소스": "소스", "식재료": "식재료", "냉장": "냉장", "냉동": "냉동", "기타": "기타" },
-    en: { "반조리": "Semi-prepared", "야채": "Vegetables", "반찬": "Side Dishes", "소스": "Sauces", "식재료": "Ingredients", "냉장": "Refrigerated", "냉동": "Frozen", "기타": "Other" }
+    ko: { "반조리": "반조리", "야채": "야채", "반찬": "반찬", "소스": "소스", "식재료": "식재료", "상온": "상온", "냉장": "냉장", "냉동": "냉동", "기타": "기타" },
+    en: { "반조리": "Semi-prepared", "야채": "Vegetables", "반찬": "Side Dishes", "소스": "Sauces", "식재료": "Ingredients", "상온": "Room Temp", "냉장": "Refrigerated", "냉동": "Frozen", "기타": "Other" }
   };
 
   function lang() {
