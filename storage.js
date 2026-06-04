@@ -31,22 +31,22 @@
     madmin: { role: "admin", department: "", label: "관리자" }
   };
   const defaultIngredients = [
-    { id: "item-donkatsu", name: "돈까스", section: "반조리", unit: "개", target: "카페테리아", enabled: true },
-    { id: "item-mandu", name: "만두", section: "반조리", unit: "봉", target: "카페테리아", enabled: true },
-    { id: "item-onion", name: "양파", section: "야채", unit: "kg", target: "야채", enabled: true },
-    { id: "item-potato", name: "감자", section: "야채", unit: "박스", target: "야채", enabled: true },
-    { id: "item-green-onion", name: "대파", section: "야채", unit: "단", target: "야채", enabled: true },
-    { id: "item-kimchi", name: "김치", section: "반찬", unit: "kg", target: "카페테리아", enabled: true },
-    { id: "item-danmuji", name: "단무지", section: "반찬", unit: "팩", target: "카페테리아", enabled: true },
-    { id: "item-oil", name: "식용유", section: "소스", unit: "통", target: "카페테리아", enabled: true },
-    { id: "item-soy-sauce", name: "간장", section: "소스", unit: "병", target: "카페테리아", enabled: true },
-    { id: "item-eggs", name: "계란", section: "냉장", unit: "판", target: "카페테리아", enabled: true },
-    { id: "item-flour", name: "밀가루", section: "식재료", unit: "kg", target: "그로서리", enabled: true },
-    { id: "item-milk", name: "우유", section: "냉장", unit: "L", target: "카페테리아", enabled: true },
-    { id: "item-cheese", name: "치즈", section: "냉장", unit: "팩", target: "카페테리아", enabled: true },
-    { id: "item-frozen-mandu", name: "냉동만두", section: "냉동", unit: "봉", target: "카페테리아", enabled: true },
-    { id: "item-frozen-potato", name: "냉동감자", section: "냉동", unit: "봉", target: "그로서리", enabled: true },
-    { id: "item-other", name: "기타요청", section: "기타", unit: "개", target: "그로서리", enabled: true }
+    { id: "item-donkatsu", name: "돈까스", nameKo: "돈까스", nameEn: "Pork Cutlet", section: "반조리", unit: "개", target: "카페테리아", enabled: true },
+    { id: "item-mandu", name: "만두", nameKo: "만두", nameEn: "Dumplings", section: "반조리", unit: "봉", target: "카페테리아", enabled: true },
+    { id: "item-onion", name: "양파", nameKo: "양파", nameEn: "Onion", section: "야채", unit: "kg", target: "야채", enabled: true },
+    { id: "item-potato", name: "감자", nameKo: "감자", nameEn: "Potato", section: "야채", unit: "박스", target: "야채", enabled: true },
+    { id: "item-green-onion", name: "대파", nameKo: "대파", nameEn: "Green Onion", section: "야채", unit: "단", target: "야채", enabled: true },
+    { id: "item-kimchi", name: "김치", nameKo: "김치", nameEn: "Kimchi", section: "반찬", unit: "kg", target: "카페테리아", enabled: true },
+    { id: "item-danmuji", name: "단무지", nameKo: "단무지", nameEn: "Pickled Radish", section: "반찬", unit: "팩", target: "카페테리아", enabled: true },
+    { id: "item-oil", name: "식용유", nameKo: "식용유", nameEn: "Cooking Oil", section: "소스", unit: "통", target: "카페테리아", enabled: true },
+    { id: "item-soy-sauce", name: "간장", nameKo: "간장", nameEn: "Soy Sauce", section: "소스", unit: "병", target: "카페테리아", enabled: true },
+    { id: "item-eggs", name: "계란", nameKo: "계란", nameEn: "Eggs", section: "냉장", unit: "판", target: "카페테리아", enabled: true },
+    { id: "item-flour", name: "밀가루", nameKo: "밀가루", nameEn: "Flour", section: "식재료", unit: "kg", target: "그로서리", enabled: true },
+    { id: "item-milk", name: "우유", nameKo: "우유", nameEn: "Milk", section: "냉장", unit: "L", target: "카페테리아", enabled: true },
+    { id: "item-cheese", name: "치즈", nameKo: "치즈", nameEn: "Cheese", section: "냉장", unit: "팩", target: "카페테리아", enabled: true },
+    { id: "item-frozen-mandu", name: "냉동만두", nameKo: "냉동만두", nameEn: "Frozen Dumplings", section: "냉동", unit: "봉", target: "카페테리아", enabled: true },
+    { id: "item-frozen-potato", name: "냉동감자", nameKo: "냉동감자", nameEn: "Frozen Potatoes", section: "냉동", unit: "봉", target: "그로서리", enabled: true },
+    { id: "item-other", name: "기타요청", nameKo: "기타요청", nameEn: "Other Request", section: "기타", unit: "개", target: "그로서리", enabled: true }
   ];
   const defaultRecipes = [
     recipe("김치볶음밥", "식재료", "남은 밥과 김치를 빠르게 볶는 점심 메뉴", "밥, 김치, 계란, 대파, 간장", "1. 대파를 볶아 향을 냅니다.\n2. 김치와 밥을 넣고 볶습니다.\n3. 간장으로 간을 맞추고 계란을 올립니다.", "김치 물기를 살짝 짜면 볶음이 깔끔합니다."),
@@ -84,6 +84,16 @@
         notes: ""
       };
     });
+  }
+
+  function normalizeMenu(menu) {
+    if (!menu) return menu;
+    const seed = defaultMenuSeeds.find((row) => row.nameKo === menu.nameKo || row.recipeName === menu.recipeName);
+    return {
+      ...menu,
+      nameKo: menu.nameKo || menu.name || seed?.nameKo || "",
+      nameEn: menu.nameEn || seed?.nameEn || ""
+    };
   }
 
   function id(prefix) {
@@ -226,13 +236,32 @@
     const localMenus = getJson(keys.menus, []);
     try {
       const data = await apiRequest("/menus");
-      const remoteMenus = Array.isArray(data.menus) ? data.menus : [];
+      const remoteMenus = Array.isArray(data.menus) ? data.menus.map(normalizeMenu) : [];
       if (remoteMenus.length) {
         setJson(keys.menus, remoteMenus);
       } else if (localMenus.length) {
         await apiRequest("/menus", {
           method: "PUT",
-          body: JSON.stringify({ menus: localMenus })
+          body: JSON.stringify({ menus: localMenus.map(normalizeMenu) })
+        });
+      }
+    } catch {
+      apiState.checked = true;
+      apiState.available = false;
+    }
+  }
+
+  async function hydrateIngredientsFromApi() {
+    const localIngredients = getJson(keys.ingredients, []);
+    try {
+      const data = await apiRequest("/ingredients");
+      const remoteIngredients = Array.isArray(data.ingredients) ? data.ingredients.map(normalizeIngredient) : [];
+      if (remoteIngredients.length) {
+        setJson(keys.ingredients, remoteIngredients);
+      } else if (localIngredients.length) {
+        await apiRequest("/ingredients", {
+          method: "PUT",
+          body: JSON.stringify({ ingredients: localIngredients.map(normalizeIngredient) })
         });
       }
     } catch {
@@ -258,7 +287,15 @@
   }
 
   function normalizeIngredient(item) {
-    return normalizeSection(normalizeTarget(item));
+    const normalized = normalizeSection(normalizeTarget(item));
+    const seed = defaultIngredients.find((row) => row.id === normalized.id || row.name === normalized.name || row.nameKo === normalized.nameKo);
+    const nameKo = normalized.nameKo || normalized.name || seed?.nameKo || seed?.name || "";
+    return {
+      ...normalized,
+      name: nameKo,
+      nameKo,
+      nameEn: normalized.nameEn || normalized.name_en || seed?.nameEn || ""
+    };
   }
 
   function shouldResetSections(sections) {
@@ -273,6 +310,7 @@
     if (!localStorage.getItem(keys.employees)) setJson(keys.employees, defaultEmployees);
     if (!localStorage.getItem(keys.recipes)) setJson(keys.recipes, defaultRecipes);
     if (!localStorage.getItem(keys.menus)) setJson(keys.menus, buildDefaultMenus(getJson(keys.recipes, defaultRecipes)));
+    else setJson(keys.menus, getJson(keys.menus, []).map(normalizeMenu));
     if (!localStorage.getItem(keys.history)) setJson(keys.history, []);
     if (!localStorage.getItem(keys.ingredients)) {
       try {
@@ -284,6 +322,7 @@
     } else {
       setJson(keys.ingredients, getJson(keys.ingredients, []).map(normalizeIngredient));
     }
+    await hydrateIngredientsFromApi();
     await hydrateHistoryFromApi();
     await hydrateRecipesFromApi();
     await hydrateMenusFromApi();
@@ -335,7 +374,7 @@
   }
 
   function historyToCsv(rows) {
-    const header = ["날짜", "시간", "모드", "요청자", "주문부서", "품목", "수량", "단위", "입고여부", "메모"];
+    const header = ["날짜", "시간", "모드", "요청자", "주문부서", "품목", "품목영문", "수량", "단위", "입고여부", "메모"];
     const lines = [header.map(csvEscape).join(",")];
     rows.forEach((entry) => {
       entry.items.forEach((item) => {
@@ -345,7 +384,8 @@
           entry.mode,
           entry.employee || "",
           item.target || entry.target || "",
-          item.name,
+          item.nameKo || item.name,
+          item.nameEn || "",
           item.quantity || "",
           item.unit || "",
           item.received ? "Y" : "",
@@ -401,6 +441,7 @@
       const memo = field(row, map, ["메모", "memo", "Memo"]);
       const target = field(row, map, ["주문부서", "준비부서", "target", "Target"]);
       const name = field(row, map, ["품목", "item", "name", "Item"]);
+      const nameEn = field(row, map, ["품목영문", "영문품목", "itemEn", "nameEn", "English Item"]);
       if (!date || !name) return;
       const key = [date, time, mode, employee, memo].join("|");
       if (!grouped.has(key)) {
@@ -419,6 +460,8 @@
       grouped.get(key).items.push({
         id: id("csv-item"),
         name,
+        nameKo: name,
+        nameEn,
         target,
         quantity: field(row, map, ["수량", "quantity", "Quantity"]),
         unit: field(row, map, ["단위", "unit", "Unit"]),
@@ -483,7 +526,7 @@
     localStorage.setItem(keys.lang, data.lang || "ko");
     setJson(keys.employees, data.employees || []);
     setJson(keys.sections, data.sections || []);
-    setJson(keys.ingredients, data.ingredients || []);
+    setIngredients(data.ingredients || []);
     setJson(keys.recipes, data.recipes || []);
     setJson(keys.menus, data.menus || []);
     setJson(keys.history, data.history || []);
@@ -548,22 +591,33 @@
   }
 
   function setMenus(menus) {
-    setJson(keys.menus, menus);
+    const normalized = menus.map(normalizeMenu);
+    setJson(keys.menus, normalized);
     syncQuietly(() => apiRequest("/menus", {
       method: "PUT",
-      body: JSON.stringify({ menus })
+      body: JSON.stringify({ menus: normalized })
+    }));
+  }
+
+  function setIngredients(ingredients) {
+    const normalized = ingredients.map(normalizeIngredient);
+    setJson(keys.ingredients, normalized);
+    syncQuietly(() => apiRequest("/ingredients", {
+      method: "PUT",
+      body: JSON.stringify({ ingredients: normalized })
     }));
   }
 
   function saveMenu(menu) {
+    const normalizedMenu = normalizeMenu(menu);
     const menus = getJson(keys.menus, []);
-    const next = menus.some((row) => row.id === menu.id)
-      ? menus.map((row) => row.id === menu.id ? menu : row)
-      : [...menus, menu];
+    const next = menus.some((row) => row.id === normalizedMenu.id)
+      ? menus.map((row) => row.id === normalizedMenu.id ? normalizedMenu : row)
+      : [...menus, normalizedMenu];
     setJson(keys.menus, next);
     syncQuietly(() => apiRequest("/menus", {
       method: "POST",
-      body: JSON.stringify({ menu })
+      body: JSON.stringify({ menu: normalizedMenu })
     }));
   }
 
@@ -592,13 +646,13 @@
     setSections: (v) => setJson(keys.sections, v),
     getTargets: () => defaultTargets.slice(),
     getAllowedTargets: allowedTargets,
-    getIngredients: () => getJson(keys.ingredients, []),
-    setIngredients: (v) => setJson(keys.ingredients, v),
+    getIngredients: () => getJson(keys.ingredients, []).map(normalizeIngredient),
+    setIngredients,
     getRecipes: () => getJson(keys.recipes, []),
     setRecipes,
     saveRecipe,
     deleteRecipe,
-    getMenus: () => getJson(keys.menus, []),
+    getMenus: () => getJson(keys.menus, []).map(normalizeMenu),
     setMenus,
     saveMenu,
     discontinueMenu,

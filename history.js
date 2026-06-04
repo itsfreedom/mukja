@@ -51,14 +51,14 @@
               </div>
               ${entry.mode === "simple" ? `
                 <div class="simple-history-list admin-section">
-                  ${entry.items.map((item) => `<div>${item.name}</div>`).join("")}
+                  ${entry.items.map((item) => `<div>${I18n.itemName(item)}</div>`).join("")}
                 </div>
               ` : `
                 <div class="table-wrap admin-section">
                   <table>
                     <thead><tr><th>${I18n.t("items")}</th><th>${I18n.t("quantity")}</th><th>${I18n.t("unit")}</th><th>${I18n.t("target")}</th></tr></thead>
                     <tbody>
-                      ${entry.items.map((item) => `<tr><td>${item.name}</td><td>${item.quantity || ""}</td><td>${item.unit || ""}</td><td>${I18n.targetLabel(item.target || "")}</td></tr>`).join("")}
+                      ${entry.items.map((item) => `<tr><td>${I18n.itemName(item)}</td><td>${item.quantity || ""}</td><td>${item.unit || ""}</td><td>${I18n.targetLabel(item.target || "")}</td></tr>`).join("")}
                     </tbody>
                   </table>
                 </div>

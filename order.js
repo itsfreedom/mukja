@@ -109,7 +109,7 @@
   }
 
   function itemKey(item) {
-    return item.id || `${item.target}|${item.name}|${item.unit}`;
+    return item.id || `${item.target}|${item.nameKo || item.name}|${item.unit}`;
   }
 
   function itemRow(item) {
@@ -119,7 +119,7 @@
       <label class="item-row">
         <input type="checkbox" data-item-check="${itemKey(item)}" ${selected.checked ? "checked" : ""} />
         <span class="item-main">
-          <span class="item-name">${item.name}</span>
+          <span class="item-name">${I18n.itemName(item)}</span>
           ${simple ? "" : `<span class="item-meta">${I18n.sectionLabel(item.section)}</span>`}
         </span>
         <input class="normal-only" type="number" min="0" step="0.1" inputmode="decimal" data-item-qty="${itemKey(item)}" value="${selected.quantity || ""}" placeholder="${I18n.t("quantity")}" />

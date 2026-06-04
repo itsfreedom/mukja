@@ -74,11 +74,11 @@
   function renderIngredients() {
     document.getElementById("ingredient-list").innerHTML = `
       <table>
-        <thead><tr><th>${I18n.t("name")}</th><th>${I18n.t("section")}</th><th>${I18n.t("unit")}</th><th>${I18n.t("target")}</th><th>${I18n.t("enabled")}</th><th></th></tr></thead>
+        <thead><tr><th>${I18n.t("name")}</th><th>${I18n.t("englishName")}</th><th>${I18n.t("section")}</th><th>${I18n.t("unit")}</th><th>${I18n.t("target")}</th><th>${I18n.t("enabled")}</th><th></th></tr></thead>
         <tbody>
           ${Store.getIngredients().map((item) => `
             <tr>
-              <td>${item.name}</td><td>${I18n.sectionLabel(item.section)}</td><td>${item.unit}</td><td>${I18n.targetLabel(item.target)}</td><td>${item.enabled ? I18n.t("enabled") : I18n.t("disabled")}</td>
+              <td>${item.nameKo || item.name}</td><td>${item.nameEn || ""}</td><td>${I18n.sectionLabel(item.section)}</td><td>${item.unit}</td><td>${I18n.targetLabel(item.target)}</td><td>${item.enabled ? I18n.t("enabled") : I18n.t("disabled")}</td>
               <td class="button-row">
                 <button class="ghost-button" data-edit-ingredient="${item.id}">${I18n.t("edit")}</button>
                 <button class="ghost-button" data-toggle-ingredient="${item.id}">${item.enabled ? I18n.t("disabled") : I18n.t("enabled")}</button>
@@ -159,7 +159,9 @@
     document.querySelectorAll("[data-edit-ingredient]").forEach((button) => button.onclick = () => {
       const rows = Store.getIngredients();
       const item = rows.find((row) => row.id === button.dataset.editIngredient);
-      item.name = prompt(I18n.t("name"), item.name) || item.name;
+      item.name = prompt(I18n.t("name"), item.nameKo || item.name) || item.name;
+      item.nameKo = item.name;
+      item.nameEn = prompt(I18n.t("englishName"), item.nameEn || "") || item.nameEn || "";
       item.unit = prompt(I18n.t("unit"), item.unit) || item.unit;
       Store.setIngredients(rows); renderAll();
     });
@@ -223,12 +225,14 @@
     Store.setIngredients([...Store.getIngredients(), {
       id: Store.id("item"),
       name,
+      nameKo: name,
+      nameEn: document.getElementById("ingredient-name-en").value.trim(),
       section: document.getElementById("ingredient-section").value,
       unit: document.getElementById("ingredient-unit").value.trim(),
       target: document.getElementById("ingredient-target").value,
       enabled: true
     }]);
-    ["ingredient-name", "ingredient-unit"].forEach((id) => (document.getElementById(id).value = ""));
+    ["ingredient-name", "ingredient-name-en", "ingredient-unit"].forEach((id) => (document.getElementById(id).value = ""));
     renderAll();
   });
   document.getElementById("add-recipe").addEventListener("click", (event) => {

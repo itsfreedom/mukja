@@ -84,6 +84,7 @@ async function ensureSchema(client) {
       order_id text not null references orders(id) on delete cascade,
       item_index integer not null default 0,
       name text not null,
+      name_en text,
       section text,
       target text,
       quantity text,
@@ -149,6 +150,20 @@ async function ensureSchema(client) {
       synced_at timestamptz not null default now()
     );
 
+    create table if not exists ingredients (
+      id text primary key,
+      name_ko text not null,
+      name_en text,
+      section text,
+      unit text,
+      target text,
+      enabled boolean not null default true,
+      changed_by_identity_id text references access_identities(id) on delete set null,
+      changed_ip text,
+      changed_user_agent text,
+      synced_at timestamptz not null default now()
+    );
+
     create table if not exists menus (
       id text primary key,
       recipe_id text references recipes(id) on delete set null,
@@ -168,6 +183,8 @@ async function ensureSchema(client) {
     );
 
     alter table menus add column if not exists category text;
+    alter table order_items add column if not exists name_en text;
+    alter table ingredients add column if not exists name_en text;
 
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_order_items_order_id on order_items(order_id, item_index);
@@ -175,6 +192,8 @@ async function ensureSchema(client) {
     create index if not exists idx_receipt_confirmations_item on receipt_confirmations(order_item_id, confirmed_at desc);
     create index if not exists idx_department_confirmations_item on department_confirmations(order_item_id, department, confirmed_at desc);
     create index if not exists idx_recipes_section on recipes(section, enabled);
+    create index if not exists idx_ingredients_target on ingredients(target, enabled);
+    create index if not exists idx_ingredients_section on ingredients(section, enabled);
     create index if not exists idx_menus_recipe_id on menus(recipe_id);
     create index if not exists idx_menus_category on menus(category, discontinued);
     create index if not exists idx_menus_status on menus(discontinued, seasonal);
@@ -283,15 +302,16 @@ async function upsertOrder(client, entry, info) {
   for (const [index, item] of entry.items.entries()) {
     await client.query(`
       insert into order_items (
-        id, order_id, item_index, name, section, target, quantity, unit,
+        id, order_id, item_index, name, name_en, section, target, quantity, unit,
         received, received_by_identity_id, received_ip, received_user_agent, received_at
       )
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, case when $9 then now() else null end)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, case when $10 then now() else null end)
     `, [
       itemDbId(id, item, index),
       id,
       index,
-      item.name || "",
+      item.nameKo || item.name || "",
+      item.nameEn || "",
       item.section || "",
       item.target || "",
       item.quantity || "",
@@ -390,6 +410,54 @@ async function listRecipes(client) {
   }));
 }
 
+async function upsertIngredient(client, ingredient, info) {
+  if (!ingredient?.id || !(ingredient.nameKo || ingredient.name)) throw new Error("Invalid ingredient");
+  const nameKo = ingredient.nameKo || ingredient.name || "";
+  await client.query(`
+    insert into ingredients (
+      id, name_ko, name_en, section, unit, target, enabled,
+      changed_by_identity_id, changed_ip, changed_user_agent, synced_at
+    )
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())
+    on conflict (id) do update set
+      name_ko = excluded.name_ko,
+      name_en = excluded.name_en,
+      section = excluded.section,
+      unit = excluded.unit,
+      target = excluded.target,
+      enabled = excluded.enabled,
+      changed_by_identity_id = excluded.changed_by_identity_id,
+      changed_ip = excluded.changed_ip,
+      changed_user_agent = excluded.changed_user_agent,
+      synced_at = now()
+  `, [
+    ingredient.id,
+    nameKo,
+    ingredient.nameEn || "",
+    ingredient.section || "",
+    ingredient.unit || "",
+    ingredient.target || "",
+    ingredient.enabled !== false,
+    info.memberId,
+    info.ip,
+    info.userAgent
+  ]);
+}
+
+async function listIngredients(client) {
+  const ingredients = await client.query("select * from ingredients order by target asc, section asc, name_ko asc");
+  return ingredients.rows.map((row) => ({
+    id: row.id,
+    name: row.name_ko,
+    nameKo: row.name_ko,
+    nameEn: row.name_en || "",
+    section: row.section || "",
+    unit: row.unit || "",
+    target: row.target || "",
+    enabled: row.enabled
+  }));
+}
+
 async function upsertMenu(client, menu, info) {
   if (!menu?.id || !menu.nameKo) throw new Error("Invalid menu");
   const price = menu.price === "" || menu.price === undefined || menu.price === null ? null : Number(menu.price);
@@ -475,6 +543,8 @@ async function listHistory(client) {
     acc[item.order_id].push({
       id: item.id,
       name: item.name,
+      nameKo: item.name,
+      nameEn: item.name_en || "",
       section: item.section || "",
       target: item.target || "",
       quantity: item.quantity || "",
@@ -536,6 +606,10 @@ exports.handler = async (event) => {
       return json(200, { ok: true, menus: await listMenus(client) });
     }
 
+    if (method === "GET" && path === "/ingredients") {
+      return json(200, { ok: true, ingredients: await listIngredients(client) });
+    }
+
     if (method === "POST" && path === "/history") {
       const { entry } = parseBody(event);
       await client.query("begin");
@@ -567,6 +641,24 @@ exports.handler = async (event) => {
       const { recipe } = parseBody(event);
       await client.query("begin");
       await upsertRecipe(client, recipe, info);
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "PUT" && path === "/ingredients") {
+      const { ingredients } = parseBody(event);
+      if (!Array.isArray(ingredients)) return json(400, { ok: false, error: "ingredients must be an array" });
+      await client.query("begin");
+      await client.query("delete from ingredients");
+      for (const ingredient of ingredients) await upsertIngredient(client, ingredient, info);
+      await client.query("commit");
+      return json(200, { ok: true });
+    }
+
+    if (method === "POST" && path === "/ingredients") {
+      const { ingredient } = parseBody(event);
+      await client.query("begin");
+      await upsertIngredient(client, ingredient, info);
       await client.query("commit");
       return json(200, { ok: true });
     }

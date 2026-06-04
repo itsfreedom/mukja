@@ -126,6 +126,7 @@
       enabled: "사용",
       disabled: "중지",
       name: "이름",
+      englishName: "영문 이름",
       description: "설명",
       imageUrl: "이미지 URL",
       importInvalid: "가져올 JSON 형식이 올바르지 않습니다.",
@@ -263,6 +264,7 @@
       enabled: "Enabled",
       disabled: "Disabled",
       name: "Name",
+      englishName: "English Name",
       description: "Description",
       imageUrl: "Image URL",
       importInvalid: "The JSON format is invalid.",
@@ -323,6 +325,21 @@
     return labels[lang()]?.[role] || role;
   }
 
+  function itemName(item) {
+    if (!item) return "";
+    return lang() === "en" ? (item.nameEn || item.name || item.nameKo || "") : (item.nameKo || item.name || "");
+  }
+
+  function menuName(menu) {
+    if (!menu) return "";
+    return lang() === "en" ? (menu.nameEn || menu.nameKo || "") : (menu.nameKo || menu.nameEn || "");
+  }
+
+  function secondaryMenuName(menu) {
+    if (!menu) return "";
+    return lang() === "en" ? (menu.nameKo || "") : (menu.nameEn || "");
+  }
+
   function applyI18n() {
     document.documentElement.lang = lang();
     document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -336,5 +353,5 @@
     });
   }
 
-  window.I18n = { translations, lang, t, targetLabel, sectionLabel, roleLabel, applyI18n };
+  window.I18n = { translations, lang, t, targetLabel, sectionLabel, roleLabel, itemName, menuName, secondaryMenuName, applyI18n };
 })();

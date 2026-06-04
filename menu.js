@@ -43,8 +43,8 @@
     detail.innerHTML = `
       <div class="list-card-header">
         <div>
-          <h2>${menu.nameKo}</h2>
-          <div class="item-meta">${menu.nameEn || ""}</div>
+          <h2>${I18n.menuName(menu)}</h2>
+          <div class="item-meta">${I18n.secondaryMenuName(menu)}</div>
         </div>
         <span class="badge">${money(menu)}</span>
       </div>
@@ -75,8 +75,8 @@
     list.innerHTML = menus.map((menu) => `
       <button class="list-card menu-row ${menu.id === activeId ? "is-active" : ""}" data-menu="${menu.id}" type="button">
         <div>
-          <strong>${menu.nameKo}</strong>
-          <div class="item-meta">${[menu.nameEn, menu.category].filter(Boolean).join(" · ")}</div>
+          <strong>${I18n.menuName(menu)}</strong>
+          <div class="item-meta">${[I18n.secondaryMenuName(menu), menu.category].filter(Boolean).join(" · ")}</div>
         </div>
         <div class="menu-row-price">
           <strong>${money(menu)}</strong>
