@@ -1,4 +1,4 @@
-const CACHE_NAME = "mokja-alley-v78";
+const CACHE_NAME = "mokja-alley-v79";
 const ASSETS = [
   "index.html",
   "reset-cache.html",

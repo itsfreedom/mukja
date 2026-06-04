@@ -21,7 +21,12 @@
   }
 
   function itemKey(item) {
-    return item.id || `${item.target}|${item.section}|${item.nameKo || item.name}`;
+    return [
+      targetFor(item),
+      categoryFor(item),
+      item.section || "",
+      item.nameKo || item.name || ""
+    ].join("|");
   }
 
   function sameAuthor(memo) {
