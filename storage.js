@@ -428,13 +428,14 @@
 
   async function apiRequest(path, options = {}) {
     const session = auth();
+    const headerValue = (value) => encodeURIComponent(String(value || ""));
     const response = await fetch(`/api${path}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
         "X-Mukja-Member-Id": memberId(),
         "X-Mukja-Role": session?.role || "anonymous",
-        "X-Mukja-Department": session?.department || "",
+        "X-Mukja-Department": headerValue(session?.department),
         ...(options.headers || {})
       },
       cache: "no-store"

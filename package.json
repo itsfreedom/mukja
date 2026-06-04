@@ -4,7 +4,13 @@
   "private": true,
   "description": "Mobile-first restaurant ingredient ordering PWA for Mukja Alley.",
   "license": "UNLICENSED",
+  "scripts": {
+    "test:user-flows": "node scripts/user-flow-test.cjs"
+  },
   "dependencies": {
     "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
   }
 }

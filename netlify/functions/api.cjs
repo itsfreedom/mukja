@@ -234,6 +234,14 @@ function header(event, name) {
   return headers[name] || headers[name.toLowerCase()] || headers[name.toUpperCase()] || "";
 }
 
+function decodeHeader(value) {
+  try {
+    return decodeURIComponent(value || "");
+  } catch {
+    return value || "";
+  }
+}
+
 function clientIp(event) {
   const forwarded = header(event, "x-forwarded-for");
   return header(event, "x-nf-client-connection-ip") ||
@@ -246,7 +254,7 @@ function clientInfo(event) {
   return {
     memberId: header(event, "x-mukja-member-id") || "anonymous",
     role: header(event, "x-mukja-role") || "anonymous",
-    department: header(event, "x-mukja-department"),
+    department: decodeHeader(header(event, "x-mukja-department")),
     ip: clientIp(event),
     userAgent: header(event, "user-agent")
   };
