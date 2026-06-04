@@ -61,7 +61,7 @@
     `).join("");
     list.querySelectorAll("[data-delete]").forEach((button) => {
       button.addEventListener("click", () => {
-        Store.setHistory(Store.getHistory().filter((entry) => entry.id !== button.dataset.delete));
+        Store.deleteHistory(button.dataset.delete);
         render();
       });
     });
@@ -78,7 +78,7 @@
   });
   document.getElementById("clear-all").addEventListener("click", () => {
     if (confirm(I18n.t("confirmClear"))) {
-      Store.setHistory([]);
+      Store.clearHistory();
       render();
     }
   });

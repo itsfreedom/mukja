@@ -8,8 +8,13 @@
     ingredients: "restaurant_ingredients",
     recipes: "restaurant_recipes",
     history: "restaurant_history",
+    memberId: "restaurant_member_id",
     adminPassword: "restaurant_admin_password",
     adminAuthed: "restaurant_admin_authed"
+  };
+  const apiState = {
+    checked: false,
+    available: false
   };
 
   const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
@@ -73,6 +78,60 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function memberId() {
+    let value = localStorage.getItem(keys.memberId);
+    if (!value) {
+      value = `member-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      localStorage.setItem(keys.memberId, value);
+    }
+    return value;
+  }
+
+  async function apiRequest(path, options = {}) {
+    const response = await fetch(`/api${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "X-Mukja-Member-Id": memberId(),
+        ...(options.headers || {})
+      },
+      cache: "no-store"
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || `API ${response.status}`);
+    }
+    apiState.checked = true;
+    apiState.available = true;
+    return data;
+  }
+
+  function syncQuietly(task) {
+    task().catch(() => {
+      apiState.checked = true;
+      apiState.available = false;
+    });
+  }
+
+  async function hydrateHistoryFromApi() {
+    const localHistory = getJson(keys.history, []);
+    try {
+      const data = await apiRequest("/history");
+      const remoteHistory = Array.isArray(data.history) ? data.history : [];
+      if (remoteHistory.length) {
+        setJson(keys.history, remoteHistory);
+      } else if (localHistory.length) {
+        await apiRequest("/history", {
+          method: "PUT",
+          body: JSON.stringify({ history: localHistory })
+        });
+      }
+    } catch {
+      apiState.checked = true;
+      apiState.available = false;
+    }
+  }
+
   function normalizeTarget(item) {
     if (!item) return item;
     if (item.target === "마트") return { ...item, target: item.section === "야채" ? "야채" : "그로서리" };
@@ -115,6 +174,7 @@
     } else {
       setJson(keys.ingredients, getJson(keys.ingredients, []).map(normalizeIngredient));
     }
+    await hydrateHistoryFromApi();
     localStorage.setItem(keys.initialized, "true");
   }
 
@@ -317,6 +377,37 @@
     if (data.adminPassword !== undefined) localStorage.setItem(keys.adminPassword, data.adminPassword);
   }
 
+  function setHistory(history) {
+    setJson(keys.history, history);
+  }
+
+  function saveHistoryEntry(entry) {
+    const history = getJson(keys.history, []);
+    setHistory([entry, ...history.filter((row) => row.id !== entry.id)]);
+    syncQuietly(() => apiRequest("/history", {
+      method: "POST",
+      body: JSON.stringify({ entry })
+    }));
+  }
+
+  function replaceHistory(history) {
+    setHistory(history);
+    syncQuietly(() => apiRequest("/history", {
+      method: "PUT",
+      body: JSON.stringify({ history })
+    }));
+  }
+
+  function deleteHistory(idValue) {
+    setHistory(getJson(keys.history, []).filter((entry) => entry.id !== idValue));
+    syncQuietly(() => apiRequest(`/history/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+  }
+
+  function clearHistory() {
+    setHistory([]);
+    syncQuietly(() => apiRequest("/history", { method: "DELETE" }));
+  }
+
   window.Store = {
     keys,
     init,
@@ -335,8 +426,13 @@
     getRecipes: () => getJson(keys.recipes, []),
     setRecipes: (v) => setJson(keys.recipes, v),
     getHistory: () => getJson(keys.history, []),
-    setHistory: (v) => setJson(keys.history, v),
-    addHistory: (entry) => setJson(keys.history, [entry, ...getJson(keys.history, [])]),
+    setHistory,
+    addHistory: saveHistoryEntry,
+    saveHistoryEntry,
+    replaceHistory,
+    deleteHistory,
+    clearHistory,
+    dbStatus: () => ({ ...apiState }),
     historyToCsv,
     historyFromCsv,
     recipesToCsv,
@@ -374,7 +470,7 @@
             </a>
           `).join("")}
         </nav>
-        <div class="sidebar-footer">Static PWA · localStorage only<br />GitHub + Netlify ready</div>
+        <div class="sidebar-footer">Static PWA · DB sync ready<br />GitHub + Netlify ready</div>
       `;
       let clock = document.querySelector("[data-layout-clock]");
       if (!clock) {

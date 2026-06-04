@@ -1,0 +1,10 @@
+{
+  "name": "mukja-order",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobile-first restaurant ingredient ordering PWA for Mukja Alley.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "pg": "^8.16.0"
+  }
+}

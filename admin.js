@@ -292,7 +292,7 @@
       const rows = Store.historyFromCsv(await file.text());
       if (!rows.length) throw new Error("empty csv");
       if (!confirm(I18n.t("confirmCsvImport"))) return;
-      Store.setHistory(rows);
+      Store.replaceHistory(rows);
       setStatus(I18n.t("csvImportDone"));
       renderAll();
     } catch {

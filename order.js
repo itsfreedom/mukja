@@ -160,7 +160,6 @@
 
   function saveDraftToHistory() {
     if (!state.draftItems.length) return;
-    const history = Store.getHistory();
     const entry = {
       id: state.savedHistoryId || Store.id("history"),
       date: Store.today(),
@@ -173,7 +172,7 @@
       message: [state.messages.cafeteria, state.messages.grocery].filter(Boolean).join("\n\n---\n\n")
     };
     state.savedHistoryId = entry.id;
-    Store.setHistory([entry, ...history.filter((row) => row.id !== entry.id)]);
+    Store.saveHistoryEntry(entry);
   }
 
   function saveAndCreateMessage() {

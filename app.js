@@ -98,8 +98,7 @@
           ({ ...item, received: checkedKeys.has(`${sectionFor(item)}|${item.name}`) })
         )
       };
-      const history = Store.getHistory();
-      Store.setHistory(latest.isSample ? [updated, ...history.filter((entry) => entry.id !== "sample-last-order")] : [updated, ...history.slice(1)]);
+      Store.saveHistoryEntry(updated);
       document.getElementById("received-status").textContent = I18n.t("receivedSaved");
       setTimeout(renderLastOrder, 600);
     });
