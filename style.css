@@ -1950,17 +1950,22 @@ body {
 }
 
 .menu-search-row input,
-.menu-search-row .button {
-  min-height: 38px;
+.menu-search-row .button,
+.menu-category-field select {
+  height: 48px;
+  min-height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .menu-search-row .button {
-  padding: 7px 12px;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 .menu-category-field select {
-  min-height: 56px;
   font-size: 0.98rem;
+  line-height: 48px;
 }
 
 .recipe-modal {
