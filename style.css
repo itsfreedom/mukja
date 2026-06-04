@@ -1905,16 +1905,13 @@ body {
   justify-content: space-between;
 }
 
-.order-page .title-action-button {
-  width: auto;
-  min-height: 34px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  line-height: 1;
+.order-page .order-reset-row {
+  margin-top: 0;
+  margin-bottom: 14px;
 }
 
-.order-page .title-action-button.danger-button {
+.order-page .order-reset-row .danger-button {
+  width: 100%;
   border-color: rgba(242, 107, 122, 0.56);
   background: #d83f52;
   color: #fff;
