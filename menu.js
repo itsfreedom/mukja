@@ -57,17 +57,7 @@
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
-  const nonSaleCategories = ["반조리"];
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
-
-  function isNonSaleCategory(menu) {
-    return nonSaleCategories.includes(String(menu.category || "").trim());
-  }
-
-  function money(menu) {
-    if (!menu.price) return "-";
-    return `${menu.currency || "CAD"} ${Number(menu.price).toFixed(2)}`;
-  }
 
   function renderFilters() {
     category.innerHTML = `<option value="">${I18n.t("all")}</option>` + Store.getMenuCategories()
@@ -152,10 +142,6 @@
     return `
       ${menu.seasonal ? `<span class="tiny-badge is-seasonal">${I18n.t("seasonalMenu")}</span>` : ""}
     `;
-  }
-
-  function menuPriceLine(menu) {
-    return isNonSaleCategory(menu) ? "" : `<span class="menu-inline-price">${money(menu)}</span>`;
   }
 
   function escapeHtml(value) {
@@ -861,7 +847,6 @@
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
                   <strong class="${menu.discontinued ? "is-discontinued" : ""}">${I18n.menuName(menu)}</strong>
-                  ${menuPriceLine(menu)}
                 </div>
               </div>
               ${rowActions(menu)}

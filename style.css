@@ -743,11 +743,6 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .tiny-badge.is-seasonal {
   color: #d9e3ff;
 }
-.menu-inline-price {
-  color: #d9e3ff;
-  font-size: 0.86rem;
-  font-weight: 900;
-}
 .menu-row-actions {
   display: grid;
   grid-auto-flow: column;
@@ -2622,7 +2617,6 @@ body.modal-open {
   line-height: 1.35;
 }
 
-.menu-inline-price,
 .recipe-crud-main span,
 .receive-row-main span,
 .item-meta {
