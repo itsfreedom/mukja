@@ -874,6 +874,24 @@
     return `\ufeff${lines.join("\n")}`;
   }
 
+  function ingredientsToCsv(rows) {
+    const header = ["id", "nameKo", "nameEn", "target", "section", "unit", "enabled", "sortOrder"];
+    const lines = [header.map(csvEscape).join(",")];
+    rows.forEach((item) => {
+      lines.push([
+        item.id,
+        item.nameKo || item.name,
+        item.nameEn || "",
+        item.target || "",
+        item.section || "",
+        item.unit || "",
+        item.enabled === false ? "false" : "true",
+        item.sortOrder ?? ""
+      ].map(csvEscape).join(","));
+    });
+    return `\ufeff${lines.join("\n")}`;
+  }
+
   function headerMap(header) {
     return header.reduce((acc, name, index) => {
       acc[String(name || "").trim()] = index;
@@ -977,6 +995,27 @@
         currency: field(row, map, ["currency", "통화"]) || "CAD",
         notes: field(row, map, ["notes", "메모"]),
         sortOrder: field(row, map, ["sortOrder", "sort_order", "순서"])
+      })];
+    });
+  }
+
+  function ingredientsFromCsv(text) {
+    const rows = parseCsv(text);
+    if (rows.length < 2) return [];
+    const map = headerMap(rows[0]);
+    return rows.slice(1).flatMap((row, index) => {
+      const nameKo = field(row, map, ["nameKo", "품목명", "재료명", "name", "Name"]);
+      if (!nameKo) return [];
+      return [normalizeIngredient({
+        id: field(row, map, ["id"]) || id("item"),
+        name: nameKo,
+        nameKo,
+        nameEn: field(row, map, ["nameEn", "영문명", "englishName"]),
+        target: normalizeTargetName(field(row, map, ["target", "부서", "주문부서"])) || "카페테리아",
+        section: field(row, map, ["section", "카테고리", "분류"]) || "기타",
+        unit: field(row, map, ["unit", "주문 단위", "단위"]),
+        enabled: field(row, map, ["enabled", "사용"]) !== "false",
+        sortOrder: field(row, map, ["sortOrder", "sort_order", "순서"]) || index
       })];
     });
   }
@@ -1270,6 +1309,8 @@
     recipesFromCsv,
     menusToCsv,
     menusFromCsv,
+    ingredientsToCsv,
+    ingredientsFromCsv,
     normalizeRecipe,
     parseRecipeItems,
     parseRecipeSteps,

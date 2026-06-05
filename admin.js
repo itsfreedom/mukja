@@ -165,6 +165,8 @@
   function exportCsv(kind) {
     if (kind === "history") {
       Store.downloadText("mukja-request-history.csv", Store.historyToCsv(Store.getHistory()), "text/csv;charset=utf-8");
+    } else if (kind === "ingredients") {
+      Store.downloadText("mukja-ingredients.csv", Store.ingredientsToCsv(Store.getIngredients()), "text/csv;charset=utf-8");
     } else if (kind === "menus") {
       Store.downloadText("mukja-menus.csv", Store.menusToCsv(Store.getMenus()), "text/csv;charset=utf-8");
     } else if (kind === "recipes") {
@@ -181,8 +183,13 @@
       if (kind === "history") {
         const history = Store.historyFromCsv(text);
         if (!history.length) throw new Error("empty");
-        if (!window.confirm("요청 목록 CSV를 가져올까요? 기존 요청 목록이 교체됩니다.")) return;
+        if (!window.confirm("요청 내역 CSV를 가져올까요? 기존 요청 내역이 교체됩니다.")) return;
         Store.replaceHistory(history);
+      } else if (kind === "ingredients") {
+        const ingredients = Store.ingredientsFromCsv(text);
+        if (!ingredients.length) throw new Error("empty");
+        if (!window.confirm("재료 목록 CSV를 가져올까요? 기존 재료 목록이 교체됩니다.")) return;
+        Store.setIngredients(ingredients);
       } else if (kind === "menus") {
         const menus = Store.menusFromCsv(text);
         if (!menus.length) throw new Error("empty");

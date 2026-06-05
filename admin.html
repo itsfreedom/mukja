@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>관리자</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260605-admin-arrow-icons" />
+    <link rel="stylesheet" href="style.css?v=20260605-admin-four-csv" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -41,14 +41,26 @@
               <hr class="section-divider department-divider" />
               <div class="admin-csv-list">
                 <article class="list-card admin-csv-row">
-                  <strong>요청 목록</strong>
+                  <strong>요청 내역</strong>
                   <div class="admin-csv-actions">
-                    <button class="menu-row-action" data-export-csv="history" type="button" aria-label="요청 목록 CSV 내보내기">
+                    <button class="menu-row-action" data-export-csv="history" type="button" aria-label="요청 내역 CSV 내보내기">
                       <img class="admin-csv-icon" src="assets/icons/csv-export.png" alt="" />
                     </button>
-                    <label class="menu-row-action" aria-label="요청 목록 CSV 가져오기">
+                    <label class="menu-row-action" aria-label="요청 내역 CSV 가져오기">
                       <img class="admin-csv-icon" src="assets/icons/csv-import.png" alt="" />
                       <input class="hidden" data-import-csv="history" type="file" accept=".csv,text/csv" />
+                    </label>
+                  </div>
+                </article>
+                <article class="list-card admin-csv-row">
+                  <strong>재료 목록</strong>
+                  <div class="admin-csv-actions">
+                    <button class="menu-row-action" data-export-csv="ingredients" type="button" aria-label="재료 목록 CSV 내보내기">
+                      <img class="admin-csv-icon" src="assets/icons/csv-export.png" alt="" />
+                    </button>
+                    <label class="menu-row-action" aria-label="재료 목록 CSV 가져오기">
+                      <img class="admin-csv-icon" src="assets/icons/csv-import.png" alt="" />
+                      <input class="hidden" data-import-csv="ingredients" type="file" accept=".csv,text/csv" />
                     </label>
                   </div>
                 </article>
@@ -84,6 +96,6 @@
     </div>
     <script src="storage.js?v=20260605-admin-csv-access"></script>
     <script src="i18n.js?v=20260605-item-category-dropdown"></script>
-    <script src="admin.js?v=20260605-admin-arrow-icons"></script>
+    <script src="admin.js?v=20260605-admin-four-csv"></script>
   </body>
 </html>
