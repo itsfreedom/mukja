@@ -777,7 +777,7 @@
     const icons = {
       create: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>',
       edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>',
-      drag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01" /><path d="M15 6h.01" /><path d="M9 12h.01" /><path d="M15 12h.01" /><path d="M9 18h.01" /><path d="M15 18h.01" /></svg>',
+      drag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>',
       recipe: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>'
     };
     return `
@@ -791,7 +791,6 @@
     return `
       <div class="menu-row-actions">
         ${canManageMenu ? actionButton("edit", "U", menu, "is-edit") : ""}
-        ${canManageMenu ? actionButton("drag", "순서 이동", menu, "recipe-drag-handle") : ""}
         ${actionButton("recipe", "레시피", menu, "is-recipe")}
       </div>
     `;
@@ -822,6 +821,7 @@
         <div class="list admin-section">
           ${groupMenus.map((menu) => `
             <article class="list-card menu-row" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
+              ${canManageMenu ? actionButton("drag", "순서 이동", menu, "menu-drag-handle recipe-drag-handle") : ""}
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>

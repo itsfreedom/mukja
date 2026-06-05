@@ -686,7 +686,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-row {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   color: var(--text);
@@ -755,7 +755,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 .menu-row-actions {
   display: grid;
-  grid-template-columns: repeat(3, 32px);
+  grid-template-columns: repeat(2, 32px);
   gap: 6px;
   justify-content: end;
 }
@@ -796,6 +796,10 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   background: rgba(130, 168, 255, 0.15);
 }
 
+.menu-drag-handle {
+  background: rgba(255, 255, 255, 0.055);
+}
+
 .menu-row-action svg {
   width: 17px;
   height: 17px;
@@ -808,11 +812,11 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 
 @media (max-width: 520px) {
   .menu-row {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 10px;
   }
   .menu-row-actions {
-    grid-template-columns: repeat(3, 30px);
+    grid-template-columns: repeat(2, 30px);
     gap: 5px;
   }
   .menu-row-action {
