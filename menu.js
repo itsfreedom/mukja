@@ -50,6 +50,11 @@
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
+  const nonSaleCategories = ["반조리"];
+
+  function isNonSaleCategory(menu) {
+    return nonSaleCategories.includes(String(menu.category || "").trim());
+  }
 
   function money(menu) {
     if (!menu.price) return "-";
@@ -121,10 +126,16 @@
   }
 
   function menuStatusBadges(menu) {
+    const statusClass = isNonSaleCategory(menu) ? "is-unavailable" : menu.discontinued ? "is-paused" : "is-live";
+    const statusLabel = isNonSaleCategory(menu) ? "판매 불가" : menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     return `
-      <span class="menu-status-dot ${menu.discontinued ? "is-paused" : "is-live"}" aria-label="${menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu")}"></span>
+      <span class="menu-status-dot ${statusClass}" aria-label="${statusLabel}"></span>
       ${menu.seasonal ? `<span class="tiny-badge is-seasonal">${I18n.t("seasonalMenu")}</span>` : ""}
     `;
+  }
+
+  function menuPriceLine(menu) {
+    return isNonSaleCategory(menu) ? "" : `<span class="menu-inline-price">${money(menu)}</span>`;
   }
 
   function measuredList(title, items) {
@@ -372,7 +383,7 @@
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
                   <strong class="${menu.discontinued ? "is-discontinued" : ""}">${I18n.menuName(menu)}</strong>
-                  <span class="menu-inline-price">${money(menu)}</span>
+                  ${menuPriceLine(menu)}
                 </div>
               </div>
               ${rowActions(menu)}
