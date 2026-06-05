@@ -9,6 +9,7 @@
   const selected = new Set();
   const editSelected = new Set();
   let requestMode = "order";
+  let lastSelectedItemId = null;
   let editingEntry = null;
   let activeItemEdit = null;
   let activeCategoryEdit = null;
@@ -294,6 +295,30 @@
     `;
   }
 
+  function bulkSelectionAnchorId() {
+    if (!editSelected.size) return null;
+    if (lastSelectedItemId && editSelected.has(lastSelectedItemId)) return lastSelectedItemId;
+    return [...editSelected][editSelected.size - 1] || null;
+  }
+
+  function bulkSelectionForm(anchorItem) {
+    const target = targetFor(anchorItem);
+    const category = categoryFor(anchorItem);
+    return `
+      <div class="recipe-item-form order-selection-form" data-order-selection-form>
+        <div class="order-selection-summary">선택된 ${editSelected.size}개 품목</div>
+        <label><span>부서</span><select data-bulk-selection-target>
+          ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
+        </select></label>
+        <label><span>카테고리</span><select data-bulk-selection-section>${categoryOptions(target, category)}</select></label>
+        <div class="recipe-item-form-actions order-selection-actions">
+          <button class="button" data-bulk-selection-action="save" type="button">저장</button>
+          <button class="ghost-button" data-bulk-selection-action="cancel" type="button">취소</button>
+        </div>
+      </div>
+    `;
+  }
+
   function saveItemFromForm(form, item = null) {
     const nameKo = form?.querySelector("[data-order-item-name-ko]")?.value.trim() || "";
     if (!nameKo) {
@@ -318,6 +343,21 @@
       ? rows.map((row) => row.id === nextItem.id ? nextItem : row)
       : [...rows, nextItem]);
     activeItemEdit = null;
+    renderItems();
+  }
+
+  function saveBulkSelectionFromForm(form) {
+    const ids = [...editSelected];
+    if (!ids.length) return;
+    const target = form?.querySelector("[data-bulk-selection-target]")?.value || "카페테리아";
+    const section = form?.querySelector("[data-bulk-selection-section]")?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
+    Store.setIngredients(Store.getIngredients().map((item) =>
+      ids.includes(item.id) ? { ...item, target, section } : item
+    ));
+    editSelected.clear();
+    lastSelectedItemId = null;
+    activeItemEdit = null;
+    setStatus(`${ids.length}개 품목을 수정했습니다.`);
     renderItems();
   }
 
@@ -359,6 +399,7 @@
   }
 
   function renderItemRows(items) {
+    const selectionAnchorId = isEditMode() ? bulkSelectionAnchorId() : null;
     return `
       <div class="item-section-list">
         ${items.map((item) => {
@@ -374,6 +415,7 @@
             ${itemActions(item)}
           </article>
           ${isEditMode() && activeItemEdit?.id === item.id ? itemForm(item) : ""}
+          ${isEditMode() && selectionAnchorId === item.id ? bulkSelectionForm(item) : ""}
         `;
         }).join("")}
       </div>
@@ -452,8 +494,17 @@
     els.list.querySelectorAll("[data-item]").forEach((input) => {
       input.addEventListener("change", () => {
         if (isEditMode()) {
-          if (input.checked) editSelected.add(input.dataset.itemId);
-          else editSelected.delete(input.dataset.itemId);
+          if (input.checked) {
+            editSelected.add(input.dataset.itemId);
+            lastSelectedItemId = input.dataset.itemId;
+            activeItemEdit = null;
+          } else {
+            editSelected.delete(input.dataset.itemId);
+            if (lastSelectedItemId === input.dataset.itemId) {
+              lastSelectedItemId = [...editSelected][editSelected.size - 1] || null;
+            }
+          }
+          renderItems();
           return;
         }
         if (input.checked) selected.add(input.dataset.item);
@@ -466,6 +517,27 @@
         const categorySelect = form?.querySelector("[data-order-item-section]");
         if (!categorySelect) return;
         categorySelect.innerHTML = categoryOptions(select.value);
+      });
+    });
+    els.list.querySelectorAll("[data-bulk-selection-target]").forEach((select) => {
+      select.addEventListener("change", () => {
+        const form = select.closest("[data-order-selection-form]");
+        const categorySelect = form?.querySelector("[data-bulk-selection-section]");
+        if (!categorySelect) return;
+        categorySelect.innerHTML = categoryOptions(select.value);
+      });
+    });
+    els.list.querySelectorAll("[data-bulk-selection-action]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (button.dataset.bulkSelectionAction === "save") {
+          saveBulkSelectionFromForm(button.closest("[data-order-selection-form]"));
+          return;
+        }
+        editSelected.clear();
+        lastSelectedItemId = null;
+        renderItems();
       });
     });
     els.list.querySelectorAll("[data-order-item-action]").forEach((button) => {
@@ -484,6 +556,8 @@
           return;
         }
         if (action === "edit") {
+          editSelected.clear();
+          lastSelectedItemId = null;
           activeItemEdit = activeItemEdit?.id === item?.id ? null : { id: item?.id };
           renderItems();
           return;
@@ -501,6 +575,8 @@
           if (!window.confirm(`${I18n.itemName(item)} 품목을 삭제할까요?`)) return;
           Store.setIngredients(Store.getIngredients().filter((row) => row.id !== item.id));
           selected.delete(itemKey(item));
+          editSelected.delete(item.id);
+          if (lastSelectedItemId === item.id) lastSelectedItemId = null;
           activeItemEdit = null;
           renderItems();
         }
@@ -681,6 +757,8 @@
 
   function setRequestMode(mode) {
     requestMode = canEditCatalog && mode === "edit" ? "edit" : "order";
+    editSelected.clear();
+    lastSelectedItemId = null;
     activeItemEdit = null;
     activeCategoryEdit = null;
     draggedCategory = null;
