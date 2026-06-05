@@ -31,7 +31,8 @@
     price: document.getElementById("edit-menu-price"),
     recipe: document.getElementById("edit-menu-recipe"),
     seasonal: document.getElementById("edit-menu-seasonal"),
-    active: document.getElementById("edit-menu-active")
+    active: document.getElementById("edit-menu-active"),
+    discontinued: document.getElementById("edit-menu-discontinued")
   };
   const recipeEditFields = {
     name: document.getElementById("menu-edit-recipe-name"),
@@ -65,6 +66,19 @@
     recipeEditFields.section.innerHTML = Store.getSections()
       .map((name) => `<option value="${name}">${I18n.sectionLabel(name)}</option>`)
       .join("");
+  }
+
+  function renderMenuCategoryOptions(selectedValue = "") {
+    const categories = Store.getMenuCategories();
+    const selected = String(selectedValue || "");
+    if (selected && !categories.includes(selected)) categories.push(selected);
+    editFields.category.innerHTML = categories
+      .map((name) => `<option value="${name}">${name}</option>`)
+      .join("");
+    if (selected && !categories.length) {
+      editFields.category.innerHTML = `<option value="${selected}">${selected}</option>`;
+    }
+    editFields.category.value = selected || categories[0] || "";
   }
 
   function filteredMenus() {
@@ -240,14 +254,15 @@
 
   function openMenuEditor(menu = null, defaults = {}) {
     editingMenuId = menu?.id || "";
-    editModalTitle.textContent = menu ? "메뉴 수정" : "메뉴 생성";
+    editModalTitle.textContent = menu ? "메뉴 수정" : "메뉴 추가";
     editFields.nameKo.value = menu?.nameKo || "";
     editFields.nameEn.value = menu?.nameEn || "";
-    editFields.category.value = menu?.category || defaults.category || "";
+    renderMenuCategoryOptions(menu?.category || defaults.category || "");
     editFields.price.value = menu?.price || "";
     editFields.recipe.value = menu?.recipeId || "";
     editFields.seasonal.checked = Boolean(menu?.seasonal);
     editFields.active.checked = menu ? !menu.discontinued : true;
+    editFields.discontinued.checked = menu ? Boolean(menu.discontinued) : false;
     editModal.classList.remove("hidden");
     document.body.classList.add("modal-open");
     editFields.nameKo.focus();
@@ -263,6 +278,7 @@
     if (!nameKo) return;
     const existing = editingMenuId ? Store.getMenus().find((row) => row.id === editingMenuId) : null;
     const existingRecipe = existing ? recipeFor(existing) : null;
+    const isActive = editFields.active.checked;
     const recipe = existingRecipe || {
       id: editFields.recipe.value || Store.id("recipe"),
       name: nameKo,
@@ -276,13 +292,13 @@
       ingredientItems: [],
       seasoningItems: [],
       stepItems: [],
-      enabled: editFields.active.checked,
+      enabled: isActive,
       updatedAt: Store.today()
     };
     const recipeToSave = {
       ...recipe,
       name: recipe.name || nameKo,
-      enabled: editFields.active.checked,
+      enabled: isActive,
       updatedAt: Store.today()
     };
     const menu = {
@@ -296,7 +312,7 @@
       price: editFields.price.value.trim(),
       currency: existing?.currency || "CAD",
       seasonal: editFields.seasonal.checked,
-      discontinued: !editFields.active.checked,
+      discontinued: !isActive,
       notes: existing?.notes || ""
     };
     Store.saveMenuWithRecipe(recipeToSave, menu);
