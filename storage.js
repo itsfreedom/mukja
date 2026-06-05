@@ -1244,7 +1244,6 @@
             </a>
           `).join("")}
         </nav>
-        <div class="sidebar-footer">Static PWA · DB sync ready<br />GitHub + Netlify ready</div>
       `;
       const sidebarToggle = sidebar.querySelector("[data-sidebar-toggle]");
       if (sidebarToggle) {
