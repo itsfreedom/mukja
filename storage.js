@@ -219,7 +219,7 @@
   }
 
   function buildDefaultMenus(recipes) {
-    return defaultMenuSeeds.map((menu) => {
+    return defaultMenuSeeds.map((menu, index) => {
       const recipeRow = recipes.find((recipe) => recipe.name === menu.recipeName);
       return {
         id: `menu-${menu.nameEn.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`,
@@ -232,7 +232,8 @@
         discontinued: false,
         price: menu.price,
         currency: "CAD",
-        notes: ""
+        notes: "",
+        sortOrder: index + 1
       };
     });
   }
@@ -282,7 +283,8 @@
         discontinued: index % 9 === 8,
         price,
         currency: "CAD",
-        notes: index % 9 === 8 ? "테스트용 판매 중단 메뉴" : ""
+        notes: index % 9 === 8 ? "테스트용 판매 중단 메뉴" : "",
+        sortOrder: base.length + index + 1
       };
     });
     return [...base, ...extra].map(normalizeMenu);
@@ -394,7 +396,8 @@
     return {
       ...menu,
       nameKo: menu.nameKo || menu.name || seed?.nameKo || "",
-      nameEn: menu.nameEn || seed?.nameEn || ""
+      nameEn: menu.nameEn || seed?.nameEn || "",
+      sortOrder: Number.isFinite(Number(menu.sortOrder)) ? Number(menu.sortOrder) : 0
     };
   }
 

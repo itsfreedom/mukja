@@ -51,7 +51,9 @@
   let editingRecipeId = "";
   let activeIngredientEdit = null;
   let activeStepEdit = null;
+  let activeMenuEdit = null;
   let draggedStepIndex = null;
+  let draggedMenuId = null;
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
@@ -91,12 +93,27 @@
     editFields.category.value = selected || categories[0] || "";
   }
 
+  function menuCategoryOptions(selectedValue = "") {
+    const categories = Store.getMenuCategories();
+    const selected = String(selectedValue || "");
+    if (selected && !categories.includes(selected)) categories.push(selected);
+    return categories
+      .map((name) => `<option value="${name}" ${name === selected ? "selected" : ""}>${name}</option>`)
+      .join("");
+  }
+
   function filteredMenus() {
     const q = searchQuery.trim().toLowerCase();
     return Store.getMenus().filter((menu) => {
       if (category.value && menu.category !== category.value) return false;
       if (q && !`${menu.nameKo} ${menu.nameEn} ${menu.category} ${menu.recipeName}`.toLowerCase().includes(q)) return false;
       return true;
+    }).sort((a, b) => {
+      const categoryCompare = String(a.category || "").localeCompare(String(b.category || ""), "ko");
+      if (categoryCompare) return categoryCompare;
+      const orderCompare = (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0);
+      if (orderCompare) return orderCompare;
+      return String(a.nameKo || "").localeCompare(String(b.nameKo || ""), "ko");
     });
   }
 
@@ -638,10 +655,129 @@
     render();
   }
 
+  function menuEditForm(menu = null, defaults = {}) {
+    const isNew = !menu;
+    const selectedCategory = menu?.category || defaults.category || Store.getMenuCategories()[0] || "식사";
+    const activeChecked = menu ? !menu.discontinued : true;
+    const discontinuedChecked = menu ? Boolean(menu.discontinued) : false;
+    return `
+      <div class="recipe-item-form menu-inline-form" data-menu-form="${menu?.id || "__new__"}">
+        <label><span>한글 메뉴명</span><input data-menu-name-ko value="${escapeHtml(menu?.nameKo || "")}" /></label>
+        <label><span>영문 메뉴명</span><input data-menu-name-en value="${escapeHtml(menu?.nameEn || "")}" /></label>
+        <label><span>카테고리</span><select data-menu-category>${menuCategoryOptions(selectedCategory)}</select></label>
+        <label><span>가격 (CAD)</span><input data-menu-price inputmode="decimal" value="${escapeHtml(menu?.price || "")}" /></label>
+        <div class="menu-option-row">
+          <div class="menu-option-card menu-status-card">
+            <label class="menu-check-option">
+              <input data-menu-active name="menu-status-${menu?.id || "new"}" type="radio" value="active" ${activeChecked ? "checked" : ""} />
+              <span>판매</span>
+            </label>
+            <label class="menu-check-option">
+              <input data-menu-discontinued name="menu-status-${menu?.id || "new"}" type="radio" value="discontinued" ${discontinuedChecked ? "checked" : ""} />
+              <span>판매 중지</span>
+            </label>
+          </div>
+          <label class="menu-option-card menu-check-option">
+            <input data-menu-seasonal type="checkbox" ${menu?.seasonal ? "checked" : ""} />
+            <span data-i18n="seasonalMenu">계절 메뉴</span>
+          </label>
+        </div>
+        <div class="recipe-item-form-actions">
+          <button class="button" data-menu-action="save" data-menu-id="${menu?.id || ""}" type="button">저장</button>
+          <button class="danger-button ${isNew ? "hidden" : ""}" data-menu-action="delete" data-menu-id="${menu?.id || ""}" type="button">삭제</button>
+          <button class="ghost-button" data-menu-action="cancel" type="button">취소</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function saveMenuFromInline(form, menu = null) {
+    const nameKo = form?.querySelector("[data-menu-name-ko]")?.value.trim() || "";
+    if (!nameKo) return;
+    const isActive = form.querySelector("[data-menu-active]")?.checked;
+    const confirmMessage = isActive ? "메뉴 정보를 저장할까요?" : "메뉴를 판매 중지 상태로 저장할까요?";
+    if (!confirm(confirmMessage)) return;
+    const categoryValue = form.querySelector("[data-menu-category]")?.value.trim() || "기타";
+    const existingRecipe = menu ? recipeFor(menu) : null;
+    const recipe = existingRecipe || {
+      id: Store.id("recipe"),
+      name: nameKo,
+      section: categoryValue,
+      description: "",
+      ingredients: "",
+      seasonings: "",
+      steps: "",
+      notes: "",
+      imageUrl: "",
+      ingredientItems: [],
+      seasoningItems: [],
+      stepItems: [],
+      enabled: isActive,
+      updatedAt: Store.today()
+    };
+    const recipeToSave = {
+      ...recipe,
+      name: recipe.name || nameKo,
+      section: recipe.section || categoryValue,
+      enabled: isActive,
+      updatedAt: Store.today()
+    };
+    const categoryMenus = Store.getMenus().filter((row) => row.category === categoryValue);
+    const nextSortOrder = categoryMenus.length
+      ? Math.max(...categoryMenus.map((row) => Number(row.sortOrder) || 0)) + 1
+      : 1;
+    const sortOrder = menu && menu.category === categoryValue
+      ? (menu.sortOrder ?? nextSortOrder)
+      : nextSortOrder;
+    const nextMenu = {
+      ...(menu || {}),
+      id: menu?.id || Store.id("menu"),
+      recipeId: recipeToSave.id,
+      recipeName: recipeToSave.name,
+      nameKo,
+      nameEn: form.querySelector("[data-menu-name-en]")?.value.trim() || "",
+      category: categoryValue,
+      price: form.querySelector("[data-menu-price]")?.value.trim() || "",
+      currency: menu?.currency || "CAD",
+      seasonal: Boolean(form.querySelector("[data-menu-seasonal]")?.checked),
+      discontinued: !isActive,
+      notes: menu?.notes || "",
+      sortOrder
+    };
+    Store.saveMenuWithRecipe(recipeToSave, nextMenu);
+    activeMenuEdit = null;
+    renderFilters();
+    render();
+  }
+
+  function reorderMenus(fromId, toId) {
+    if (!fromId || !toId || fromId === toId) return;
+    const menus = Store.getMenus();
+    const fromMenu = menus.find((menu) => menu.id === fromId);
+    const toMenu = menus.find((menu) => menu.id === toId);
+    if (!fromMenu || !toMenu || fromMenu.category !== toMenu.category) return;
+    const categoryMenus = menus
+      .filter((menu) => menu.category === fromMenu.category)
+      .sort((a, b) => (Number(a.sortOrder) || 0) - (Number(b.sortOrder) || 0) || String(a.nameKo || "").localeCompare(String(b.nameKo || ""), "ko"));
+    const fromIndex = categoryMenus.findIndex((menu) => menu.id === fromId);
+    const toIndex = categoryMenus.findIndex((menu) => menu.id === toId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const nextCategoryMenus = categoryMenus.slice();
+    const [moved] = nextCategoryMenus.splice(fromIndex, 1);
+    nextCategoryMenus.splice(toIndex, 0, moved);
+    const orderById = new Map(nextCategoryMenus.map((menu, index) => [menu.id, index + 1]));
+    const nextMenus = menus.map((menu) => orderById.has(menu.id) ? { ...menu, sortOrder: orderById.get(menu.id) } : menu);
+    Store.setMenus(nextMenus);
+    activeMenuEdit = null;
+    draggedMenuId = null;
+    render();
+  }
+
   function actionButton(action, label, menu, extraClass = "") {
     const icons = {
       create: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>',
       edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>',
+      drag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01" /><path d="M15 6h.01" /><path d="M9 12h.01" /><path d="M15 12h.01" /><path d="M9 18h.01" /><path d="M15 18h.01" /></svg>',
       recipe: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>'
     };
     return `
@@ -654,8 +790,8 @@
   function rowActions(menu) {
     return `
       <div class="menu-row-actions">
-        ${canManageMenu ? actionButton("create", "+", menu, "is-create") : ""}
         ${canManageMenu ? actionButton("edit", "U", menu, "is-edit") : ""}
+        ${canManageMenu ? actionButton("drag", "순서 이동", menu, "recipe-drag-handle") : ""}
         ${actionButton("recipe", "레시피", menu, "is-recipe")}
       </div>
     `;
@@ -679,10 +815,13 @@
     }, {});
     list.innerHTML = Object.entries(groups).map(([group, groupMenus]) => `
       <section class="menu-category-group">
-        <h2>${group}</h2>
+        <div class="recipe-section-title-row menu-category-title-row">
+          <h2>${group}</h2>
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+        </div>
         <div class="list admin-section">
           ${groupMenus.map((menu) => `
-            <article class="list-card menu-row" data-menu="${menu.id}">
+            <article class="list-card menu-row" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
@@ -692,7 +831,9 @@
               </div>
               ${rowActions(menu)}
             </article>
+            ${activeMenuEdit?.id === menu.id ? menuEditForm(menu) : ""}
           `).join("")}
+          ${activeMenuEdit?.isNew && activeMenuEdit.category === group ? menuEditForm(null, { category: group }) : ""}
         </div>
       </section>
     `).join("");
@@ -700,10 +841,52 @@
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         const menu = Store.getMenus().find((row) => row.id === button.dataset.menuId);
+        const action = button.dataset.menuAction;
+        if (action === "create") {
+          activeMenuEdit = { isNew: true, category: button.dataset.menuCategory || Store.getMenuCategories()[0] || "식사" };
+          render();
+          return;
+        }
+        if (action === "cancel") {
+          activeMenuEdit = null;
+          render();
+          return;
+        }
+        if (action === "save") {
+          saveMenuFromInline(button.closest("[data-menu-form]"), menu || null);
+          return;
+        }
         if (!menu) return;
-        if (button.dataset.menuAction === "create") openMenuEditor(null, { category: menu.category });
-        if (button.dataset.menuAction === "edit") openMenuEditor(menu);
-        if (button.dataset.menuAction === "recipe") openRecipe(menu);
+        if (action === "edit") {
+          activeMenuEdit = { id: menu.id };
+          render();
+        }
+        if (action === "delete") {
+          if (!confirm(`${I18n.menuName(menu)} 메뉴를 삭제할까요?`)) return;
+          Store.deleteMenu(menu.id);
+          activeMenuEdit = null;
+          renderFilters();
+          render();
+        }
+        if (action === "recipe") openRecipe(menu);
+      });
+    });
+    list.querySelectorAll("[data-menu]").forEach((row) => {
+      row.addEventListener("dragstart", (event) => {
+        if (!canManageMenu) return;
+        draggedMenuId = row.dataset.menu;
+        event.dataTransfer?.setData("text/plain", draggedMenuId);
+        event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
+      });
+      row.addEventListener("dragover", (event) => {
+        if (!canManageMenu) return;
+        event.preventDefault();
+      });
+      row.addEventListener("drop", (event) => {
+        if (!canManageMenu) return;
+        event.preventDefault();
+        const fromId = draggedMenuId || event.dataTransfer?.getData("text/plain");
+        reorderMenus(fromId, row.dataset.menu);
       });
     });
   }

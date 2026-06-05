@@ -200,6 +200,7 @@ async function ensureSchema(client) {
       price numeric(10, 2),
       currency text not null default 'CAD',
       notes text,
+      sort_order integer not null default 0,
       changed_by_identity_id text references access_identities(id) on delete set null,
       changed_ip text,
       changed_user_agent text,
@@ -208,6 +209,7 @@ async function ensureSchema(client) {
     );
 
     alter table menus add column if not exists category text;
+    alter table menus add column if not exists sort_order integer not null default 0;
     alter table order_items add column if not exists name_en text;
     alter table ingredients add column if not exists name_en text;
     alter table recipes add column if not exists ingredient_items jsonb not null default '[]'::jsonb;
@@ -607,10 +609,10 @@ async function upsertMenu(client, menu, info) {
   const price = menu.price === "" || menu.price === undefined || menu.price === null ? null : Number(menu.price);
   await client.query(`
     insert into menus (
-      id, recipe_id, category, name_ko, name_en, seasonal, discontinued, price, currency, notes,
+      id, recipe_id, category, name_ko, name_en, seasonal, discontinued, price, currency, notes, sort_order,
       changed_by_identity_id, changed_ip, changed_user_agent, updated_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
     on conflict (id) do update set
       recipe_id = excluded.recipe_id,
       category = excluded.category,
@@ -621,6 +623,7 @@ async function upsertMenu(client, menu, info) {
       price = excluded.price,
       currency = excluded.currency,
       notes = excluded.notes,
+      sort_order = excluded.sort_order,
       changed_by_identity_id = excluded.changed_by_identity_id,
       changed_ip = excluded.changed_ip,
       changed_user_agent = excluded.changed_user_agent,
@@ -636,6 +639,7 @@ async function upsertMenu(client, menu, info) {
     Number.isFinite(price) ? price : null,
     menu.currency || "CAD",
     menu.notes || "",
+    Number(menu.sortOrder) || 0,
     info.memberId,
     info.ip,
     info.userAgent
@@ -649,7 +653,7 @@ async function listMenus(client) {
       recipes.name as recipe_name
     from menus
     left join recipes on recipes.id = menus.recipe_id
-    order by menus.discontinued asc, menus.name_ko asc
+    order by menus.category asc, menus.sort_order asc, menus.name_ko asc
   `);
   return menus.rows.map((row) => ({
     id: row.id,
@@ -662,7 +666,8 @@ async function listMenus(client) {
     discontinued: row.discontinued,
     price: row.price === null ? "" : String(row.price),
     currency: row.currency || "CAD",
-    notes: row.notes || ""
+    notes: row.notes || "",
+    sortOrder: row.sort_order || 0
   }));
 }
 
