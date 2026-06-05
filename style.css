@@ -1573,11 +1573,11 @@ body {
 
 .sidebar-toggle {
   position: fixed;
-  top: 50dvh;
-  left: calc(var(--sidebar-open) - 22px);
+  top: 56dvh;
+  left: calc(var(--sidebar-open) - 20px);
   z-index: 300;
-  width: 44px;
-  height: 74px;
+  width: 40px;
+  height: 40px;
   border: 1px solid rgba(184, 196, 240, 0.2);
   border-radius: 999px;
   background: rgba(13, 17, 32, 0.98);
@@ -1598,8 +1598,8 @@ body {
 
 .sidebar-toggle-icon {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
   stroke-width: 3;
@@ -1774,7 +1774,7 @@ body {
 }
 
 .sidebar-collapsed .sidebar-toggle {
-  left: calc(var(--sidebar-closed) - 22px);
+  left: calc(var(--sidebar-closed) - 20px);
 }
 
 .sidebar-collapsed .main-frame,
