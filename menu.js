@@ -273,7 +273,6 @@
             <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
               ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
-                <span class="recipe-step-number">${index + 1}</span>
                 <p>${escapeHtml(step.text || "-")}</p>
                 ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>

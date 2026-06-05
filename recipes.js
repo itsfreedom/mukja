@@ -147,7 +147,6 @@
             <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
               ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
-                <span class="recipe-step-number">${index + 1}</span>
                 <p>${escapeHtml(step.text || "-")}</p>
                 ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>
@@ -193,7 +192,6 @@
     detail.innerHTML = `
       <div class="recipe-detail-title-row">
         <h2>${recipe.name}</h2>
-        <span class="badge ${recipe.enabled ? "green" : "yellow"} recipe-status-badge">${recipe.enabled ? I18n.t("activeMenu") : I18n.t("discontinuedMenu")}</span>
       </div>
       <hr class="recipe-detail-rule" />
       ${recipeTextArea("recipe-description-inline", "설명", recipe.description || "", "설명")}
