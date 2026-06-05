@@ -755,6 +755,7 @@ td { color: #dbe2ff; font-size: 0.9rem; }
   --sidebar-open: 264px;
   --sidebar-closed: 66px;
   --content-pad: clamp(14px, 3vw, 30px);
+  --desktop-app-width: clamp(430px, calc(100dvh * 0.481), 500px);
 }
 
 body {
@@ -1740,6 +1741,38 @@ body.modal-open {
 
   h1 {
     font-size: 1.52rem;
+  }
+}
+
+@media (min-width: 701px) {
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(92, 117, 255, 0.14), transparent 26%),
+      radial-gradient(circle at top right, rgba(143, 94, 212, 0.1), transparent 24%),
+      #050710;
+  }
+
+  .shell,
+  .home-page .shell {
+    width: var(--desktop-app-width);
+    min-height: 100dvh;
+    margin-inline: auto;
+    border-inline: 1px solid rgba(184, 196, 240, 0.18);
+    background: linear-gradient(180deg, rgba(12, 16, 31, 0.98), rgba(8, 10, 21, 0.98));
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.025), 0 28px 88px rgba(0, 0, 0, 0.58);
+  }
+
+  .sidebar,
+  .home-page .sidebar {
+    left: calc((100vw - var(--desktop-app-width)) / 2);
+  }
+
+  .sidebar-toggle {
+    left: calc((100vw - var(--desktop-app-width)) / 2 + var(--sidebar-open) - 20px);
+  }
+
+  .sidebar-collapsed .sidebar-toggle {
+    left: calc((100vw - var(--desktop-app-width)) / 2 + var(--sidebar-closed) - 20px);
   }
 }
 
