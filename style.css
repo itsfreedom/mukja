@@ -1918,6 +1918,32 @@ body {
   margin-top: 18px;
 }
 
+.menu-manage-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.menu-manage-actions.hidden {
+  display: none;
+}
+
+.menu-manage-actions button {
+  min-height: 42px;
+}
+
+.menu-results-card {
+  border: 1px solid rgba(184, 196, 240, 0.13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+}
+
+.menu-edit-panel {
+  max-width: 560px;
+}
+
 .menu-filter-panel {
   border: 1px solid rgba(184, 196, 240, 0.13);
   border-radius: 14px;
