@@ -33,6 +33,10 @@
     bulkTarget: document.getElementById("bulk-target"),
     bulkCategory: document.getElementById("bulk-category"),
     bulkJump: document.getElementById("bulk-jump"),
+    bulkJumpTop: document.getElementById("bulk-jump-top"),
+    bulkJumpPrev: document.getElementById("bulk-jump-prev"),
+    bulkJumpNext: document.getElementById("bulk-jump-next"),
+    bulkJumpBottom: document.getElementById("bulk-jump-bottom"),
     memoPanel: document.getElementById("order-memo-panel"),
     memoDivider: document.getElementById("order-memo-divider")
   };
@@ -766,12 +770,24 @@
     renderItems();
   }
 
-  function jumpToCategory() {
-    if (!canCreateRequest) return;
+  function categoryRows() {
+    return [...els.list.querySelectorAll("[data-request-category-row]")];
+  }
+
+  function currentCategoryRow() {
     const target = els.bulkTarget?.value || "카페테리아";
     const category = els.bulkCategory?.value || "";
-    const row = [...els.list.querySelectorAll("[data-request-category-row]")]
-      .find((node) => node.dataset.categoryTarget === target && node.dataset.categoryName === category);
+    return categoryRows().find((node) => node.dataset.categoryTarget === target && node.dataset.categoryName === category);
+  }
+
+  function syncJumpSelects(row) {
+    if (!row) return;
+    els.bulkTarget.value = row.dataset.categoryTarget || "카페테리아";
+    fillBulkCategories();
+    els.bulkCategory.value = row.dataset.categoryName || "";
+  }
+
+  function scrollToCategoryRow(row) {
     if (!row) {
       setStatus("카테고리를 찾을 수 없습니다.");
       return;
@@ -783,12 +799,41 @@
     setTimeout(() => row.classList.remove("is-jump-focused"), 1400);
   }
 
+  function jumpToCategory() {
+    if (!canCreateRequest) return;
+    scrollToCategoryRow(currentCategoryRow());
+  }
+
+  function jumpByCategoryStep(step) {
+    if (!canCreateRequest) return;
+    const rows = categoryRows();
+    if (!rows.length) return;
+    const current = currentCategoryRow();
+    const currentIndex = Math.max(0, rows.indexOf(current));
+    const nextIndex = Math.min(rows.length - 1, Math.max(0, currentIndex + step));
+    const row = rows[nextIndex];
+    syncJumpSelects(row);
+    scrollToCategoryRow(row);
+  }
+
+  function jumpToEdge(edge) {
+    if (!canCreateRequest) return;
+    const rows = categoryRows();
+    const row = edge === "bottom" ? rows[rows.length - 1] : rows[0];
+    syncJumpSelects(row);
+    scrollToCategoryRow(row);
+  }
+
   els.save.addEventListener("click", () => saveRequest());
   els.reset.addEventListener("click", resetForm);
   els.orderModeButton?.addEventListener("click", () => setRequestMode("order"));
   els.editModeButton?.addEventListener("click", () => setRequestMode("edit"));
   els.bulkTarget?.addEventListener("change", fillBulkCategories);
   els.bulkJump?.addEventListener("click", jumpToCategory);
+  els.bulkJumpTop?.addEventListener("click", () => jumpToEdge("top"));
+  els.bulkJumpPrev?.addEventListener("click", () => jumpByCategoryStep(-1));
+  els.bulkJumpNext?.addEventListener("click", () => jumpByCategoryStep(1));
+  els.bulkJumpBottom?.addEventListener("click", () => jumpToEdge("bottom"));
   loadLatestRequest();
   renderItems();
   I18n.applyI18n();
