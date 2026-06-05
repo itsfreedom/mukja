@@ -165,11 +165,11 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   line-height: 1.1;
   text-align: center;
 }
-.nav-link:hover, .lang-button:hover { color: var(--text); background: rgba(255, 255, 255, 0.045); }
+.nav-link:hover, .lang-button:hover { color: var(--text); background: transparent; }
 .nav-link.is-active, .lang-button.is-active {
   color: #d9e3ff;
-  background: var(--accent-soft);
-  border-color: rgba(130, 168, 255, 0.22);
+  background: transparent;
+  border-color: transparent;
 }
 .nav-link.is-restricted {
   color: rgba(151, 163, 199, 0.38);
@@ -1680,7 +1680,7 @@ body {
   flex-direction: row;
   justify-content: flex-start;
   gap: 10px;
-  padding: 10px 11px;
+  padding: 8px 7px;
   font-size: 0.96rem;
   text-align: left;
   border-radius: 12px;
@@ -1703,26 +1703,33 @@ body {
 }
 
 .nav-link.is-active {
-  color: #201706;
-  background: linear-gradient(135deg, #ffd86a, #f2bd3f);
-  border-color: rgba(255, 226, 128, 0.62);
-  box-shadow: 0 10px 26px rgba(242, 189, 63, 0.18);
+  color: #d9e3ff;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
-.nav-link.is-active::after {
+.nav-link::after {
   content: "";
   position: absolute;
   left: 42px;
   right: 12px;
-  bottom: 7px;
+  bottom: 4px;
   height: 2px;
   border-radius: 999px;
   background: currentColor;
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+
+.nav-link:not(.is-restricted):hover::after {
+  opacity: 0.72;
 }
 
 .nav-link.is-active .nav-icon {
-  border-color: rgba(32, 23, 6, 0.34);
-  background: rgba(32, 23, 6, 0.12);
+  border-color: rgba(255, 226, 128, 0.68);
+  background: linear-gradient(135deg, #ffd86a, #f2bd3f);
+  color: #201706;
 }
 
 .sidebar-footer {
@@ -1796,19 +1803,19 @@ body {
 
 .sidebar-collapsed .nav-link {
   justify-content: center;
-  padding: 10px 0;
+  padding: 8px 7px;
 }
 
 .sidebar-collapsed .nav-icon {
-  width: 30px;
-  height: 30px;
-  flex-basis: 30px;
+  width: 28px;
+  height: 28px;
+  flex-basis: 28px;
 }
 
-.sidebar-collapsed .nav-link.is-active::after {
+.sidebar-collapsed .nav-link::after {
   left: 18px;
   right: 18px;
-  bottom: 6px;
+  bottom: 4px;
 }
 
 .panel {
