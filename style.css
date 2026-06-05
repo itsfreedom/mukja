@@ -2318,6 +2318,72 @@ body.modal-open {
   font-size: 0.9rem;
 }
 
+.recipe-section-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.recipe-crud-list {
+  display: grid;
+  gap: 9px;
+}
+
+.recipe-crud-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+}
+
+.recipe-crud-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.recipe-crud-main strong {
+  font-weight: 500;
+}
+
+.recipe-crud-main span {
+  color: #d9e3ff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.recipe-item-form {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(184, 196, 240, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 12px;
+}
+
+.recipe-item-form label {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.recipe-item-form label span {
+  color: #d9e3ff;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.recipe-item-form-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .recipe-step-list {
   display: grid;
   gap: 12px;

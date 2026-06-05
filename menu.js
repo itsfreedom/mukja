@@ -50,6 +50,7 @@
   let editingMenuId = "";
   let activeRecipeMenuId = "";
   let editingRecipeId = "";
+  let activeIngredientEdit = null;
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
@@ -141,6 +142,78 @@
     return isNonSaleCategory(menu) ? "" : `<span class="menu-inline-price">${money(menu)}</span>`;
   }
 
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function splitAmount(value) {
+    const text = String(value || "").trim();
+    const match = text.match(/^([\d.,/]+)\s*(.*)$/);
+    return match ? { quantity: match[1], unit: match[2] } : { quantity: "", unit: text };
+  }
+
+  function joinAmount(quantity, unit) {
+    return [quantity, unit].map((part) => String(part || "").trim()).filter(Boolean).join(" ");
+  }
+
+  function recipeWithIngredientItems(recipe, items) {
+    const ingredientItems = Store.parseRecipeItems(items);
+    return {
+      ...recipe,
+      ingredientItems,
+      ingredients: Store.recipeItemsToLines(ingredientItems),
+      updatedAt: Store.today()
+    };
+  }
+
+  function ingredientEditForm(item = {}, index = 0) {
+    const amount = splitAmount(item.amount);
+    return `
+      <div class="recipe-item-form" data-ingredient-form="${index}">
+        <label><span>재료명</span><input data-ingredient-name value="${escapeHtml(item.name)}" /></label>
+        <label><span>수량</span><input data-ingredient-quantity inputmode="decimal" value="${escapeHtml(amount.quantity)}" /></label>
+        <label><span>단위</span><input data-ingredient-unit value="${escapeHtml(amount.unit)}" /></label>
+        <div class="recipe-item-form-actions">
+          <button class="button" data-ingredient-action="save" data-index="${index}" type="button">저장</button>
+          <button class="danger-button" data-ingredient-action="delete" data-index="${index}" type="button">삭제</button>
+          <button class="ghost-button" data-ingredient-action="cancel" type="button">취소</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function ingredientCrudList(recipe) {
+    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    return `
+      <section class="history-detail-card recipe-detail-section recipe-crud-section">
+        <div class="recipe-section-title-row">
+          <h2>${I18n.t("ingredients")}</h2>
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+        </div>
+        <div class="recipe-crud-list">
+          ${rows.length ? rows.map((item, index) => {
+            const amount = splitAmount(item.amount);
+            return `
+              <article class="list-card recipe-crud-row">
+                <div class="recipe-crud-main">
+                  <strong>${escapeHtml(item.name)}</strong>
+                  <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
+                </div>
+                ${canManageMenu ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
+              </article>
+              ${activeIngredientEdit?.index === index ? ingredientEditForm(item, index) : ""}
+            `;
+          }).join("") : `<p class="muted">-</p>`}
+          ${activeIngredientEdit?.isNew ? ingredientEditForm({}, rows.length) : ""}
+        </div>
+      </section>
+    `;
+  }
+
   function measuredList(title, items) {
     const rows = Store.parseRecipeItems(items);
     return `
@@ -183,16 +256,17 @@
   function recipeSections(menu, recipe) {
     if (!recipe) return `<section class="history-detail-card"><p class="muted">${I18n.t("noRecipes")}</p></section>`;
     return `
-      ${measuredList(I18n.t("ingredients"), recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients)}
+      ${ingredientCrudList(recipe)}
       ${measuredList(I18n.t("seasonings"), recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings)}
       ${stepList(recipe)}
       ${(recipe.notes || menu.notes) ? `<section class="history-detail-card recipe-detail-section"><h2>${I18n.t("notes")}</h2><p class="preview-box">${recipe.notes || menu.notes}</p></section>` : ""}
     `;
   }
 
-  function openRecipe(menu) {
+  function openRecipe(menu, options = {}) {
     const recipe = ensureRecipeForMenu(menu);
     activeRecipeMenuId = menu.id;
+    if (options.resetIngredientEdit !== false) activeIngredientEdit = null;
     modalTitle.textContent = I18n.menuName(menu);
     modalStatus.textContent = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     modalStatus.className = `badge ${menu.discontinued ? "yellow" : "green"}`;
@@ -207,6 +281,7 @@
 
   function closeRecipe() {
     modal.classList.add("hidden");
+    activeIngredientEdit = null;
     document.body.classList.remove("modal-open");
   }
 
@@ -287,6 +362,58 @@
     closeRecipe();
     renderFilters();
     render();
+  }
+
+  function rerenderActiveRecipe() {
+    const menu = activeRecipeMenu();
+    if (menu) openRecipe(menu, { resetIngredientEdit: false });
+  }
+
+  function handleIngredientAction(event) {
+    const button = event.target.closest("[data-ingredient-action]");
+    if (!button || !canManageMenu) return;
+    const menu = activeRecipeMenu();
+    const recipe = menu ? recipeFor(menu) : null;
+    if (!recipe) return;
+    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const action = button.dataset.ingredientAction;
+    const index = Number(button.dataset.index || rows.length);
+    if (action === "add") {
+      activeIngredientEdit = { index: rows.length, isNew: true };
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "edit") {
+      activeIngredientEdit = { index, isNew: false };
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "cancel") {
+      activeIngredientEdit = null;
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "delete") {
+      if (!confirm("재료를 삭제할까요?")) return;
+      Store.saveRecipe(recipeWithIngredientItems(recipe, rows.filter((_, rowIndex) => rowIndex !== index)));
+      activeIngredientEdit = null;
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "save") {
+      const form = button.closest("[data-ingredient-form]");
+      const name = form?.querySelector("[data-ingredient-name]")?.value.trim() || "";
+      if (!name) return;
+      const amount = joinAmount(
+        form.querySelector("[data-ingredient-quantity]")?.value,
+        form.querySelector("[data-ingredient-unit]")?.value
+      );
+      const next = rows.slice();
+      next[index] = { name, amount };
+      Store.saveRecipe(recipeWithIngredientItems(recipe, next));
+      activeIngredientEdit = null;
+      rerenderActiveRecipe();
+    }
   }
 
   function openMenuEditor(menu = null, defaults = {}) {
@@ -469,6 +596,7 @@
   deleteRecipeEdit.addEventListener("click", deleteRecipeFromEditor);
   cancelRecipeEdit.addEventListener("click", closeRecipeEditor);
   modalClose.addEventListener("click", closeRecipe);
+  modalContent.addEventListener("click", handleIngredientAction);
   closeRecipeEdit.addEventListener("click", closeRecipeEditor);
   editModalClose.addEventListener("click", closeMenuEditor);
   modal.querySelectorAll("[data-close-recipe-modal]").forEach((button) => {
