@@ -1798,42 +1798,50 @@ body.modal-open {
   position: sticky;
   top: 0;
   z-index: 12;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 22px;
+  padding: 8px;
 }
 
 .order-jump-selects {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .order-jump-actions {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
+  gap: 5px;
 }
 
 .order-bulk-panel label {
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
 }
 
 .order-bulk-panel label span {
   white-space: nowrap;
+  font-size: 0.76rem;
 }
 
 .order-bulk-panel select {
+  height: 34px;
+  min-height: 34px;
+  line-height: 34px;
+  padding-inline: 8px;
   min-width: 0;
 }
 
 .order-bulk-panel .button,
 .order-bulk-panel .ghost-button {
-  min-height: 48px;
-  border-radius: 10px;
+  min-height: 34px;
+  border-radius: 8px;
   padding-inline: 0;
+  padding-block: 0;
+  font-size: 0.82rem;
   font-weight: 900;
 }
 
