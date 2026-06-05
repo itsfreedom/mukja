@@ -2393,14 +2393,14 @@ body.modal-open {
 }
 
 .recipe-step-crud-row {
-  align-items: start;
+  align-items: center;
 }
 
 .recipe-step-crud-main {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 10px;
-  align-items: start;
+  align-items: center;
 }
 
 .recipe-step-crud-main p,
