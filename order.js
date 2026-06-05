@@ -5,7 +5,10 @@
 
   const session = Store.getAuth();
   const canCreateRequest = ["restaurant", "admin"].includes(session?.role);
+  const canEditCatalog = session?.role === "admin";
   const selected = new Set();
+  const editSelected = new Set();
+  let requestMode = "order";
   let editingEntry = null;
   let activeItemEdit = null;
   let activeCategoryEdit = null;
@@ -19,12 +22,58 @@
     memo: document.getElementById("memo"),
     status: document.getElementById("status"),
     save: document.getElementById("save-create-message"),
-    reset: document.getElementById("reset-order")
+    reset: document.getElementById("reset-order"),
+    modeRow: document.getElementById("order-mode-row"),
+    orderModeButton: document.getElementById("order-mode-order"),
+    editModeButton: document.getElementById("order-mode-edit"),
+    resetRow: document.getElementById("order-reset-row"),
+    saveRow: document.getElementById("order-save-row"),
+    bulkPanel: document.getElementById("order-bulk-panel"),
+    bulkTarget: document.getElementById("bulk-target"),
+    bulkCategory: document.getElementById("bulk-category"),
+    memoPanel: document.getElementById("order-memo-panel"),
+    memoDivider: document.getElementById("order-memo-divider")
   };
+
+  function isEditMode() {
+    return canEditCatalog && requestMode === "edit";
+  }
 
   function setStatus(text) {
     els.status.textContent = text || "";
     if (text) setTimeout(() => (els.status.textContent = ""), 2600);
+  }
+
+  function fillBulkTargets() {
+    if (!els.bulkTarget) return;
+    const current = els.bulkTarget.value || "카페테리아";
+    els.bulkTarget.innerHTML = Store.getTargets().map((name) =>
+      `<option value="${escapeHtml(name)}" ${name === current ? "selected" : ""}>${I18n.targetLabel(name)}</option>`
+    ).join("");
+    if (![...els.bulkTarget.options].some((option) => option.value === current)) {
+      els.bulkTarget.value = "카페테리아";
+    }
+  }
+
+  function fillBulkCategories() {
+    if (!els.bulkTarget || !els.bulkCategory) return;
+    els.bulkCategory.innerHTML = categoryOptions(els.bulkTarget.value || "카페테리아", els.bulkCategory.value);
+  }
+
+  function updateModeUI() {
+    const edit = isEditMode();
+    els.modeRow?.classList.toggle("hidden", !canEditCatalog);
+    els.orderModeButton?.classList.toggle("is-active", !edit);
+    els.editModeButton?.classList.toggle("is-active", edit);
+    els.resetRow?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.saveRow?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.memoPanel?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.memoDivider?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.bulkPanel?.classList.toggle("hidden", !edit);
+    if (edit) {
+      fillBulkTargets();
+      fillBulkCategories();
+    }
   }
 
   function itemKey(item) {
@@ -202,14 +251,18 @@
     const rows = [...els.list.querySelectorAll("[data-request-item-row]")]
       .filter((row) => row.dataset.itemTarget === target && row.dataset.itemCategory === category);
     const orderedIds = rows.map((row) => row.dataset.itemId).filter(Boolean);
-    const from = orderedIds.indexOf(fromId);
-    const to = orderedIds.indexOf(toId);
-    if (from < 0 || to < 0) return;
-    const [moved] = orderedIds.splice(from, 1);
-    orderedIds.splice(to, 0, moved);
+    if (!orderedIds.includes(fromId) || !orderedIds.includes(toId)) return;
+    const movingIds = isEditMode() && editSelected.has(fromId)
+      ? orderedIds.filter((id) => editSelected.has(id))
+      : [fromId];
+    if (movingIds.includes(toId)) return;
+    const remainingIds = orderedIds.filter((id) => !movingIds.includes(id));
+    const to = remainingIds.indexOf(toId);
+    if (to < 0) return;
+    remainingIds.splice(to, 0, ...movingIds);
 
     const ingredients = Store.getIngredients();
-    const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
+    const orderMap = new Map(remainingIds.map((id, index) => [id, index]));
     const matching = ingredients
       .filter((item) => orderMap.has(item.id))
       .sort((a, b) => orderMap.get(a.id) - orderMap.get(b.id));
@@ -230,7 +283,7 @@
           ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
         </select></label>
         <label><span>카테고리</span><select data-order-item-section>${categoryOptions(target, section)}</select></label>
-        <label><span>단위</span><input data-order-item-unit value="${escapeHtml(item?.unit || "")}" /></label>
+        <label class="order-unit-field hidden"><span>주문 단위</span><input data-order-item-unit value="${escapeHtml(item?.unit || "")}" /></label>
         <div class="recipe-item-form-actions">
           <button class="button" data-order-item-action="save" data-order-item-id="${item?.id || ""}" type="button">저장</button>
           <button class="danger-button ${item ? "" : "hidden"}" data-order-item-action="delete" data-order-item-id="${item?.id || ""}" type="button">삭제</button>
@@ -284,6 +337,7 @@
   }
 
   function itemActions(item) {
+    if (!isEditMode()) return "";
     return `
       <div class="menu-row-actions request-row-actions">
         <button class="menu-row-action is-edit" data-order-item-action="edit" data-order-item-id="${item.id}" type="button" aria-label="${I18n.itemName(item)} 수정">${editIcon}</button>
@@ -293,6 +347,7 @@
   }
 
   function categoryActions(target, category) {
+    if (!isEditMode()) return "";
     return `
       <div class="menu-row-actions request-row-actions">
         <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 품목 추가">${addIcon}</button>
@@ -305,18 +360,21 @@
   function renderItemRows(items) {
     return `
       <div class="item-section-list">
-        ${items.map((item) => `
-          <article class="list-card request-item-row" data-request-item-row data-item-id="${escapeHtml(item.id)}" data-item-target="${escapeHtml(targetFor(item))}" data-item-category="${escapeHtml(categoryFor(item))}" draggable="true">
+        ${items.map((item) => {
+          const checked = isEditMode() ? editSelected.has(item.id) : selected.has(itemKey(item));
+          return `
+          <article class="list-card request-item-row" data-request-item-row data-item-id="${escapeHtml(item.id)}" data-item-target="${escapeHtml(targetFor(item))}" data-item-category="${escapeHtml(categoryFor(item))}" draggable="${isEditMode() ? "true" : "false"}">
             <label class="request-item-check">
-              <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
+              <input type="checkbox" data-item="${itemKey(item)}" data-item-id="${escapeHtml(item.id)}" ${checked ? "checked" : ""} />
               <span class="receive-row-main">
                 <strong>${I18n.itemName(item)}</strong>
               </span>
             </label>
             ${itemActions(item)}
           </article>
-          ${activeItemEdit?.id === item.id ? itemForm(item) : ""}
-        `).join("")}
+          ${isEditMode() && activeItemEdit?.id === item.id ? itemForm(item) : ""}
+        `;
+        }).join("")}
       </div>
     `;
   }
@@ -327,6 +385,7 @@
       els.memo.disabled = true;
       els.save.disabled = true;
       els.reset.disabled = true;
+      updateModeUI();
       return;
     }
 
@@ -356,6 +415,7 @@
     const targets = orderedKeys(groups, targetOrder);
     if (!targets.length) {
       els.list.innerHTML = `<div class="list-card muted">${I18n.t("noItems")}</div>`;
+      updateModeUI();
       return;
     }
 
@@ -366,21 +426,21 @@
         <section class="department-group request-target-group">
           <div class="section-title-row menu-category-title-row">
             <h2>${I18n.targetLabel(target)}</h2>
-            <button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">카테고리 추가</button>
+            ${isEditMode() ? `<button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">카테고리 추가</button>` : ""}
           </div>
           <hr class="section-divider department-divider" />
-          ${activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
+          ${isEditMode() && activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
           <div class="department-card request-target-section">
             ${categories.map((category) => `
-              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="true">
+              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="${isEditMode() ? "true" : "false"}">
                 <div class="section-title-row request-category-title-row">
                   <h3>${I18n.sectionLabel(category)}</h3>
                   ${categoryActions(target, category)}
                 </div>
                 <hr class="section-divider section-title-divider" />
-                ${activeCategoryEdit?.mode === "edit" && categoryKey(activeCategoryEdit.target, activeCategoryEdit.category) === categoryKey(target, category) ? categoryForm(target, category, "edit") : ""}
+                ${isEditMode() && activeCategoryEdit?.mode === "edit" && categoryKey(activeCategoryEdit.target, activeCategoryEdit.category) === categoryKey(target, category) ? categoryForm(target, category, "edit") : ""}
                 ${renderItemRows(categoryGroups[category])}
-                ${activeItemEdit?.isNew && activeItemEdit.target === target && activeItemEdit.category === category ? itemForm(null, activeItemEdit) : ""}
+                ${isEditMode() && activeItemEdit?.isNew && activeItemEdit.target === target && activeItemEdit.category === category ? itemForm(null, activeItemEdit) : ""}
               </section>
             `).join("")}
           </div>
@@ -390,6 +450,11 @@
 
     els.list.querySelectorAll("[data-item]").forEach((input) => {
       input.addEventListener("change", () => {
+        if (isEditMode()) {
+          if (input.checked) editSelected.add(input.dataset.itemId);
+          else editSelected.delete(input.dataset.itemId);
+          return;
+        }
         if (input.checked) selected.add(input.dataset.item);
         else selected.delete(input.dataset.item);
       });
@@ -480,6 +545,7 @@
     });
     els.list.querySelectorAll("[data-request-category-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
+        if (!isEditMode()) return;
         if (event.target.closest("[data-request-item-row]")) return;
         draggedCategory = {
           target: row.dataset.categoryTarget,
@@ -488,11 +554,13 @@
         event.dataTransfer?.setData("text/plain", JSON.stringify(draggedCategory));
       });
       row.addEventListener("dragover", (event) => {
+        if (!isEditMode()) return;
         if (event.target.closest("[data-request-item-row]")) return;
         if (!draggedCategory || draggedCategory.target !== row.dataset.categoryTarget) return;
         event.preventDefault();
       });
       row.addEventListener("drop", (event) => {
+        if (!isEditMode()) return;
         if (event.target.closest("[data-request-item-row]")) return;
         event.preventDefault();
         let source = draggedCategory;
@@ -510,6 +578,7 @@
     });
     els.list.querySelectorAll("[data-request-item-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
+        if (!isEditMode()) return;
         event.stopPropagation();
         draggedItem = {
           id: row.dataset.itemId,
@@ -519,11 +588,13 @@
         event.dataTransfer?.setData("text/plain", JSON.stringify(draggedItem));
       });
       row.addEventListener("dragover", (event) => {
+        if (!isEditMode()) return;
         event.stopPropagation();
         if (!draggedItem || draggedItem.target !== row.dataset.itemTarget || draggedItem.category !== row.dataset.itemCategory) return;
         event.preventDefault();
       });
       row.addEventListener("drop", (event) => {
+        if (!isEditMode()) return;
         event.stopPropagation();
         event.preventDefault();
         let source = draggedItem;
@@ -539,6 +610,7 @@
         draggedItem = null;
       });
     });
+    updateModeUI();
   }
 
   function selectedItems() {
@@ -606,8 +678,44 @@
     renderItems();
   }
 
+  function setRequestMode(mode) {
+    requestMode = canEditCatalog && mode === "edit" ? "edit" : "order";
+    activeItemEdit = null;
+    activeCategoryEdit = null;
+    draggedCategory = null;
+    draggedItem = null;
+    renderItems();
+  }
+
+  function clearEditSelection() {
+    editSelected.clear();
+    renderItems();
+  }
+
+  function applyBulkEdit() {
+    if (!isEditMode()) return;
+    const ids = [...editSelected];
+    if (!ids.length) {
+      setStatus("변경할 품목을 선택하세요.");
+      return;
+    }
+    const target = els.bulkTarget?.value || "카페테리아";
+    const section = els.bulkCategory?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
+    Store.setIngredients(Store.getIngredients().map((item) =>
+      ids.includes(item.id) ? { ...item, target, section } : item
+    ));
+    activeItemEdit = null;
+    setStatus("선택한 품목을 변경했습니다.");
+    renderItems();
+  }
+
   els.save.addEventListener("click", () => saveRequest());
   els.reset.addEventListener("click", resetForm);
+  els.orderModeButton?.addEventListener("click", () => setRequestMode("order"));
+  els.editModeButton?.addEventListener("click", () => setRequestMode("edit"));
+  els.bulkTarget?.addEventListener("change", fillBulkCategories);
+  document.getElementById("bulk-apply")?.addEventListener("click", applyBulkEdit);
+  document.getElementById("bulk-clear")?.addEventListener("click", clearEditSelection);
   loadLatestRequest();
   renderItems();
   I18n.applyI18n();

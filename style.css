@@ -1751,7 +1751,7 @@ body.modal-open {
 
 .order-page .order-reset-row {
   margin-top: 0;
-  margin-bottom: 34px;
+  margin-bottom: 10px;
 }
 
 .order-page .order-reset-row .danger-button {
@@ -1769,6 +1769,36 @@ body.modal-open {
 
 .order-page .order-action-row .button {
   width: 100%;
+}
+
+.order-page .order-mode-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.order-page .order-mode-row .ghost-button {
+  width: 100%;
+  font-weight: 900;
+}
+
+.order-page .order-mode-row .ghost-button.is-active {
+  background: #5b78f6;
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.order-page #order-save-row {
+  margin-bottom: 22px;
+}
+
+.order-bulk-panel {
+  margin-bottom: 22px;
+}
+
+.order-bulk-panel .recipe-item-form-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .request-target-section {
