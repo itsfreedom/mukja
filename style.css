@@ -23,6 +23,8 @@
   --ui-row-padding: 10px 12px;
   --ui-row-gap: 10px;
   --ui-checkbox-size: 18px;
+  --ui-action-button-size: 40px;
+  --ui-action-icon-size: 22px;
   --ui-table-border: 1px solid rgba(184, 196, 240, 0.12);
   --ui-table-row-border: 1px solid rgba(184, 196, 240, 0.1);
   --ui-table-radius: 14px;
@@ -746,16 +748,16 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-row-actions {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 32px;
+  grid-auto-columns: var(--ui-action-button-size);
   gap: 6px;
   justify-content: end;
   justify-self: end;
 }
 
 .menu-row-action {
-  width: 30px;
-  height: 30px;
-  min-height: 30px;
+  width: var(--ui-action-button-size);
+  height: var(--ui-action-button-size);
+  min-height: var(--ui-action-button-size);
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.34);
   background: rgba(130, 168, 255, 0.15);
@@ -793,8 +795,8 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 .menu-row-action svg {
-  width: 17px;
-  height: 17px;
+  width: var(--ui-action-icon-size);
+  height: var(--ui-action-icon-size);
   fill: none;
   stroke: currentColor;
   stroke-width: 3;
@@ -811,13 +813,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
   .menu-row-actions {
-    grid-auto-columns: 30px;
     gap: 5px;
-  }
-  .menu-row-action {
-    width: 28px;
-    height: 28px;
-    min-height: 28px;
   }
 }
 .menu-badges {
@@ -2018,16 +2014,32 @@ body {
   accent-color: #e5485d;
 }
 
-.menu-category-group {
+.menu-category-group,
+.request-target-group {
   display: grid;
   gap: 8px;
 }
 
+.section-title-row,
+.recipe-section-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.section-title-row h2,
+.section-title-row h3,
 .menu-category-title-row h2 {
   margin: 0;
 }
 
-.menu-category-group + .menu-category-group {
+.section-title-divider {
+  margin: 0;
+}
+
+.menu-category-group + .menu-category-group,
+.request-target-group + .request-target-group {
   margin-top: 18px;
 }
 
@@ -2360,13 +2372,6 @@ body.modal-open {
   font-size: 0.9rem;
 }
 
-.recipe-section-title-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-}
-
 .recipe-crud-list {
   display: grid;
   gap: 9px;
@@ -2590,12 +2595,48 @@ body.modal-open {
   width: 100%;
 }
 
+.request-target-section {
+  display: grid;
+  gap: 12px;
+}
+
+.request-category-section {
+  display: grid;
+  gap: 8px;
+}
+
+.request-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.request-item-check {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: var(--ui-checkbox-size) minmax(0, 1fr);
+  gap: var(--ui-row-gap);
+  align-items: center;
+}
+
+.request-item-check input[type="checkbox"] {
+  width: var(--ui-checkbox-size);
+  height: var(--ui-checkbox-size);
+  min-height: var(--ui-checkbox-size);
+  padding: 0;
+}
+
+.request-row-actions {
+  align-items: center;
+}
+
 /* Shared list row module. Request/order rows are the visual baseline. */
 .list-card,
 .receive-row,
 .item-row,
 .simple .item-row,
 .recipe-crud-row,
+.request-item-row,
 .history-row,
 .history-detail-row,
 .memo-entry {
@@ -2610,6 +2651,7 @@ body.modal-open {
 .item-row,
 .simple .item-row,
 .recipe-crud-row,
+.request-item-row,
 .history-row,
 .history-detail-row {
   min-height: var(--ui-row-min-height);
@@ -2622,6 +2664,7 @@ body.modal-open {
 .menu-title-line strong,
 .recipe-crud-main strong,
 .recipe-step-crud-main p,
+.request-item-check strong,
 .history-detail-row strong,
 .history-row strong,
 .list-card-header strong {

@@ -835,11 +835,12 @@
     }, {});
     list.innerHTML = Object.entries(groups).map(([group, groupMenus]) => `
       <section class="menu-category-group">
-        <div class="recipe-section-title-row menu-category-title-row">
+        <div class="section-title-row menu-category-title-row">
           <h2>${group}</h2>
           ${canManageMenu ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
         </div>
-        <div class="list admin-section">
+        <hr class="section-divider section-title-divider" />
+        <div class="list">
           ${groupMenus.map((menu) => `
             <article class="list-card menu-row ${canManageMenu ? "has-leading-action" : ""}" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
               ${canManageMenu ? actionButton("drag", "순서 이동", menu, "menu-drag-handle recipe-drag-handle") : ""}
