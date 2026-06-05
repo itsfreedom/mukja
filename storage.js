@@ -1,4 +1,5 @@
 (function () {
+  const appAssetVersion = "v145";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -12,6 +13,7 @@
     error: ""
   };
   const loadedDatasets = new Set();
+  const loadingDatasets = new Map();
   const dataState = {
     employees: [],
     sections: [],
@@ -733,13 +735,39 @@
       : selected.filter((name) => datasetLoaders[name] && name !== "access");
   }
 
+  async function loadDataset(name) {
+    if (!datasetLoaders[name]) return;
+    if (loadedDatasets.has(name)) return;
+    if (!loadingDatasets.has(name)) {
+      loadingDatasets.set(name, datasetLoaders[name]()
+        .then(() => loadedDatasets.add(name))
+        .finally(() => loadingDatasets.delete(name)));
+    }
+    await loadingDatasets.get(name);
+  }
+
+  async function loadDatasets(names) {
+    await Promise.all(names
+      .filter((name) => datasetLoaders[name])
+      .map((name) => loadDataset(name)));
+  }
+
   async function ensureData(datasets = []) {
     const selected = requestedDatasets({ datasets });
-    const ordered = datasetOrder.filter((name) => selected.includes(name) || (datasets || []).includes(name));
-    for (const name of ordered) {
+    const wanted = new Set([...selected, ...(Array.isArray(datasets) ? datasets : [])]);
+    if (wanted.has("all")) {
+      await loadDatasets(datasetOrder);
+      return;
+    }
+    if (wanted.has("access")) await loadDataset("access");
+
+    await loadDatasets(["settings", "recipes", "history"].filter((name) => wanted.has(name)));
+    await loadDatasets(["ingredients", "menus"].filter((name) => wanted.has(name)));
+
+    for (const name of datasetOrder) {
+      if (!wanted.has(name)) continue;
       if (loadedDatasets.has(name)) continue;
-      await datasetLoaders[name]();
-      loadedDatasets.add(name);
+      await loadDataset(name);
     }
   }
 
@@ -779,6 +807,7 @@
     if (!localStorage.getItem(keys.lang)) localStorage.setItem(keys.lang, "ko");
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
     loadedDatasets.clear();
+    loadingDatasets.clear();
     dataState.employees = defaultEmployees.slice();
     dataState.sections = defaultSections.slice();
     dataState.requestCategories = { ...defaultRequestCategories, "카페테리아": dataState.sections };
@@ -787,8 +816,11 @@
     dataState.recipes = defaultRecipes.map(normalizeRecipe);
     dataState.menus = buildDefaultMenus(dataState.recipes).map(normalizeMenu);
     dataState.history = [];
-    await ensureData(["access"]);
-    await ensureData(requestedDatasets(options));
+    const pageDatasets = auth() ? requestedDatasets(options) : [];
+    await Promise.all([
+      ensureData(["access"]),
+      pageDatasets.length ? ensureData(pageDatasets) : Promise.resolve()
+    ]);
     clearLegacyLocalData();
     localStorage.setItem(keys.initialized, "true");
   }
@@ -1301,13 +1333,13 @@
     getTargets: () => defaultTargets.slice(),
     normalizeTargetName,
     getAllowedTargets: allowedTargets,
-    getIngredients: () => dataState.ingredients.map(normalizeIngredient),
+    getIngredients: () => dataState.ingredients.slice(),
     setIngredients,
-    getRecipes: () => dataState.recipes.map(normalizeRecipe),
+    getRecipes: () => dataState.recipes.slice(),
     setRecipes,
     saveRecipe,
     deleteRecipe,
-    getMenus: () => dataState.menus.map(normalizeMenu),
+    getMenus: () => dataState.menus.slice(),
     setMenus,
     saveMenu,
     saveMenuWithRecipe,
@@ -1474,14 +1506,24 @@
     },
     registerServiceWorker() {
       if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+        const cleanupKey = `mukja_sw_cleanup_${appAssetVersion}`;
+        if (sessionStorage.getItem(cleanupKey)) return;
         const clearCaches = () => {
           if (!window.caches) return Promise.resolve();
           return caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
         };
-        navigator.serviceWorker.getRegistrations()
-          .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-          .then(clearCaches)
-          .catch(() => {});
+        const cleanup = () => {
+          sessionStorage.setItem(cleanupKey, "1");
+          navigator.serviceWorker.getRegistrations()
+            .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+            .then(clearCaches)
+            .catch(() => {});
+        };
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(cleanup, { timeout: 3000 });
+        } else {
+          window.setTimeout(cleanup, 1200);
+        }
       }
     }
   };
