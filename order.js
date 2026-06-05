@@ -177,11 +177,11 @@
     const canDelete = !isNew && category !== fallback;
     return `
       <div class="recipe-item-form request-category-form" data-request-category-form data-category-target="${escapeHtml(target)}" data-category-old-name="${escapeHtml(category)}" data-category-mode="${mode}">
-        <label><span>카테고리명</span><input data-request-category-name value="${escapeHtml(category)}" placeholder="카테고리명" /></label>
+        <label><span>${I18n.t("categoryName")}</span><input data-request-category-name value="${escapeHtml(category)}" placeholder="${I18n.t("categoryName")}" /></label>
         <div class="recipe-item-form-actions">
-          <button class="button" data-request-category-action="save" type="button">저장</button>
-          <button class="danger-button ${canDelete ? "" : "hidden"}" data-request-category-action="delete" type="button">삭제</button>
-          <button class="ghost-button" data-request-category-action="cancel" type="button">취소</button>
+          <button class="button" data-request-category-action="save" type="button">${I18n.t("save")}</button>
+          <button class="danger-button ${canDelete ? "" : "hidden"}" data-request-category-action="delete" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-request-category-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
@@ -193,12 +193,12 @@
     const mode = form?.dataset.categoryMode || "edit";
     const nextName = form?.querySelector("[data-request-category-name]")?.value.trim() || "";
     if (!nextName) {
-      setStatus("카테고리명을 입력하세요.");
+      setStatus(I18n.t("categoryRequired"));
       return;
     }
     const categories = Store.getRequestCategories(target);
     if (categories.includes(nextName) && nextName !== oldName) {
-      setStatus("이미 있는 카테고리입니다.");
+      setStatus(I18n.t("categoryDuplicate"));
       return;
     }
     if (mode !== "create") {
@@ -220,7 +220,7 @@
     const oldName = form?.dataset.categoryOldName || "";
     if (!oldName) return;
     const fallback = target === "야채" ? "야채" : "기타";
-    if (!window.confirm(`${oldName} 카테고리를 삭제할까요? 이 카테고리의 품목은 ${fallback}로 이동합니다.`)) return;
+    if (!window.confirm(I18n.format("confirmDeleteCategory", { name: I18n.sectionLabel(oldName), fallback: I18n.sectionLabel(fallback) }))) return;
     Store.setRequestCategories(target, Store.getRequestCategories(target).filter((category) => category !== oldName));
     Store.setIngredients(Store.getIngredients().map((item) =>
       targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: fallback } : item
@@ -305,17 +305,17 @@
     const section = item?.section || sectionForTargetCategory(target, defaults.category || "기타");
     return `
       <div class="recipe-item-form order-item-form" data-order-item-form="${item?.id || "__new__"}">
-        <label><span>품목명</span><input data-order-item-name-ko value="${escapeHtml(item?.nameKo || item?.name || "")}" /></label>
-        <label><span>영문명</span><input data-order-item-name-en value="${escapeHtml(item?.nameEn || "")}" /></label>
-        <label><span>부서</span><select data-order-item-target>
+        <label><span>${I18n.t("itemName")}</span><input data-order-item-name-ko value="${escapeHtml(item?.nameKo || item?.name || "")}" /></label>
+        <label><span>${I18n.t("englishName")}</span><input data-order-item-name-en value="${escapeHtml(item?.nameEn || "")}" /></label>
+        <label><span>${I18n.t("department")}</span><select data-order-item-target>
           ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
         </select></label>
-        <label><span>카테고리</span><select data-order-item-section>${categoryOptions(target, section)}</select></label>
-        <label class="order-unit-field hidden"><span>주문 단위</span><input data-order-item-unit value="${escapeHtml(item?.unit || "")}" /></label>
+        <label><span>${I18n.t("menuCategory")}</span><select data-order-item-section>${categoryOptions(target, section)}</select></label>
+        <label class="order-unit-field hidden"><span>${I18n.t("orderUnit")}</span><input data-order-item-unit value="${escapeHtml(item?.unit || "")}" /></label>
         <div class="recipe-item-form-actions">
-          <button class="button" data-order-item-action="save" data-order-item-id="${item?.id || ""}" type="button">저장</button>
-          <button class="danger-button ${item ? "" : "hidden"}" data-order-item-action="delete" data-order-item-id="${item?.id || ""}" type="button">삭제</button>
-          <button class="ghost-button" data-order-item-action="cancel" type="button">취소</button>
+          <button class="button" data-order-item-action="save" data-order-item-id="${item?.id || ""}" type="button">${I18n.t("save")}</button>
+          <button class="danger-button ${item ? "" : "hidden"}" data-order-item-action="delete" data-order-item-id="${item?.id || ""}" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-order-item-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
@@ -332,14 +332,14 @@
     const category = categoryFor(anchorItem);
     return `
       <div class="recipe-item-form order-selection-form" data-order-selection-form>
-        <div class="order-selection-summary">선택된 ${editSelected.size}개 품목</div>
-        <label><span>부서</span><select data-bulk-selection-target>
+        <div class="order-selection-summary">${I18n.format("selectedItemCount", { count: editSelected.size })}</div>
+        <label><span>${I18n.t("department")}</span><select data-bulk-selection-target>
           ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
         </select></label>
-        <label><span>카테고리</span><select data-bulk-selection-section>${categoryOptions(target, category)}</select></label>
+        <label><span>${I18n.t("menuCategory")}</span><select data-bulk-selection-section>${categoryOptions(target, category)}</select></label>
         <div class="recipe-item-form-actions order-selection-actions">
-          <button class="button" data-bulk-selection-action="save" type="button">저장</button>
-          <button class="ghost-button" data-bulk-selection-action="cancel" type="button">취소</button>
+          <button class="button" data-bulk-selection-action="save" type="button">${I18n.t("save")}</button>
+          <button class="ghost-button" data-bulk-selection-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
@@ -348,7 +348,7 @@
   function saveItemFromForm(form, item = null) {
     const nameKo = form?.querySelector("[data-order-item-name-ko]")?.value.trim() || "";
     if (!nameKo) {
-      setStatus("품목명을 입력하세요.");
+      setStatus(I18n.t("chooseAtLeastOne"));
       return;
     }
     const target = form.querySelector("[data-order-item-target]")?.value || "카페테리아";
@@ -385,7 +385,7 @@
     editSelected.clear();
     lastSelectedItemId = null;
     activeItemEdit = null;
-    setStatus(`${ids.length}개 품목을 수정했습니다.`);
+    setStatus(I18n.format("selectedItemCount", { count: ids.length }));
     renderItems();
   }
 
@@ -409,8 +409,8 @@
     if (!isEditMode()) return "";
     return `
       <div class="menu-row-actions request-row-actions">
-        <button class="menu-row-action is-edit" data-order-item-action="edit" data-order-item-id="${item.id}" type="button" aria-label="${I18n.itemName(item)} 수정">${editIcon}</button>
-        <button class="menu-row-action request-item-drag-handle recipe-drag-handle" data-request-item-drag-handle type="button" aria-label="${I18n.itemName(item)} 순서 이동">${dragIcon}</button>
+        <button class="menu-row-action is-edit" data-order-item-action="edit" data-order-item-id="${item.id}" type="button" aria-label="${I18n.itemName(item)} ${I18n.t("edit")}">${editIcon}</button>
+        <button class="menu-row-action request-item-drag-handle recipe-drag-handle" data-request-item-drag-handle type="button" aria-label="${I18n.itemName(item)} ${I18n.t("moveOrder")}">${dragIcon}</button>
       </div>
     `;
   }
@@ -419,9 +419,9 @@
     if (!isEditMode()) return "";
     return `
       <div class="menu-row-actions request-row-actions">
-        <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 품목 추가">${addIcon}</button>
-        <button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 카테고리 수정">${editIcon}</button>
-        <button class="menu-row-action request-category-drag-handle recipe-drag-handle" data-request-category-drag-handle type="button" aria-label="${I18n.sectionLabel(category)} 순서 이동">${dragIcon}</button>
+        <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} ${I18n.t("add")}">${addIcon}</button>
+        <button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} ${I18n.t("edit")}">${editIcon}</button>
+        <button class="menu-row-action request-category-drag-handle recipe-drag-handle" data-request-category-drag-handle type="button" aria-label="${I18n.sectionLabel(category)} ${I18n.t("moveOrder")}">${dragIcon}</button>
       </div>
     `;
   }
@@ -497,7 +497,7 @@
         <section class="department-group request-target-group">
           <div class="section-title-row menu-category-title-row">
             <h2>${I18n.targetLabel(target)}</h2>
-            ${isEditMode() ? `<button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">카테고리 추가</button>` : ""}
+            ${isEditMode() ? `<button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">${I18n.t("categoryAdd")}</button>` : ""}
           </div>
           <hr class="section-divider department-divider" />
           ${isEditMode() && activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
@@ -604,7 +604,7 @@
           return;
         }
         if (action === "delete" && item) {
-          if (!window.confirm(`${I18n.itemName(item)} 품목을 삭제할까요?`)) return;
+          if (!window.confirm(I18n.format("confirmDeleteItem", { name: I18n.itemName(item) }))) return;
           Store.setIngredients(Store.getIngredients().filter((row) => row.id !== item.id));
           selected.delete(itemKey(item));
           editSelected.delete(item.id);
@@ -824,7 +824,7 @@
 
   function scrollToCategoryRow(row) {
     if (!row) {
-      setStatus("카테고리를 찾을 수 없습니다.");
+      setStatus(I18n.t("categoryNotFound"));
       return;
     }
     const stickyOffset = (els.bulkPanel?.offsetHeight || 0) + 14;

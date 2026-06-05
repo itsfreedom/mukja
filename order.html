@@ -23,23 +23,23 @@
               </header>
               <hr class="section-divider" />
               <div class="order-mode-row admin-section hidden" id="order-mode-row">
-                <button class="ghost-button" id="order-mode-order" type="button">주문 모드</button>
-                <button class="ghost-button" id="order-mode-edit" type="button">수정 모드</button>
+                <button class="ghost-button" id="order-mode-order" type="button" data-i18n="orderMode">주문 모드</button>
+                <button class="ghost-button" id="order-mode-edit" type="button" data-i18n="editMode">수정 모드</button>
               </div>
               <div class="button-row order-action-row order-reset-row admin-section" id="order-reset-row">
                 <button class="danger-button" id="reset-order" data-i18n="reset">초기화</button>
               </div>
               <div class="recipe-item-form order-bulk-panel admin-section hidden" id="order-bulk-panel">
                 <div class="order-jump-selects">
-                  <label><span>부서</span><select id="bulk-target"></select></label>
-                  <label><span>카테고리</span><select id="bulk-category"></select></label>
+                  <label><span data-i18n="department">부서</span><select id="bulk-target"></select></label>
+                  <label><span data-i18n="menuCategory">카테고리</span><select id="bulk-category"></select></label>
                 </div>
                 <div class="order-jump-actions">
-                  <button class="ghost-button" id="bulk-jump-top" type="button">맨위</button>
-                  <button class="ghost-button" id="bulk-jump-prev" type="button">이전</button>
-                  <button class="button" id="bulk-jump" type="button">이동</button>
-                  <button class="ghost-button" id="bulk-jump-next" type="button">다음</button>
-                  <button class="ghost-button" id="bulk-jump-bottom" type="button">맨아래</button>
+                  <button class="ghost-button" id="bulk-jump-top" type="button" data-i18n="top">맨위</button>
+                  <button class="ghost-button" id="bulk-jump-prev" type="button" data-i18n="previous">이전</button>
+                  <button class="button" id="bulk-jump" type="button" data-i18n="move">이동</button>
+                  <button class="ghost-button" id="bulk-jump-next" type="button" data-i18n="next">다음</button>
+                  <button class="ghost-button" id="bulk-jump-bottom" type="button" data-i18n="bottom">맨아래</button>
                 </div>
               </div>
               <div id="items-list" class="item-list admin-section"></div>
@@ -51,7 +51,7 @@
                 </label>
               </section>
               <div class="button-row order-action-row admin-section" id="order-save-row">
-                <button class="button" id="save-create-message" type="button">요청</button>
+                <button class="button" id="save-create-message" type="button" data-i18n="request">요청</button>
               </div>
               <p class="status" id="status"></p>
             </div>

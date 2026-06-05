@@ -139,6 +139,56 @@
       confirmImport: "현재 설정을 가져온 파일로 교체할까요?",
       confirmCsvImport: "현재 데이터를 가져온 CSV로 교체할까요?",
       emptyMessage: "메시지를 먼저 만들어주세요."
+      ,
+      readonlyMemoTitle: "타부서에서 작성한 메모",
+      readOnly: "수정 불가",
+      itemName: "품목명",
+      categoryName: "카테고리명",
+      department: "부서",
+      orderUnit: "주문 단위",
+      selectedItemCount: "선택된 {count}개 품목",
+      categoryAdd: "카테고리 추가",
+      saveDone: "저장했습니다.",
+      resetDone: "초기화했습니다.",
+      categoryRequired: "카테고리명을 입력하세요.",
+      categoryDuplicate: "이미 있는 카테고리입니다.",
+      categoryNotFound: "카테고리를 찾을 수 없습니다.",
+      confirmDeleteCategory: "{name} 카테고리를 삭제할까요? 이 카테고리의 품목은 {fallback}로 이동합니다.",
+      confirmDeleteItem: "{name} 품목을 삭제할까요?",
+      outgoingConfirm: "출고 확인",
+      incomingConfirm: "입고 확인",
+      detailHistory: "상세 내역",
+      updatedNotice: "수정되었습니다.",
+      ingredientName: "재료명",
+      amount: "수량",
+      photoUrl: "사진 URL",
+      addIngredient: "재료 추가",
+      addStep: "조리 순서 추가",
+      editRecipe: "레시피 수정",
+      confirmDeleteRecipe: "{name} 레시피를 삭제할까요?",
+      confirmDeleteIngredient: "재료를 삭제할까요?",
+      confirmDeleteStep: "조리 순서를 삭제할까요?",
+      koreanMenuName: "한글 메뉴명",
+      englishMenuName: "영문 메뉴명",
+      activeSale: "판매",
+      inactiveSale: "판매 중지",
+      addMenu: "메뉴 추가",
+      editMenu: "메뉴 수정",
+      confirmSaveMenu: "메뉴 정보를 저장할까요?",
+      confirmDiscontinueMenu: "메뉴를 판매 중지 상태로 저장할까요?",
+      moveOrder: "순서 이동",
+      top: "맨위",
+      previous: "이전",
+      next: "다음",
+      bottom: "맨아래",
+      move: "이동",
+      orderMode: "주문 모드",
+      editMode: "수정 모드",
+      request: "요청",
+      requestHistoryCsv: "요청 내역",
+      ingredientListCsv: "재료 목록",
+      exportCsv: "CSV 내보내기",
+      importCsv: "CSV 가져오기"
     },
     en: {
       appName: "Mokja Alley Management",
@@ -278,13 +328,62 @@
       csvImportDone: "CSV imported.",
       confirmImport: "Replace current settings with the imported file?",
       confirmCsvImport: "Replace current data with the imported CSV?",
-      emptyMessage: "Create a message first."
+      emptyMessage: "Create a message first.",
+      readonlyMemoTitle: "Memos From Other Teams",
+      readOnly: "Read-only",
+      itemName: "Item Name",
+      categoryName: "Category Name",
+      department: "Department",
+      orderUnit: "Order Unit",
+      selectedItemCount: "{count} selected items",
+      categoryAdd: "Add Category",
+      saveDone: "Saved.",
+      resetDone: "Reset.",
+      categoryRequired: "Enter a category name.",
+      categoryDuplicate: "This category already exists.",
+      categoryNotFound: "Category not found.",
+      confirmDeleteCategory: "Delete the {name} category? Items in this category will move to {fallback}.",
+      confirmDeleteItem: "Delete {name}?",
+      outgoingConfirm: "Outgoing",
+      incomingConfirm: "Received",
+      detailHistory: "Details",
+      updatedNotice: "Updated.",
+      ingredientName: "Ingredient",
+      amount: "Amount",
+      photoUrl: "Photo URL",
+      addIngredient: "Add Ingredient",
+      addStep: "Add Step",
+      editRecipe: "Edit Recipe",
+      confirmDeleteRecipe: "Delete {name} recipe?",
+      confirmDeleteIngredient: "Delete this ingredient?",
+      confirmDeleteStep: "Delete this cooking step?",
+      koreanMenuName: "Korean Menu Name",
+      englishMenuName: "English Menu Name",
+      activeSale: "Active",
+      inactiveSale: "Discontinued",
+      addMenu: "Add Menu",
+      editMenu: "Edit Menu",
+      confirmSaveMenu: "Save menu information?",
+      confirmDiscontinueMenu: "Save this menu as discontinued?",
+      moveOrder: "Move Order",
+      top: "Top",
+      previous: "Previous",
+      next: "Next",
+      bottom: "Bottom",
+      move: "Move",
+      orderMode: "Order Mode",
+      editMode: "Edit Mode",
+      request: "Request",
+      requestHistoryCsv: "Request History",
+      ingredientListCsv: "Ingredient List",
+      exportCsv: "Export CSV",
+      importCsv: "Import CSV"
     }
   };
 
   const sectionLabels = {
-    ko: { "반조리": "반조리", "야채": "야채", "반찬": "반찬", "소스": "소스", "식재료": "식재료", "상온": "상온", "냉장": "냉장", "냉동": "냉동", "기타": "기타" },
-    en: { "반조리": "Semi-prepared", "야채": "Vegetables", "반찬": "Side Dishes", "소스": "Sauces", "식재료": "Ingredients", "상온": "Room Temp", "냉장": "Refrigerated", "냉동": "Frozen", "기타": "Other" }
+    ko: { "반조리": "반조리", "야채": "야채", "반찬": "반찬", "소스": "소스", "식재료": "식재료", "상온": "상온", "냉장": "냉장", "냉동": "냉동", "기타": "기타", "고기": "고기", "해물": "해물", "신선": "신선", "두부": "두부", "분말": "분말", "소스류": "소스류", "곡류": "곡류", "면류": "면류", "포장 박스": "포장 박스", "식사": "식사", "찌개": "찌개", "사이드": "사이드" },
+    en: { "반조리": "Semi-prepared", "야채": "Vegetables", "반찬": "Side Dishes", "소스": "Sauces", "식재료": "Ingredients", "상온": "Room Temp", "냉장": "Refrigerated", "냉동": "Frozen", "기타": "Other", "고기": "Meat", "해물": "Seafood", "신선": "Fresh", "두부": "Tofu", "분말": "Powder", "소스류": "Sauces", "곡류": "Grains", "면류": "Noodles", "포장 박스": "Packaging", "식사": "Meals", "찌개": "Stews", "사이드": "Sides" }
   };
 
   function lang() {
@@ -293,6 +392,11 @@
 
   function t(key) {
     return (translations[lang()] && translations[lang()][key]) || translations.ko[key] || key;
+  }
+
+  function format(key, values = {}) {
+    return Object.entries(values).reduce((text, [name, value]) =>
+      text.replaceAll(`{${name}}`, value), t(key));
   }
 
   function targetLabel(target) {
@@ -344,6 +448,31 @@
     return lang() === "en" ? (menu.nameKo || "") : (menu.nameEn || "");
   }
 
+  function recipeName(recipe) {
+    if (!recipe) return "";
+    return lang() === "en" ? (recipe.nameEn || recipe.name || "") : (recipe.name || recipe.nameEn || "");
+  }
+
+  function recipeDescription(recipe) {
+    if (!recipe) return "";
+    return lang() === "en" ? (recipe.descriptionEn || recipe.description || "") : (recipe.description || recipe.descriptionEn || "");
+  }
+
+  function recipeIngredientItems(recipe) {
+    if (!recipe) return [];
+    return lang() === "en" && recipe.ingredientItemsEn?.length ? recipe.ingredientItemsEn : recipe.ingredientItems || [];
+  }
+
+  function recipeStepItems(recipe) {
+    if (!recipe) return [];
+    return lang() === "en" && recipe.stepItemsEn?.length ? recipe.stepItemsEn : recipe.stepItems || [];
+  }
+
+  function recipeNotes(recipe) {
+    if (!recipe) return "";
+    return lang() === "en" ? (recipe.notesEn || recipe.notes || "") : (recipe.notes || recipe.notesEn || "");
+  }
+
   function applyI18n() {
     document.documentElement.lang = lang();
     document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -357,5 +486,5 @@
     });
   }
 
-  window.I18n = { translations, lang, t, targetLabel, sectionLabel, roleLabel, itemName, menuName, secondaryMenuName, applyI18n };
+  window.I18n = { translations, lang, t, format, targetLabel, sectionLabel, roleLabel, itemName, menuName, secondaryMenuName, recipeName, recipeDescription, recipeIngredientItems, recipeStepItems, recipeNotes, applyI18n };
 })();

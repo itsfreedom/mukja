@@ -65,7 +65,7 @@
       .map((name) => `<option value="${name}">${name}</option>`)
       .join("");
     editFields.recipe.innerHTML = `<option value="">${I18n.t("recipeDetail")}</option>` + Store.getRecipes()
-      .map((recipe) => `<option value="${recipe.id}">${recipe.name}</option>`)
+      .map((recipe) => `<option value="${recipe.id}">${I18n.recipeName(recipe)}</option>`)
       .join("");
     recipeEditFields.section.innerHTML = Store.getSections()
       .map((name) => `<option value="${name}">${I18n.sectionLabel(name)}</option>`)
@@ -187,38 +187,38 @@
     const amount = splitAmount(item.amount);
     return `
       <div class="recipe-item-form" data-ingredient-form="${index}">
-        <label><span>재료명</span><input data-ingredient-name value="${escapeHtml(item.name)}" /></label>
-        <label><span>수량</span><input data-ingredient-quantity inputmode="decimal" value="${escapeHtml(amount.quantity)}" /></label>
-        <label><span>단위</span><input data-ingredient-unit value="${escapeHtml(amount.unit)}" /></label>
+        <label><span>${I18n.t("ingredientName")}</span><input data-ingredient-name value="${escapeHtml(item.name)}" /></label>
+        <label><span>${I18n.t("amount")}</span><input data-ingredient-quantity inputmode="decimal" value="${escapeHtml(amount.quantity)}" /></label>
+        <label><span>${I18n.t("unit")}</span><input data-ingredient-unit value="${escapeHtml(amount.unit)}" /></label>
         <div class="recipe-item-form-actions">
-          <button class="button" data-ingredient-action="save" data-index="${index}" type="button">저장</button>
-          <button class="danger-button" data-ingredient-action="delete" data-index="${index}" type="button">삭제</button>
-          <button class="ghost-button" data-ingredient-action="cancel" type="button">취소</button>
+          <button class="button" data-ingredient-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
+          <button class="danger-button" data-ingredient-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-ingredient-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
   }
 
   function ingredientCrudList(recipe) {
-    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const rows = I18n.recipeIngredientItems(recipe);
     const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("ingredients")}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가">${addIcon}</button>` : ""}
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="${I18n.t("addIngredient")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
             return `
               <article class="list-card recipe-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
-                ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} 순서 이동">${dragIcon}</button>` : ""}
+                ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
                   <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
                 </div>
-                ${canManageMenu ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
+                ${canManageMenu ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
               </article>
               ${activeIngredientEdit?.index === index ? ingredientEditForm(item, index) : ""}
             `;
@@ -232,37 +232,37 @@
   function stepEditForm(step = {}, index = 0) {
     return `
       <div class="recipe-item-form" data-step-form="${index}">
-        <label><span>조리 순서</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
-        <label><span>사진 URL</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
+        <label><span>${I18n.t("steps")}</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
+        <label><span>${I18n.t("photoUrl")}</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
         <div class="recipe-item-form-actions">
-          <button class="button" data-step-action="save" data-index="${index}" type="button">저장</button>
-          <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">삭제</button>
-          <button class="ghost-button" data-step-action="cancel" type="button">취소</button>
+          <button class="button" data-step-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
+          <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-step-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
   }
 
   function stepCrudList(recipe) {
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("steps")}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가">${addIcon}</button>` : ""}
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
             <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
-              ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동">${dragIcon}</button>` : ""}
+              ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
                 ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>
               ${canManageMenu ? `
                 <div class="recipe-crud-actions">
-                  <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1}번 조리 순서 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
+                  <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
                 </div>
               ` : ""}
             </article>
@@ -318,7 +318,7 @@
     return `
       ${ingredientCrudList(recipe)}
       ${stepCrudList(recipe)}
-      ${(recipe.notes || menu.notes) ? `<section class="history-detail-card recipe-detail-section"><h2>${I18n.t("notes")}</h2><p class="preview-box">${recipe.notes || menu.notes}</p></section>` : ""}
+      ${(I18n.recipeNotes(recipe) || menu.notes) ? `<section class="history-detail-card recipe-detail-section"><h2>${I18n.t("notes")}</h2><p class="preview-box">${I18n.recipeNotes(recipe) || menu.notes}</p></section>` : ""}
     `;
   }
 
@@ -353,7 +353,7 @@
 
   function openRecipeEditor(recipe = null) {
     editingRecipeId = recipe?.id || "";
-    recipeEditModalTitle.textContent = "레시피 수정";
+    recipeEditModalTitle.textContent = I18n.t("editRecipe");
     recipeEditFields.name.value = recipe?.name || "";
     recipeEditFields.section.value = recipe?.section || Store.getSections()[0] || "기타";
     recipeEditFields.description.value = recipe?.description || "";
@@ -405,7 +405,7 @@
     if (!editingRecipeId) return;
     const recipe = Store.getRecipes().find((row) => row.id === editingRecipeId);
     if (!recipe) return;
-    if (!confirm(`${recipe.name} 레시피를 삭제할까요?`)) return;
+    if (!confirm(I18n.format("confirmDeleteRecipe", { name: I18n.recipeName(recipe) }))) return;
     Store.deleteRecipe(editingRecipeId);
     closeRecipeEditor();
     closeRecipe();
@@ -417,7 +417,7 @@
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe) return;
-    if (!confirm(`${recipe.name} 레시피를 삭제할까요?`)) return;
+    if (!confirm(I18n.format("confirmDeleteRecipe", { name: I18n.recipeName(recipe) }))) return;
     Store.deleteRecipe(recipe.id);
     closeRecipe();
     renderFilters();
@@ -454,7 +454,7 @@
       return;
     }
     if (action === "delete") {
-      if (!confirm("재료를 삭제할까요?")) return;
+      if (!confirm(I18n.t("confirmDeleteIngredient"))) return;
       Store.saveRecipe(recipeWithIngredientItems(recipe, rows.filter((_, rowIndex) => rowIndex !== index)));
       activeIngredientEdit = null;
       rerenderActiveRecipe();
@@ -550,7 +550,7 @@
       return;
     }
     if (action === "delete") {
-      if (!confirm("조리 순서를 삭제할까요?")) return;
+      if (!confirm(I18n.t("confirmDeleteStep"))) return;
       Store.saveRecipe(recipeWithStepItems(recipe, rows.filter((_, rowIndex) => rowIndex !== index)));
       activeStepEdit = null;
       rerenderActiveRecipe();
@@ -610,7 +610,7 @@
 
   function openMenuEditor(menu = null, defaults = {}) {
     editingMenuId = menu?.id || "";
-    editModalTitle.textContent = menu ? "메뉴 수정" : "메뉴 추가";
+    editModalTitle.textContent = menu ? I18n.t("editMenu") : I18n.t("addMenu");
     editFields.nameKo.value = menu?.nameKo || "";
     editFields.nameEn.value = menu?.nameEn || "";
     renderMenuCategoryOptions(menu?.category || defaults.category || "");
@@ -634,7 +634,7 @@
     const nameKo = editFields.nameKo.value.trim();
     if (!nameKo) return;
     const isActive = editFields.active.checked;
-    const confirmMessage = isActive ? "메뉴 정보를 저장할까요?" : "메뉴를 판매 중지 상태로 저장할까요?";
+    const confirmMessage = isActive ? I18n.t("confirmSaveMenu") : I18n.t("confirmDiscontinueMenu");
     if (!confirm(confirmMessage)) return;
     const existing = editingMenuId ? Store.getMenus().find((row) => row.id === editingMenuId) : null;
     const existingRecipe = existing ? recipeFor(existing) : null;
@@ -684,7 +684,7 @@
     if (!editingMenuId) return;
     const menu = Store.getMenus().find((row) => row.id === editingMenuId);
     if (!menu) return;
-    if (!confirm(`${I18n.menuName(menu)} 메뉴를 삭제할까요?`)) return;
+    if (!confirm(I18n.format("confirmDeleteItem", { name: I18n.menuName(menu) }))) return;
     Store.deleteMenu(editingMenuId);
     closeMenuEditor();
     renderFilters();
@@ -698,19 +698,19 @@
     const discontinuedChecked = menu ? Boolean(menu.discontinued) : false;
     return `
       <div class="recipe-item-form menu-inline-form" data-menu-form="${menu?.id || "__new__"}">
-        <label><span>한글 메뉴명</span><input data-menu-name-ko value="${escapeHtml(menu?.nameKo || "")}" /></label>
-        <label><span>영문 메뉴명</span><input data-menu-name-en value="${escapeHtml(menu?.nameEn || "")}" /></label>
-        <label><span>카테고리</span><select data-menu-category>${menuCategoryOptions(selectedCategory)}</select></label>
-        <label><span>가격 (CAD)</span><input data-menu-price inputmode="decimal" value="${escapeHtml(menu?.price || "")}" /></label>
+        <label><span>${I18n.t("koreanMenuName")}</span><input data-menu-name-ko value="${escapeHtml(menu?.nameKo || "")}" /></label>
+        <label><span>${I18n.t("englishMenuName")}</span><input data-menu-name-en value="${escapeHtml(menu?.nameEn || "")}" /></label>
+        <label><span>${I18n.t("menuCategory")}</span><select data-menu-category>${menuCategoryOptions(selectedCategory)}</select></label>
+        <label><span>${I18n.t("price")} (CAD)</span><input data-menu-price inputmode="decimal" value="${escapeHtml(menu?.price || "")}" /></label>
         <div class="menu-option-row">
           <div class="menu-option-card menu-status-card">
             <label class="menu-check-option">
               <input data-menu-active name="menu-status-${menu?.id || "new"}" type="radio" value="active" ${activeChecked ? "checked" : ""} />
-              <span>판매</span>
+              <span>${I18n.t("activeSale")}</span>
             </label>
             <label class="menu-check-option">
               <input data-menu-discontinued name="menu-status-${menu?.id || "new"}" type="radio" value="discontinued" ${discontinuedChecked ? "checked" : ""} />
-              <span>판매 중지</span>
+              <span>${I18n.t("inactiveSale")}</span>
             </label>
           </div>
           <label class="menu-option-card menu-check-option">
@@ -719,9 +719,9 @@
           </label>
         </div>
         <div class="recipe-item-form-actions">
-          <button class="button" data-menu-action="save" data-menu-id="${menu?.id || ""}" type="button">저장</button>
-          <button class="danger-button ${isNew ? "hidden" : ""}" data-menu-action="delete" data-menu-id="${menu?.id || ""}" type="button">삭제</button>
-          <button class="ghost-button" data-menu-action="cancel" type="button">취소</button>
+          <button class="button" data-menu-action="save" data-menu-id="${menu?.id || ""}" type="button">${I18n.t("save")}</button>
+          <button class="danger-button ${isNew ? "hidden" : ""}" data-menu-action="delete" data-menu-id="${menu?.id || ""}" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-menu-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
@@ -731,7 +731,7 @@
     const nameKo = form?.querySelector("[data-menu-name-ko]")?.value.trim() || "";
     if (!nameKo) return;
     const isActive = form.querySelector("[data-menu-active]")?.checked;
-    const confirmMessage = isActive ? "메뉴 정보를 저장할까요?" : "메뉴를 판매 중지 상태로 저장할까요?";
+    const confirmMessage = isActive ? I18n.t("confirmSaveMenu") : I18n.t("confirmDiscontinueMenu");
     if (!confirm(confirmMessage)) return;
     const categoryValue = form.querySelector("[data-menu-category]")?.value.trim() || "기타";
     const existingRecipe = menu ? recipeFor(menu) : null;
@@ -847,7 +847,7 @@
     return `
       <div class="menu-row-actions">
         ${canManageMenu ? actionButton("edit", "U", menu, "is-edit") : ""}
-        ${actionButton("recipe", "레시피", menu, "is-recipe")}
+        ${actionButton("recipe", I18n.t("recipes"), menu, "is-recipe")}
       </div>
     `;
   }
@@ -878,7 +878,7 @@
         <div class="list">
           ${groupMenus.map((menu) => `
             <article class="list-card menu-row ${canManageMenu ? "has-leading-action" : ""}" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
-              ${canManageMenu ? actionButton("drag", "순서 이동", menu, "menu-drag-handle recipe-drag-handle") : ""}
+              ${canManageMenu ? actionButton("drag", I18n.t("moveOrder"), menu, "menu-drag-handle recipe-drag-handle") : ""}
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
@@ -918,7 +918,7 @@
           render();
         }
         if (action === "delete") {
-          if (!confirm(`${I18n.menuName(menu)} 메뉴를 삭제할까요?`)) return;
+          if (!confirm(I18n.format("confirmDeleteItem", { name: I18n.menuName(menu) }))) return;
           Store.deleteMenu(menu.id);
           activeMenuEdit = null;
           renderFilters();

@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v147";
+  const appAssetVersion = "v148";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -192,20 +192,29 @@
   function normalizeRecipe(recipe) {
     if (!recipe) return recipe;
     const ingredientItems = parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const ingredientItemsEn = parseRecipeItems(recipe.ingredientItemsEn?.length ? recipe.ingredientItemsEn : recipe.ingredientsEn);
     const seasoningItems = parseRecipeItems(recipe.seasoningItems?.length ? recipe.seasoningItems : (recipe.seasonings || ""));
     const stepItems = parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const stepItemsEn = parseRecipeSteps(recipe.stepItemsEn?.length ? recipe.stepItemsEn : recipe.stepsEn);
     return {
       ...recipe,
+      nameEn: recipe.nameEn || "",
       section: recipe.section || "기타",
       description: recipe.description || "",
+      descriptionEn: recipe.descriptionEn || "",
       ingredients: recipe.ingredients || recipeItemsToLines(ingredientItems),
+      ingredientsEn: recipe.ingredientsEn || recipeItemsToLines(ingredientItemsEn),
       seasonings: recipe.seasonings || recipeItemsToLines(seasoningItems),
       steps: recipe.steps || legacyStepsText(stepItems),
+      stepsEn: recipe.stepsEn || legacyStepsText(stepItemsEn),
       notes: recipe.notes || "",
+      notesEn: recipe.notesEn || "",
       imageUrl: recipe.imageUrl || "",
       ingredientItems,
+      ingredientItemsEn,
       seasoningItems,
       stepItems,
+      stepItemsEn,
       enabled: recipe.enabled !== false,
       updatedAt: recipe.updatedAt || today()
     };
@@ -893,19 +902,25 @@
   }
 
   function recipesToCsv(rows) {
-    const header = ["id", "name", "section", "description", "ingredients", "seasonings", "steps", "stepItems", "notes", "imageUrl", "enabled", "updatedAt"];
+    const header = ["id", "name", "nameEn", "section", "description", "descriptionEn", "ingredients", "ingredientsEn", "seasonings", "steps", "stepsEn", "stepItems", "stepItemsEn", "notes", "notesEn", "imageUrl", "enabled", "updatedAt"];
     const lines = [header.map(csvEscape).join(",")];
     rows.forEach((recipe) => {
       lines.push([
         recipe.id,
         recipe.name,
+        recipe.nameEn,
         recipe.section,
         recipe.description,
+        recipe.descriptionEn,
         recipeItemsToLines(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients),
+        recipeItemsToLines(recipe.ingredientItemsEn?.length ? recipe.ingredientItemsEn : recipe.ingredientsEn),
         recipeItemsToLines(recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings),
         recipeStepsToLines(recipe.stepItems?.length ? recipe.stepItems : recipe.steps),
+        recipeStepsToLines(recipe.stepItemsEn?.length ? recipe.stepItemsEn : recipe.stepsEn),
         JSON.stringify(recipe.stepItems || []),
+        JSON.stringify(recipe.stepItemsEn || []),
         recipe.notes,
+        recipe.notesEn,
         recipe.imageUrl,
         recipe.enabled ? "true" : "false",
         recipe.updatedAt
@@ -1020,16 +1035,25 @@
       return [normalizeRecipe({
         id: field(row, map, ["id"]) || id("recipe"),
         name,
+        nameEn: field(row, map, ["nameEn", "영문 레시피명", "englishName"]),
         section: field(row, map, ["section", "섹션", "Section"]) || "기타",
         description: field(row, map, ["description", "설명", "Description"]),
+        descriptionEn: field(row, map, ["descriptionEn", "영문 설명", "English Description"]),
         ingredients: field(row, map, ["ingredients", "재료", "Ingredients"]),
+        ingredientsEn: field(row, map, ["ingredientsEn", "영문 재료", "English Ingredients"]),
         seasonings: field(row, map, ["seasonings", "양념", "Seasonings"]),
         steps: field(row, map, ["steps", "조리 순서", "Steps"]),
+        stepsEn: field(row, map, ["stepsEn", "영문 조리 순서", "English Steps"]),
         stepItems: (() => {
           try { return JSON.parse(field(row, map, ["stepItems", "step_items", "Step Items"]) || "[]"); }
           catch (_) { return []; }
         })(),
+        stepItemsEn: (() => {
+          try { return JSON.parse(field(row, map, ["stepItemsEn", "step_items_en", "English Step Items"]) || "[]"); }
+          catch (_) { return []; }
+        })(),
         notes: field(row, map, ["notes", "메모", "Notes"]),
+        notesEn: field(row, map, ["notesEn", "영문 메모", "English Notes"]),
         imageUrl: field(row, map, ["imageUrl", "이미지 URL"]),
         enabled: field(row, map, ["enabled", "사용"]) !== "false",
         updatedAt: field(row, map, ["updatedAt", "수정일"]) || today()

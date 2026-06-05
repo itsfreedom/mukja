@@ -159,15 +159,22 @@ async function ensureSchema(client) {
     create table if not exists recipes (
       id text primary key,
       name text not null,
+      name_en text,
       section text,
       description text,
+      description_en text,
       ingredients text,
+      ingredients_en text,
       ingredient_items jsonb not null default '[]'::jsonb,
+      ingredient_items_en jsonb not null default '[]'::jsonb,
       seasonings text,
       seasoning_items jsonb not null default '[]'::jsonb,
       steps text,
+      steps_en text,
       step_items jsonb not null default '[]'::jsonb,
+      step_items_en jsonb not null default '[]'::jsonb,
       notes text,
+      notes_en text,
       image_url text,
       enabled boolean not null default true,
       updated_at text,
@@ -219,9 +226,16 @@ async function ensureSchema(client) {
     alter table access_accounts add column if not exists user_name text;
     alter table access_accounts add column if not exists name text;
     alter table recipes add column if not exists ingredient_items jsonb not null default '[]'::jsonb;
+    alter table recipes add column if not exists name_en text;
+    alter table recipes add column if not exists description_en text;
+    alter table recipes add column if not exists ingredients_en text;
+    alter table recipes add column if not exists ingredient_items_en jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists seasonings text;
     alter table recipes add column if not exists seasoning_items jsonb not null default '[]'::jsonb;
+    alter table recipes add column if not exists steps_en text;
     alter table recipes add column if not exists step_items jsonb not null default '[]'::jsonb;
+    alter table recipes add column if not exists step_items_en jsonb not null default '[]'::jsonb;
+    alter table recipes add column if not exists notes_en text;
 
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_access_accounts_role on access_accounts(role, department);
@@ -504,25 +518,35 @@ async function upsertOrder(client, entry, info) {
 async function upsertRecipe(client, recipe, info) {
   if (!recipe?.id || !recipe.name) throw new Error("Invalid recipe");
   const ingredientItems = Array.isArray(recipe.ingredientItems) ? recipe.ingredientItems : [];
+  const ingredientItemsEn = Array.isArray(recipe.ingredientItemsEn) ? recipe.ingredientItemsEn : [];
   const seasoningItems = Array.isArray(recipe.seasoningItems) ? recipe.seasoningItems : [];
   const stepItems = Array.isArray(recipe.stepItems) ? recipe.stepItems : [];
+  const stepItemsEn = Array.isArray(recipe.stepItemsEn) ? recipe.stepItemsEn : [];
   await client.query(`
     insert into recipes (
-      id, name, section, description, ingredients, ingredient_items, seasonings, seasoning_items, steps, step_items, notes, image_url, enabled,
+      id, name, name_en, section, description, description_en, ingredients, ingredients_en, ingredient_items, ingredient_items_en,
+      seasonings, seasoning_items, steps, steps_en, step_items, step_items_en, notes, notes_en, image_url, enabled,
       updated_at, changed_by_identity_id, changed_ip, changed_user_agent, synced_at
     )
-    values ($1, $2, $3, $4, $5, $6::jsonb, $7, $8::jsonb, $9, $10::jsonb, $11, $12, $13, $14, $15, $16, $17, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11, $12::jsonb, $13, $14, $15::jsonb, $16::jsonb, $17, $18, $19, $20, $21, $22, $23, $24, now())
     on conflict (id) do update set
       name = excluded.name,
+      name_en = excluded.name_en,
       section = excluded.section,
       description = excluded.description,
+      description_en = excluded.description_en,
       ingredients = excluded.ingredients,
+      ingredients_en = excluded.ingredients_en,
       ingredient_items = excluded.ingredient_items,
+      ingredient_items_en = excluded.ingredient_items_en,
       seasonings = excluded.seasonings,
       seasoning_items = excluded.seasoning_items,
       steps = excluded.steps,
+      steps_en = excluded.steps_en,
       step_items = excluded.step_items,
+      step_items_en = excluded.step_items_en,
       notes = excluded.notes,
+      notes_en = excluded.notes_en,
       image_url = excluded.image_url,
       enabled = excluded.enabled,
       updated_at = excluded.updated_at,
@@ -533,15 +557,21 @@ async function upsertRecipe(client, recipe, info) {
   `, [
     recipe.id,
     recipe.name,
+    recipe.nameEn || "",
     recipe.section || "",
     recipe.description || "",
+    recipe.descriptionEn || "",
     recipe.ingredients || "",
+    recipe.ingredientsEn || "",
     JSON.stringify(ingredientItems),
+    JSON.stringify(ingredientItemsEn),
     recipe.seasonings || "",
     JSON.stringify(seasoningItems),
     recipe.steps || "",
+    recipe.stepsEn || "",
     JSON.stringify(stepItems),
     recipe.notes || "",
+    recipe.notesEn || "",
     recipe.imageUrl || "",
     recipe.enabled !== false,
     recipe.updatedAt || "",
@@ -556,15 +586,22 @@ async function listRecipes(client) {
   return recipes.rows.map((row) => ({
     id: row.id,
     name: row.name,
+    nameEn: row.name_en || "",
     section: row.section || "",
     description: row.description || "",
+    descriptionEn: row.description_en || "",
     ingredients: row.ingredients || "",
+    ingredientsEn: row.ingredients_en || "",
     ingredientItems: Array.isArray(row.ingredient_items) ? row.ingredient_items : [],
+    ingredientItemsEn: Array.isArray(row.ingredient_items_en) ? row.ingredient_items_en : [],
     seasonings: row.seasonings || "",
     seasoningItems: Array.isArray(row.seasoning_items) ? row.seasoning_items : [],
     steps: row.steps || "",
+    stepsEn: row.steps_en || "",
     stepItems: Array.isArray(row.step_items) ? row.step_items : [],
+    stepItemsEn: Array.isArray(row.step_items_en) ? row.step_items_en : [],
     notes: row.notes || "",
+    notesEn: row.notes_en || "",
     imageUrl: row.image_url || "",
     enabled: row.enabled,
     updatedAt: row.updated_at || ""

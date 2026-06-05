@@ -32,7 +32,7 @@
     const q = search.value.trim().toLowerCase();
     return Store.getRecipes().filter((recipe) => {
       if (section.value && recipe.section !== section.value) return false;
-      if (q && !`${recipe.name} ${recipe.description} ${recipe.ingredients} ${recipe.seasonings}`.toLowerCase().includes(q)) return false;
+      if (q && !`${recipe.name} ${recipe.nameEn} ${recipe.description} ${recipe.descriptionEn} ${recipe.ingredients} ${recipe.ingredientsEn} ${recipe.seasonings}`.toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -79,38 +79,38 @@
     const amount = splitAmount(item.amount);
     return `
       <div class="recipe-item-form" data-ingredient-form="${index}">
-        <label><span>재료명</span><input data-ingredient-name value="${escapeHtml(item.name)}" /></label>
-        <label><span>수량</span><input data-ingredient-quantity inputmode="decimal" value="${escapeHtml(amount.quantity)}" /></label>
-        <label><span>단위</span><input data-ingredient-unit value="${escapeHtml(amount.unit)}" /></label>
+        <label><span>${I18n.t("ingredientName")}</span><input data-ingredient-name value="${escapeHtml(item.name)}" /></label>
+        <label><span>${I18n.t("amount")}</span><input data-ingredient-quantity inputmode="decimal" value="${escapeHtml(amount.quantity)}" /></label>
+        <label><span>${I18n.t("unit")}</span><input data-ingredient-unit value="${escapeHtml(amount.unit)}" /></label>
         <div class="recipe-item-form-actions">
-          <button class="button" data-ingredient-action="save" data-index="${index}" type="button">저장</button>
-          <button class="danger-button" data-ingredient-action="delete" data-index="${index}" type="button">삭제</button>
-          <button class="ghost-button" data-ingredient-action="cancel" type="button">취소</button>
+          <button class="button" data-ingredient-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
+          <button class="danger-button" data-ingredient-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-ingredient-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
   }
 
   function ingredientCrudSection(recipe) {
-    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const rows = I18n.recipeIngredientItems(recipe);
     const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("ingredients")}</h2>
-          ${canManageRecipes ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가">${addIcon}</button>` : ""}
+          ${canManageRecipes ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="${I18n.t("addIngredient")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
             return `
               <article class="list-card recipe-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
-                ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} 순서 이동">${dragIcon}</button>` : ""}
+                ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
                   <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
                 </div>
-                ${canManageRecipes ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
+                ${canManageRecipes ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
               </article>
               ${activeIngredientEdit?.index === index ? ingredientEditForm(item, index) : ""}
             `;
@@ -124,37 +124,37 @@
   function stepEditForm(step = {}, index = 0) {
     return `
       <div class="recipe-item-form" data-step-form="${index}">
-        <label><span>조리 순서</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
-        <label><span>사진 URL</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
+        <label><span>${I18n.t("steps")}</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
+        <label><span>${I18n.t("photoUrl")}</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
         <div class="recipe-item-form-actions">
-          <button class="button" data-step-action="save" data-index="${index}" type="button">저장</button>
-          <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">삭제</button>
-          <button class="ghost-button" data-step-action="cancel" type="button">취소</button>
+          <button class="button" data-step-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
+          <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
+          <button class="ghost-button" data-step-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
   }
 
   function stepCrudSection(recipe) {
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("steps")}</h2>
-          ${canManageRecipes ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가">${addIcon}</button>` : ""}
+          ${canManageRecipes ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
             <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
-              ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동">${dragIcon}</button>` : ""}
+              ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
                 ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>
               ${canManageRecipes ? `
                 <div class="recipe-crud-actions">
-                  <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1}번 조리 순서 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
+                  <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
                 </div>
               ` : ""}
             </article>
@@ -180,8 +180,8 @@
     if (!canManageRecipes) return "";
     return `
       <section class="recipe-footer-actions">
-        <button class="ghost-button recipe-action-button" data-close-recipe-detail type="button">닫기</button>
-        <button class="danger-button recipe-action-button" data-delete-recipe type="button">삭제</button>
+        <button class="ghost-button recipe-action-button" data-close-recipe-detail type="button">${I18n.t("close")}</button>
+        <button class="danger-button recipe-action-button" data-delete-recipe type="button">${I18n.t("delete")}</button>
       </section>
     `;
   }
@@ -193,13 +193,13 @@
     }
     detail.innerHTML = `
       <div class="recipe-detail-title-row">
-        <h2>${recipe.name}</h2>
+        <h2>${I18n.recipeName(recipe)}</h2>
       </div>
       <hr class="recipe-detail-rule" />
-      ${recipeTextArea("recipe-description-inline", "설명", recipe.description || "", "설명")}
+      ${recipeTextArea("recipe-description-inline", I18n.t("description"), I18n.recipeDescription(recipe), I18n.t("description"))}
       ${ingredientCrudSection(recipe)}
       ${stepCrudSection(recipe)}
-      ${recipeTextArea("recipe-notes-inline", I18n.t("notes"), recipe.notes || "", I18n.t("notes"))}
+      ${recipeTextArea("recipe-notes-inline", I18n.t("notes"), I18n.recipeNotes(recipe), I18n.t("notes"))}
       <p class="muted">${I18n.t("updatedAt")}: ${recipe.updatedAt || "-"}</p>
       ${recipeFooterActions()}
     `;
@@ -214,13 +214,17 @@
     if (!existing || !canManageRecipes) return;
     const ingredientItems = Store.parseRecipeItems(existing.ingredientItems?.length ? existing.ingredientItems : existing.ingredients);
     const stepItems = Store.parseRecipeSteps(existing.stepItems?.length ? existing.stepItems : existing.steps);
+    const descriptionValue = document.getElementById("recipe-description-inline")?.value.trim() || "";
+    const notesValue = document.getElementById("recipe-notes-inline")?.value.trim() || "";
     const recipe = {
       ...(existing || {}),
-      description: document.getElementById("recipe-description-inline")?.value.trim() || "",
+      description: I18n.lang() === "en" ? existing.description || "" : descriptionValue,
+      descriptionEn: I18n.lang() === "en" ? descriptionValue : existing.descriptionEn || "",
       ingredients: Store.recipeItemsToLines(ingredientItems),
       seasonings: existing.seasonings || "",
       steps: Store.recipeStepsToLines(stepItems),
-      notes: document.getElementById("recipe-notes-inline")?.value.trim() || "",
+      notes: I18n.lang() === "en" ? existing.notes || "" : notesValue,
+      notesEn: I18n.lang() === "en" ? notesValue : existing.notesEn || "",
       imageUrl: existing?.imageUrl || "",
       ingredientItems,
       seasoningItems: existing.seasoningItems || [],
@@ -237,7 +241,7 @@
   function deleteInlineRecipe() {
     const recipe = selectedRecipe();
     if (!recipe || !canManageRecipes) return;
-    if (!confirm(`${recipe.name} 레시피를 삭제할까요?`)) return;
+    if (!confirm(I18n.format("confirmDeleteRecipe", { name: I18n.recipeName(recipe) }))) return;
     Store.deleteRecipe(recipe.id);
     activeId = "";
     renderFilters();
@@ -256,7 +260,7 @@
     list.innerHTML = recipes.map((recipe) => `
       <button class="list-card ${recipe.id === activeId ? "is-active" : ""}" data-recipe="${recipe.id}" type="button">
         <div class="list-card-header">
-          <strong>${recipe.name}</strong>
+          <strong>${I18n.recipeName(recipe)}</strong>
         </div>
       </button>
     `).join("");
@@ -293,7 +297,7 @@
       return;
     }
     if (action === "delete") {
-      if (!confirm("재료를 삭제할까요?")) return;
+      if (!confirm(I18n.t("confirmDeleteIngredient"))) return;
       Store.saveRecipe(recipeWithIngredientItems(recipe, rows.filter((_, rowIndex) => rowIndex !== index)));
       activeIngredientEdit = null;
       renderFilters();
@@ -407,7 +411,7 @@
       return;
     }
     if (action === "delete") {
-      if (!confirm("조리 순서를 삭제할까요?")) return;
+      if (!confirm(I18n.t("confirmDeleteStep"))) return;
       Store.saveRecipe(recipeWithStepItems(recipe, rows.filter((_, rowIndex) => rowIndex !== index)));
       activeStepEdit = null;
       renderFilters();

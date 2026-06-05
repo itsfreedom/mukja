@@ -55,8 +55,8 @@
         </header>
         <div id="menu-recipe-content" class="history-detail-content"></div>
         <section id="menu-recipe-actions" class="menu-recipe-actions hidden" aria-label="레시피 관리">
-          <button id="edit-recipe-from-menu" class="ghost-button recipe-action-button" type="button">닫기</button>
-          <button id="delete-recipe-from-menu" class="danger-button recipe-action-button" type="button">삭제</button>
+          <button id="edit-recipe-from-menu" class="ghost-button recipe-action-button" type="button" data-i18n="close">닫기</button>
+          <button id="delete-recipe-from-menu" class="danger-button recipe-action-button" type="button" data-i18n="delete">삭제</button>
         </section>
       </article>
     </div>
@@ -65,22 +65,22 @@
       <article class="recipe-modal-panel menu-edit-panel">
         <header class="page-header recipe-modal-header">
           <div class="page-title-stack">
-            <h1 id="menu-recipe-edit-title">레시피 수정</h1>
+            <h1 id="menu-recipe-edit-title" data-i18n="editRecipe">레시피 수정</h1>
           </div>
           <button id="close-menu-recipe-edit" class="icon-close-button" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg></button>
         </header>
         <div class="form-grid recipe-edit-grid">
           <input id="menu-edit-recipe-name" data-i18n-placeholder="name" />
           <select id="menu-edit-recipe-section" class="hidden"></select>
-          <textarea id="menu-edit-recipe-description" placeholder="설명"></textarea>
-          <textarea id="menu-edit-recipe-ingredients" placeholder="재료명 | 양"></textarea>
-          <textarea id="menu-edit-recipe-steps" placeholder="조리순서 | 사진 URL"></textarea>
+          <textarea id="menu-edit-recipe-description" data-i18n-placeholder="description" placeholder="설명"></textarea>
+          <textarea id="menu-edit-recipe-ingredients" data-i18n-placeholder="ingredients" placeholder="재료명 | 양"></textarea>
+          <textarea id="menu-edit-recipe-steps" data-i18n-placeholder="steps" placeholder="조리순서 | 사진 URL"></textarea>
           <textarea id="menu-edit-recipe-notes" data-i18n-placeholder="notes"></textarea>
         </div>
         <div class="button-row admin-section">
           <button id="save-menu-recipe-edit" class="button" type="button" data-i18n="save">저장</button>
-          <button id="delete-menu-recipe-edit" class="danger-button" type="button">삭제</button>
-          <button id="cancel-menu-recipe-edit" class="ghost-button" type="button">취소</button>
+          <button id="delete-menu-recipe-edit" class="danger-button" type="button" data-i18n="delete">삭제</button>
+          <button id="cancel-menu-recipe-edit" class="ghost-button" type="button" data-i18n="close">취소</button>
         </div>
       </article>
     </div>
@@ -89,25 +89,25 @@
       <article class="recipe-modal-panel menu-edit-panel">
         <header class="page-header recipe-modal-header">
           <div class="page-title-stack">
-            <h1 id="menu-edit-title">메뉴 추가</h1>
+            <h1 id="menu-edit-title" data-i18n="addMenu">메뉴 추가</h1>
           </div>
           <button id="close-menu-edit" class="icon-close-button" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg></button>
         </header>
         <div class="form-grid menu-form-grid">
           <label class="menu-form-field">
-            <span>한글 메뉴명</span>
+            <span data-i18n="koreanMenuName">한글 메뉴명</span>
             <input id="edit-menu-name-ko" data-i18n-placeholder="name" />
           </label>
           <label class="menu-form-field">
-            <span>영문 메뉴명</span>
+            <span data-i18n="englishMenuName">영문 메뉴명</span>
             <input id="edit-menu-name-en" data-i18n-placeholder="englishName" />
           </label>
           <label class="menu-form-field">
-            <span>카테고리</span>
+            <span data-i18n="menuCategory">카테고리</span>
             <select id="edit-menu-category"></select>
           </label>
           <label class="menu-form-field">
-            <span>가격 (CAD)</span>
+            <span><span data-i18n="price">가격</span> (CAD)</span>
             <input id="edit-menu-price" data-i18n-placeholder="price" inputmode="decimal" />
           </label>
           <select id="edit-menu-recipe" class="hidden"></select>
@@ -115,11 +115,11 @@
             <div class="menu-option-card menu-status-card">
               <label class="menu-check-option">
                 <input id="edit-menu-active" name="edit-menu-status" type="radio" value="active" checked />
-                <span>판매</span>
+                <span data-i18n="activeSale">판매</span>
               </label>
               <label class="menu-check-option">
                 <input id="edit-menu-discontinued" name="edit-menu-status" type="radio" value="discontinued" />
-                <span>판매 중지</span>
+                <span data-i18n="inactiveSale">판매 중지</span>
               </label>
             </div>
             <label class="menu-option-card menu-check-option">
@@ -130,8 +130,8 @@
         </div>
         <div class="button-row admin-section">
           <button id="save-menu-edit" class="button" type="button" data-i18n="save">저장</button>
-          <button id="delete-menu-edit" class="danger-button hidden" type="button">삭제</button>
-          <button id="cancel-menu-edit" class="ghost-button" type="button">취소</button>
+          <button id="delete-menu-edit" class="danger-button hidden" type="button" data-i18n="delete">삭제</button>
+          <button id="cancel-menu-edit" class="ghost-button" type="button" data-i18n="close">취소</button>
         </div>
       </article>
     </div>

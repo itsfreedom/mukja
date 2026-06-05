@@ -48,7 +48,7 @@
       ["grocery", "그로서리"],
       ["restaurant", "레스토랑"],
       ["admin", "관리자"]
-    ].map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${label}</option>`).join("");
+    ].map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${I18n.roleLabel(label)}</option>`).join("");
   }
 
   function accountBadge(account = {}) {
@@ -73,12 +73,12 @@
     const isEdit = mode === "edit";
     return `
       <div class="recipe-item-form admin-access-form" data-access-form data-mode="${mode}" data-old-password="${escapeHtml(password)}">
-        <label><span>비밀번호</span><input data-access-password value="${escapeHtml(password)}" autocomplete="off" /></label>
-        <label><span>권한</span><select data-access-role>${roleOptions(roleValue(account))}</select></label>
+        <label><span>${I18n.t("password")}</span><input data-access-password value="${escapeHtml(password)}" autocomplete="off" /></label>
+        <label><span>${I18n.t("currentRole")}</span><select data-access-role>${roleOptions(roleValue(account))}</select></label>
         <div class="recipe-item-form-actions admin-access-form-actions">
-          <button class="button" data-access-action="save" type="button">${isEdit ? "저장" : "추가"}</button>
-          ${isEdit ? `<button class="danger-button" data-access-action="delete" data-password="${escapeHtml(password)}" type="button">삭제</button>` : ""}
-          <button class="ghost-button" data-access-action="cancel" type="button">취소</button>
+          <button class="button" data-access-action="save" type="button">${isEdit ? I18n.t("save") : I18n.t("add")}</button>
+          ${isEdit ? `<button class="danger-button" data-access-action="delete" data-password="${escapeHtml(password)}" type="button">${I18n.t("delete")}</button>` : ""}
+          <button class="ghost-button" data-access-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
       </div>
     `;
@@ -102,7 +102,7 @@
           ${badgeIcon(accountBadge(account))}
         </div>
         <div class="menu-row-actions admin-access-actions">
-          <button class="menu-row-action is-edit" data-access-action="edit" data-password="${escapeHtml(password)}" type="button" aria-label="수정">${editIcon}</button>
+          <button class="menu-row-action is-edit" data-access-action="edit" data-password="${escapeHtml(password)}" type="button" aria-label="${I18n.t("edit")}">${editIcon}</button>
         </div>
       </article>
       ${activeForm?.mode === "edit" && activeForm.password === password ? accessForm("edit", password, account) : ""}
@@ -125,11 +125,11 @@
     const password = form.querySelector("[data-access-password]")?.value.trim() || "";
     const selected = roleFromValue(form.querySelector("[data-access-role]")?.value || "cafeteria");
     if (!password) {
-      setStatus("비밀번호를 입력하세요.");
+      setStatus(I18n.t("accessPassword"));
       return;
     }
     if ((mode === "create" || password !== oldPassword) && accounts[password]) {
-      setStatus("이미 사용 중인 비밀번호입니다.");
+      setStatus(I18n.t("duplicatePassword"));
       return;
     }
     const next = { ...accounts };
@@ -141,7 +141,7 @@
     };
     Store.setAccessAccounts(next);
     activeForm = null;
-    setStatus(mode === "edit" ? "수정했습니다." : "추가했습니다.");
+    setStatus(mode === "edit" ? I18n.t("updatedNotice") : I18n.t("saveDone"));
     renderAll();
   }
 
@@ -150,15 +150,15 @@
     const account = accounts[password];
     const adminCount = Object.values(accounts).filter((row) => row.role === "admin").length;
     if (account?.role === "admin" && adminCount <= 1) {
-      setStatus("마지막 관리자 계정은 삭제할 수 없습니다.");
+      setStatus(I18n.t("adminAccessRequired"));
       return;
     }
-    if (!window.confirm(`${account?.label || password} 계정을 삭제할까요?`)) return;
+    if (!window.confirm(I18n.format("confirmDeleteItem", { name: I18n.roleLabel(account?.label || password) }))) return;
     const next = { ...accounts };
     delete next[password];
     Store.setAccessAccounts(next);
     if (activeForm?.password === password) activeForm = null;
-    setStatus("삭제했습니다.");
+    setStatus(I18n.t("delete"));
     renderAll();
   }
 
@@ -176,7 +176,7 @@
       await Store.ensureData(["recipes"]);
       Store.downloadText("mukja-recipes.csv", Store.recipesToCsv(Store.getRecipes()), "text/csv;charset=utf-8");
     }
-    setStatus("CSV를 내보냈습니다.");
+    setStatus(I18n.t("exportDone"));
   }
 
   async function importCsv(kind, fileInput) {
@@ -187,27 +187,27 @@
       if (kind === "history") {
         const history = Store.historyFromCsv(text);
         if (!history.length) throw new Error("empty");
-        if (!window.confirm("요청 내역 CSV를 가져올까요? 기존 요청 내역이 교체됩니다.")) return;
+        if (!window.confirm(I18n.t("confirmCsvImport"))) return;
         Store.replaceHistory(history);
       } else if (kind === "ingredients") {
         const ingredients = Store.ingredientsFromCsv(text);
         if (!ingredients.length) throw new Error("empty");
-        if (!window.confirm("재료 목록 CSV를 가져올까요? 기존 재료 목록이 교체됩니다.")) return;
+        if (!window.confirm(I18n.t("confirmCsvImport"))) return;
         Store.setIngredients(ingredients);
       } else if (kind === "menus") {
         const menus = Store.menusFromCsv(text);
         if (!menus.length) throw new Error("empty");
-        if (!window.confirm("메뉴 CSV를 가져올까요? 기존 메뉴 목록이 교체됩니다.")) return;
+        if (!window.confirm(I18n.t("confirmCsvImport"))) return;
         Store.setMenus(menus);
       } else if (kind === "recipes") {
         const recipes = Store.recipesFromCsv(text);
         if (!recipes.length) throw new Error("empty");
-        if (!window.confirm("레시피 CSV를 가져올까요? 기존 레시피 목록이 교체됩니다.")) return;
+        if (!window.confirm(I18n.t("confirmCsvImport"))) return;
         Store.setRecipes(recipes);
       }
-      setStatus("CSV를 가져왔습니다.");
+      setStatus(I18n.t("csvImportDone"));
     } catch {
-      setStatus("CSV 내용을 확인하세요.");
+      setStatus(I18n.t("csvImportInvalid"));
     } finally {
       fileInput.value = "";
     }

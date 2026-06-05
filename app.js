@@ -175,7 +175,7 @@
     const readonlySlots = memoSlots().filter((slot) => slot !== currentSlot);
     return `
       <section class="memo-panel home-memo-panel admin-section">
-        <h3>타부서에서 작성한 메모 <span>수정 불가</span></h3>
+        <h3>${I18n.t("readonlyMemoTitle")} <span>${I18n.t("readOnly")}</span></h3>
         <div class="memo-log">
           ${readonlySlots.map((slot) => {
             const memo = memoBySlot.get(slot);
@@ -192,12 +192,12 @@
           }).join("")}
         </div>
         <label class="field">
-          <span>메모 추가</span>
+          <span>${I18n.t("addMemo")}</span>
           <textarea id="home-memo" placeholder="${current?.text ? I18n.t("memoPlaceholder") : I18n.t("memoNone")}">${current?.text || ""}</textarea>
         </label>
         <div class="button-row home-action-row">
-          <button class="button" id="home-save" type="button">저장</button>
-          <button class="danger-button" id="home-reset" type="button">초기화</button>
+          <button class="button" id="home-save" type="button">${I18n.t("save")}</button>
+          <button class="danger-button" id="home-reset" type="button">${I18n.t("reset")}</button>
         </div>
       </section>
     `;
@@ -327,7 +327,7 @@
     list.querySelectorAll("[data-restaurant-receive]").forEach((input) => {
       input.checked = false;
     });
-    setStatus("초기화했습니다.");
+    setStatus(I18n.t("resetDone"));
   }
 
   async function refreshLatestFromDb() {

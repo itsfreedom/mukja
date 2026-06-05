@@ -128,8 +128,8 @@
         <div class="department-card history-detail-card">
           <div class="history-detail-grid history-detail-head">
             <span>${I18n.t("items")}</span>
-            <span>출고 확인</span>
-            <span>입고 확인</span>
+            <span>${I18n.t("outgoingConfirm")}</span>
+            <span>${I18n.t("incomingConfirm")}</span>
           </div>
           ${items.map((item) => `
             <div class="history-detail-grid history-detail-row">
@@ -156,7 +156,7 @@
         };
         Store.saveHistoryEntry(nextEntry);
         entry.items = nextEntry.items;
-        alert("수정되었습니다.");
+        alert(I18n.t("updatedNotice"));
       });
     });
   }
@@ -170,7 +170,7 @@
     weekView.classList.add("hidden");
     detailView.classList.remove("hidden");
     closeDetail.classList.remove("hidden");
-    pageTitle.textContent = "상세 내역";
+    pageTitle.textContent = I18n.t("detailHistory");
     pageTitle.removeAttribute("data-i18n");
     pageMeta.textContent = `${entry.date} ${entry.time || ""}`.trim();
     detailView.innerHTML = `
