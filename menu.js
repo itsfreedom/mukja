@@ -320,13 +320,15 @@
   }
 
   function actionButton(action, label, menu, extraClass = "") {
+    const icons = {
+      create: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>',
+      edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>',
+      discontinue: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>',
+      recipe: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>'
+    };
     return `
       <button class="menu-row-action ${extraClass}" data-menu-action="${action}" data-menu-id="${menu.id}" type="button" aria-label="${I18n.menuName(menu)} ${label}">
-        ${action === "recipe" ? `
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        ` : label}
+        ${icons[action]}
       </button>
     `;
   }
@@ -372,8 +374,8 @@
               </div>
               <div class="menu-row-price">
                 <strong>${money(menu)}</strong>
+                ${rowActions(menu)}
               </div>
-              ${rowActions(menu)}
             </article>
           `).join("")}
         </div>

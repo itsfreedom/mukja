@@ -679,7 +679,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-row {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(174px, auto);
   align-items: center;
   gap: 12px;
   color: var(--text);
@@ -730,7 +730,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-row-price {
   display: grid;
   justify-items: end;
-  gap: 4px;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 10px;
   color: #d9e3ff;
   font-size: 0.86rem;
 }
@@ -739,10 +741,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font-size: 0.72rem;
 }
 .menu-row-actions {
-  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(4, 38px);
-  gap: 8px;
+  grid-template-columns: repeat(4, 32px);
+  gap: 6px;
   justify-content: end;
 }
 
@@ -783,13 +784,32 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 .menu-row-action svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   fill: none;
   stroke: currentColor;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+@media (max-width: 520px) {
+  .menu-row {
+    grid-template-columns: minmax(0, 1fr) minmax(160px, auto);
+    gap: 10px;
+  }
+  .menu-row-price {
+    gap: 8px;
+  }
+  .menu-row-actions {
+    grid-template-columns: repeat(4, 30px);
+    gap: 5px;
+  }
+  .menu-row-action {
+    width: 28px;
+    height: 28px;
+    min-height: 28px;
+  }
 }
 .menu-badges {
   display: flex;
