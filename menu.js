@@ -90,13 +90,10 @@
   }
 
   function menuStatusBadges(menu) {
-    const recipe = recipeFor(menu);
     const statusText = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
-    const sectionText = recipe?.section ? I18n.sectionLabel(recipe.section) : "";
     return `
       <span class="tiny-badge ${menu.discontinued ? "is-paused" : "is-live"}">${statusText}</span>
       ${menu.seasonal ? `<span class="tiny-badge is-seasonal">${I18n.t("seasonalMenu")}</span>` : ""}
-      ${sectionText ? `<span class="tiny-badge">${sectionText}</span>` : ""}
     `;
   }
 
