@@ -127,16 +127,16 @@
       setStatus("이미 있는 카테고리입니다.");
       return;
     }
+    if (mode !== "create") {
+      Store.setIngredients(Store.getIngredients().map((item) =>
+        targetFor(item) === target && ((item.section || "기타") === oldName || categoryFor(item) === oldName) ? { ...item, section: nextName } : item
+      ));
+    }
     Store.setRequestCategories(target, mode === "create"
       ? [...categories, nextName]
       : categories.includes(oldName)
         ? categories.map((category) => category === oldName ? nextName : category)
         : [...categories, nextName]);
-    if (mode !== "create") {
-      Store.setIngredients(Store.getIngredients().map((item) =>
-        targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: nextName } : item
-      ));
-    }
     activeCategoryEdit = null;
     renderItems();
   }
