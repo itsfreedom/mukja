@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>요청 하기</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260605-order-edit-mode" />
+    <link rel="stylesheet" href="style.css?v=20260605-category-jump" />
   </head>
   <body class="order-page sidebar-collapsed">
     <div class="shell">
@@ -35,10 +35,7 @@
               <div class="recipe-item-form order-bulk-panel admin-section hidden" id="order-bulk-panel">
                 <label><span>부서</span><select id="bulk-target"></select></label>
                 <label><span>카테고리</span><select id="bulk-category"></select></label>
-                <div class="recipe-item-form-actions">
-                  <button class="button" id="bulk-apply" type="button">선택 품목 변경</button>
-                  <button class="ghost-button" id="bulk-clear" type="button">선택 해제</button>
-                </div>
+                <button class="button" id="bulk-jump" type="button">이동</button>
               </div>
               <div id="items-list" class="item-list admin-section"></div>
               <hr class="section-divider" id="order-memo-divider" />
@@ -54,8 +51,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260605-order-edit-mode"></script>
-    <script src="i18n.js?v=20260605-order-edit-mode"></script>
-    <script src="order.js?v=20260605-order-edit-mode"></script>
+    <script src="storage.js?v=20260605-category-jump"></script>
+    <script src="i18n.js?v=20260605-category-jump"></script>
+    <script src="order.js?v=20260605-category-jump"></script>
   </body>
 </html>

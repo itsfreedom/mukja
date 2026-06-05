@@ -31,6 +31,7 @@
     bulkPanel: document.getElementById("order-bulk-panel"),
     bulkTarget: document.getElementById("bulk-target"),
     bulkCategory: document.getElementById("bulk-category"),
+    bulkJump: document.getElementById("bulk-jump"),
     memoPanel: document.getElementById("order-memo-panel"),
     memoDivider: document.getElementById("order-memo-divider")
   };
@@ -687,26 +688,19 @@
     renderItems();
   }
 
-  function clearEditSelection() {
-    editSelected.clear();
-    renderItems();
-  }
-
-  function applyBulkEdit() {
+  function jumpToCategory() {
     if (!isEditMode()) return;
-    const ids = [...editSelected];
-    if (!ids.length) {
-      setStatus("변경할 품목을 선택하세요.");
+    const target = els.bulkTarget?.value || "카페테리아";
+    const category = els.bulkCategory?.value || "";
+    const row = [...els.list.querySelectorAll("[data-request-category-row]")]
+      .find((node) => node.dataset.categoryTarget === target && node.dataset.categoryName === category);
+    if (!row) {
+      setStatus("카테고리를 찾을 수 없습니다.");
       return;
     }
-    const target = els.bulkTarget?.value || "카페테리아";
-    const section = els.bulkCategory?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
-    Store.setIngredients(Store.getIngredients().map((item) =>
-      ids.includes(item.id) ? { ...item, target, section } : item
-    ));
-    activeItemEdit = null;
-    setStatus("선택한 품목을 변경했습니다.");
-    renderItems();
+    row.scrollIntoView({ behavior: "smooth", block: "start" });
+    row.classList.add("is-jump-focused");
+    setTimeout(() => row.classList.remove("is-jump-focused"), 1400);
   }
 
   els.save.addEventListener("click", () => saveRequest());
@@ -714,8 +708,7 @@
   els.orderModeButton?.addEventListener("click", () => setRequestMode("order"));
   els.editModeButton?.addEventListener("click", () => setRequestMode("edit"));
   els.bulkTarget?.addEventListener("change", fillBulkCategories);
-  document.getElementById("bulk-apply")?.addEventListener("click", applyBulkEdit);
-  document.getElementById("bulk-clear")?.addEventListener("click", clearEditSelection);
+  els.bulkJump?.addEventListener("click", jumpToCategory);
   loadLatestRequest();
   renderItems();
   I18n.applyI18n();
