@@ -741,6 +741,52 @@ td { color: #dbe2ff; font-size: 0.9rem; }
 .hidden { display: none !important; }
 .status { min-height: 24px; color: #bff9df; font-size: 0.86rem; }
 
+.admin-access-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-access-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ui-row-gap);
+  align-items: center;
+}
+
+.admin-access-main {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-access-main strong,
+.admin-access-main span,
+.admin-access-main code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-access-main span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-access-main code {
+  color: #d9e3ff;
+  font-size: 0.8rem;
+}
+
+.admin-access-form {
+  margin: 8px 0;
+}
+
+.admin-access-form-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .recipe-image {
   width: 100%;
   max-height: 220px;

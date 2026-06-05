@@ -1,4 +1,4 @@
-const CACHE_NAME = "mokja-alley-v134";
+const CACHE_NAME = "mokja-alley-v135";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
