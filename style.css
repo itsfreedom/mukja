@@ -792,6 +792,10 @@ td { color: #dbe2ff; font-size: 0.9rem; }
   stroke-width: 1;
 }
 
+.admin-role-badge.is-admin circle {
+  fill: #f26b7a;
+}
+
 .admin-role-badge text {
   color: #10131f;
   fill: #10131f;
@@ -835,6 +839,24 @@ td { color: #dbe2ff; font-size: 0.9rem; }
 
 .admin-csv-actions .menu-row-action {
   flex: 0 0 var(--ui-action-button-size);
+}
+
+.admin-letter-icon {
+  width: var(--ui-action-button-size);
+  height: var(--ui-action-button-size);
+}
+
+.admin-letter-icon circle {
+  fill: rgba(130, 168, 255, 0.15);
+  stroke: rgba(255, 255, 255, 0.34);
+  stroke-width: 1;
+}
+
+.admin-letter-icon text {
+  fill: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", Pretendard, sans-serif;
 }
 
 .recipe-image {

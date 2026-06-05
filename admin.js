@@ -60,8 +60,9 @@
   }
 
   function badgeIcon(label) {
+    const adminClass = label === "A" ? " is-admin" : "";
     return `
-      <svg class="admin-role-badge" viewBox="0 0 28 28" aria-hidden="true">
+      <svg class="admin-role-badge${adminClass}" viewBox="0 0 28 28" aria-hidden="true">
         <circle cx="14" cy="14" r="13" />
         <text x="14" y="14" dominant-baseline="central" text-anchor="middle">${escapeHtml(label)}</text>
       </svg>
