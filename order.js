@@ -8,9 +8,9 @@
   const selected = new Set();
   let editingEntry = null;
   let activeItemEdit = null;
+  let activeCategoryEdit = null;
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
-  const deleteIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M8 7l1 13h6l1-13" /><path d="M10 7V5h4v2" /></svg>';
   const els = {
     list: document.getElementById("items-list"),
     memo: document.getElementById("memo"),
@@ -60,7 +60,8 @@
     if (target === "그로서리" && ["상온", "냉장", "냉동", "기타"].includes(section)) return section;
     if (target === "그로서리") return "기타";
     if (target === "야채") return "야채";
-    if (["반조리", "소스", "반찬", "냉장", "냉동", "기타"].includes(section)) return section;
+    const cafeteriaSections = [...Store.getSections(), "기타"];
+    if (cafeteriaSections.includes(section)) return section;
     return "기타";
   }
 
@@ -83,6 +84,74 @@
     if (target === "야채") return "야채";
     if (target === "그로서리") return category || "기타";
     return category || "기타";
+  }
+
+  function categoryKey(target, category) {
+    return `${target}|${category || ""}`;
+  }
+
+  function categoryForm(target, category = "", mode = "edit") {
+    const isNew = mode === "create";
+    const canDelete = !isNew && category !== "기타";
+    return `
+      <div class="recipe-item-form request-category-form" data-request-category-form data-category-target="${escapeHtml(target)}" data-category-old-name="${escapeHtml(category)}" data-category-mode="${mode}">
+        <label><span>카테고리</span><input data-request-category-name value="${escapeHtml(category)}" placeholder="카테고리명" /></label>
+        <div class="recipe-item-form-actions">
+          <button class="button" data-request-category-action="save" type="button">저장</button>
+          <button class="danger-button ${canDelete ? "" : "hidden"}" data-request-category-action="delete" type="button">삭제</button>
+          <button class="ghost-button" data-request-category-action="cancel" type="button">취소</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function saveCategoryFromForm(form) {
+    const target = form?.dataset.categoryTarget || "카페테리아";
+    const oldName = form?.dataset.categoryOldName || "";
+    const mode = form?.dataset.categoryMode || "edit";
+    const nextName = form?.querySelector("[data-request-category-name]")?.value.trim() || "";
+    if (!nextName) {
+      setStatus("카테고리명을 입력하세요.");
+      return;
+    }
+    if (target !== "카페테리아") {
+      setStatus("카페테리아 카테고리부터 수정합니다.");
+      return;
+    }
+    const sections = Store.getSections();
+    if (sections.includes(nextName) && nextName !== oldName) {
+      setStatus("이미 있는 카테고리입니다.");
+      return;
+    }
+    Store.setSections(mode === "create"
+      ? [...sections, nextName]
+      : sections.includes(oldName)
+        ? sections.map((section) => section === oldName ? nextName : section)
+        : [...sections, nextName]);
+    if (mode !== "create") {
+      Store.setIngredients(Store.getIngredients().map((item) =>
+        targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: nextName } : item
+      ));
+    }
+    activeCategoryEdit = null;
+    renderItems();
+  }
+
+  function deleteCategoryFromForm(form) {
+    const target = form?.dataset.categoryTarget || "카페테리아";
+    const oldName = form?.dataset.categoryOldName || "";
+    if (!oldName) return;
+    if (target !== "카페테리아") {
+      setStatus("카페테리아 카테고리부터 수정합니다.");
+      return;
+    }
+    if (!window.confirm(`${oldName} 카테고리를 삭제할까요? 이 카테고리의 품목은 기타로 이동합니다.`)) return;
+    Store.setSections(Store.getSections().filter((section) => section !== oldName));
+    Store.setIngredients(Store.getIngredients().map((item) =>
+      targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: "기타" } : item
+    ));
+    activeCategoryEdit = null;
+    renderItems();
   }
 
   function itemForm(item = null, defaults = {}) {
@@ -153,7 +222,16 @@
     return `
       <div class="menu-row-actions request-row-actions">
         <button class="menu-row-action is-edit" data-order-item-action="edit" data-order-item-id="${item.id}" type="button" aria-label="${I18n.itemName(item)} 수정">${editIcon}</button>
-        <button class="menu-row-action is-danger" data-order-item-action="delete" data-order-item-id="${item.id}" type="button" aria-label="${I18n.itemName(item)} 삭제">${deleteIcon}</button>
+      </div>
+    `;
+  }
+
+  function categoryActions(target, category) {
+    const canEditCategory = target === "카페테리아";
+    return `
+      <div class="menu-row-actions request-row-actions">
+        <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 품목 추가">${addIcon}</button>
+        ${canEditCategory ? `<button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 카테고리 수정">${editIcon}</button>` : ""}
       </div>
     `;
   }
@@ -188,7 +266,7 @@
 
     const targetOrder = ["카페테리아", "야채", "그로서리"];
     const categoryOrders = {
-      "카페테리아": ["반조리", "소스", "반찬", "냉장", "냉동", "기타"],
+      "카페테리아": [...Store.getSections(), "기타"],
       "야채": ["야채"],
       "그로서리": ["상온", "냉장", "냉동", "기타"]
     };
@@ -201,6 +279,13 @@
         acc[target][category].push(item);
         return acc;
       }, {});
+
+    targetOrder.forEach((target) => {
+      groups[target] = groups[target] || {};
+      (categoryOrders[target] || []).forEach((category) => {
+        groups[target][category] = groups[target][category] || [];
+      });
+    });
 
     const targets = orderedKeys(groups, targetOrder);
     if (!targets.length) {
@@ -217,14 +302,19 @@
             <h2>${I18n.targetLabel(target)}</h2>
           </div>
           <hr class="section-divider department-divider" />
+          ${target === "카페테리아" ? `
+            <button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">카테고리 추가</button>
+            ${activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
+          ` : ""}
           <div class="department-card request-target-section">
             ${categories.map((category) => `
               <section class="item-section home-request-section request-category-section">
                 <div class="section-title-row request-category-title-row">
                   <h3>${I18n.sectionLabel(category)}</h3>
-                  <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 품목 추가">${addIcon}</button>
+                  ${categoryActions(target, category)}
                 </div>
                 <hr class="section-divider section-title-divider" />
+                ${activeCategoryEdit?.mode === "edit" && categoryKey(activeCategoryEdit.target, activeCategoryEdit.category) === categoryKey(target, category) ? categoryForm(target, category, "edit") : ""}
                 ${renderItemRows(categoryGroups[category])}
                 ${activeItemEdit?.isNew && activeItemEdit.target === target && activeItemEdit.category === category ? itemForm(null, activeItemEdit) : ""}
               </section>
@@ -275,6 +365,44 @@
           selected.delete(itemKey(item));
           activeItemEdit = null;
           renderItems();
+        }
+      });
+    });
+    els.list.querySelectorAll("[data-request-category-action]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const action = button.dataset.requestCategoryAction;
+        if (action === "create") {
+          activeCategoryEdit = activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === button.dataset.categoryTarget
+            ? null
+            : { mode: "create", target: button.dataset.categoryTarget };
+          activeItemEdit = null;
+          renderItems();
+          return;
+        }
+        if (action === "edit") {
+          const next = {
+            mode: "edit",
+            target: button.dataset.categoryTarget,
+            category: button.dataset.categoryName
+          };
+          activeCategoryEdit = categoryKey(activeCategoryEdit?.target, activeCategoryEdit?.category) === categoryKey(next.target, next.category) ? null : next;
+          activeItemEdit = null;
+          renderItems();
+          return;
+        }
+        if (action === "cancel") {
+          activeCategoryEdit = null;
+          renderItems();
+          return;
+        }
+        if (action === "save") {
+          saveCategoryFromForm(button.closest("[data-request-category-form]"));
+          return;
+        }
+        if (action === "delete") {
+          deleteCategoryFromForm(button.closest("[data-request-category-form]"));
         }
       });
     });

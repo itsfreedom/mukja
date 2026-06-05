@@ -1751,7 +1751,7 @@ body.modal-open {
 
 .order-page .order-reset-row {
   margin-top: 0;
-  margin-bottom: 14px;
+  margin-bottom: 24px;
 }
 
 .order-page .order-reset-row .danger-button {
@@ -1774,6 +1774,26 @@ body.modal-open {
 .request-target-section {
   display: grid;
   gap: 12px;
+}
+
+.request-category-add-text {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.2;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.request-category-add-text:hover {
+  color: #d9e3ff;
+}
+
+.request-category-form {
+  margin: 2px 0 6px;
 }
 
 .request-category-section {

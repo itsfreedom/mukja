@@ -703,7 +703,8 @@
     if (["item-oil", "item-soy-sauce"].includes(item.id)) return { ...item, target: "카페테리아", section: "소스" };
     if (item.target !== "카페테리아") return item;
     if (item.section === "식재료") return { ...item, section: "냉장" };
-    if (!defaultSections.includes(item.section)) return { ...item, section: "냉장" };
+    const cafeteriaSections = [...(dataState.sections.length ? dataState.sections : defaultSections), "기타"];
+    if (!cafeteriaSections.includes(item.section)) return { ...item, section: "냉장" };
     return item;
   }
 
