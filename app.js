@@ -239,21 +239,20 @@
     }, {});
     const targets = isDepartment ? Object.keys(targetGroups) : orderedKeys(targetGroups, targetOrder);
     list.innerHTML = `
-      <article class="list-card">
-        ${targets.map((target) => {
-          const categoryGroups = targetGroups[target];
-          const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
-          return `
-            <section class="home-target-group">
-              <h2>${I18n.targetLabel(target)}</h2>
-              <div class="home-target-section">
-                ${categories.map((category) => renderCategorySection(category, categoryGroups[category])).join("")}
-              </div>
-            </section>
-          `;
-        }).join("")}
-        ${renderMemoPanel(entry)}
-      </article>
+      ${targets.map((target) => {
+        const categoryGroups = targetGroups[target];
+        const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
+        return `
+          <section class="department-group home-target-group">
+            <h2>${I18n.targetLabel(target)}</h2>
+            <hr class="section-divider department-divider" />
+            <div class="department-card home-target-section">
+              ${categories.map((category) => renderCategorySection(category, categoryGroups[category])).join("")}
+            </div>
+          </section>
+        `;
+      }).join("")}
+      ${renderMemoPanel(entry)}
     `;
     list.querySelectorAll("[data-receive]").forEach((input) => {
       input.addEventListener("change", () => {

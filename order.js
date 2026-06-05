@@ -212,12 +212,12 @@
       const categoryGroups = groups[target];
       const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
       return `
-        <section class="menu-category-group request-target-group">
+        <section class="department-group request-target-group">
           <div class="section-title-row menu-category-title-row">
             <h2>${I18n.targetLabel(target)}</h2>
           </div>
-          <hr class="section-divider section-title-divider" />
-          <div class="home-target-section request-target-section">
+          <hr class="section-divider department-divider" />
+          <div class="department-card request-target-section">
             ${categories.map((category) => `
               <section class="item-section home-request-section request-category-section">
                 <div class="section-title-row request-category-title-row">

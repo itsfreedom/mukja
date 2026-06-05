@@ -124,20 +124,23 @@
 
   function renderDetailGroups(entry) {
     return groupItemsByTarget(entry.items || []).map(([target, items]) => `
-      <section class="history-detail-card">
+      <section class="department-group history-detail-group">
         <h2>${I18n.targetLabel(target)}</h2>
-        <div class="history-detail-grid history-detail-head">
-          <span>${I18n.t("items")}</span>
-          <span>출고 확인</span>
-          <span>입고 확인</span>
-        </div>
-        ${items.map((item) => `
-          <div class="history-detail-grid history-detail-row">
-            <strong>${I18n.itemName(item)}</strong>
-            <span>${checkCell(item, "received")}</span>
-            <span>${checkCell(item, "restaurantReceived")}</span>
+        <hr class="section-divider department-divider" />
+        <div class="department-card history-detail-card">
+          <div class="history-detail-grid history-detail-head">
+            <span>${I18n.t("items")}</span>
+            <span>출고 확인</span>
+            <span>입고 확인</span>
           </div>
-        `).join("")}
+          ${items.map((item) => `
+            <div class="history-detail-grid history-detail-row">
+              <strong>${I18n.itemName(item)}</strong>
+              <span>${checkCell(item, "received")}</span>
+              <span>${checkCell(item, "restaurantReceived")}</span>
+            </div>
+          `).join("")}
+        </div>
       </section>
     `).join("");
   }

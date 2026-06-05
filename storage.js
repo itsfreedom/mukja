@@ -1259,29 +1259,6 @@
           localStorage.setItem(sidebarStateKey, "1");
         });
       });
-      let clock = document.querySelector("[data-layout-clock]");
-      if (!clock) {
-        clock = document.createElement("div");
-        clock.className = "layout-clock";
-        clock.setAttribute("data-layout-clock", "");
-        sidebar.insertAdjacentElement("afterend", clock);
-      }
-      const renderClock = () => {
-        if (!clock) return;
-        const locale = I18n.lang() === "en" ? "en-CA" : "ko-KR";
-        const weekday = I18n.lang() === "en" ? "long" : "long";
-        clock.textContent = new Intl.DateTimeFormat(locale, {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          weekday,
-          hour: "2-digit",
-          minute: "2-digit"
-        }).format(new Date());
-      };
-      renderClock();
-      clearInterval(window.__restaurantClockTimer);
-      window.__restaurantClockTimer = setInterval(renderClock, 30000);
       const langToggle = sidebar.querySelector("[data-lang-toggle]");
       if (langToggle) {
         langToggle.classList.toggle("is-en", I18n.lang() === "en");
