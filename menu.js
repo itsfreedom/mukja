@@ -858,7 +858,7 @@
         }
         if (!menu) return;
         if (action === "edit") {
-          activeMenuEdit = { id: menu.id };
+          activeMenuEdit = activeMenuEdit?.id === menu.id ? null : { id: menu.id };
           render();
         }
         if (action === "delete") {
