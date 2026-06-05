@@ -61,14 +61,12 @@
     const startSlot = Math.max(0, weekOffset - 2);
     const slots = Array.from({ length: 5 }, (_, index) => startSlot + index);
     pager.innerHTML = `
-      <button type="button" data-week-jump="0">&lt;&lt;</button>
       <button type="button" data-week-jump="${Math.max(0, weekOffset - 1)}">&lt;</button>
       ${slots.map((offset) => pageHasItems(offset)
         ? `<button type="button" class="${offset === weekOffset ? "is-active" : ""}" data-week-jump="${offset}">${offset + 1}</button>`
         : `<span>.</span>`
       ).join("")}
       <button type="button" data-week-jump="${weekOffset + 1}">&gt;</button>
-      <button type="button" data-week-jump="${weekOffset + 4}">&gt;&gt;</button>
     `;
     pager.querySelectorAll("[data-week-jump]").forEach((button) => {
       button.addEventListener("click", () => {
