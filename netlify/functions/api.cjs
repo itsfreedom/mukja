@@ -68,6 +68,8 @@ async function ensureSchema(client) {
       role text not null,
       department text,
       label text,
+      user_name text,
+      name text,
       enabled boolean not null default true,
       changed_by_identity_id text references access_identities(id) on delete set null,
       changed_ip text,
@@ -214,6 +216,8 @@ async function ensureSchema(client) {
     alter table order_items add column if not exists name_en text;
     alter table ingredients add column if not exists name_en text;
     alter table ingredients add column if not exists sort_order integer not null default 0;
+    alter table access_accounts add column if not exists user_name text;
+    alter table access_accounts add column if not exists name text;
     alter table recipes add column if not exists ingredient_items jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists seasonings text;
     alter table recipes add column if not exists seasoning_items jsonb not null default '[]'::jsonb;
@@ -294,16 +298,21 @@ async function recordAccess(client, event, path) {
 
 async function upsertAccessAccount(client, password, account, info) {
   if (!password || !account?.role) throw new Error("Invalid access account");
+  const label = account.label || account.name || account.department || account.role;
+  const name = account.name || label;
+  const userName = account.userName || account.user_name || password;
   await client.query(`
     insert into access_accounts (
-      password, role, department, label, enabled,
+      password, role, department, label, user_name, name, enabled,
       changed_by_identity_id, changed_ip, changed_user_agent, updated_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())
     on conflict (password) do update set
       role = excluded.role,
       department = excluded.department,
       label = excluded.label,
+      user_name = excluded.user_name,
+      name = excluded.name,
       enabled = excluded.enabled,
       changed_by_identity_id = excluded.changed_by_identity_id,
       changed_ip = excluded.changed_ip,
@@ -313,7 +322,9 @@ async function upsertAccessAccount(client, password, account, info) {
     password,
     account.role,
     account.department || "",
-    account.label || account.department || account.role,
+    label,
+    userName,
+    name,
     account.enabled !== false,
     info.memberId,
     info.ip,
@@ -328,6 +339,8 @@ async function listAccessAccounts(client) {
       role: row.role,
       department: row.department || "",
       label: row.label || row.department || row.role,
+      userName: row.user_name || row.password,
+      name: row.name || row.label || row.department || row.role,
       enabled: row.enabled
     };
     return accounts;

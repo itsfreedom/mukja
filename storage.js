@@ -34,11 +34,11 @@
     "그로서리": ["상온", "냉장", "냉동", "기타"]
   };
   const defaultAccessCodes = {
-    c1234: { role: "department", department: "카페테리아", label: "카페테리아" },
-    v1234: { role: "department", department: "야채", label: "야채" },
-    g1234: { role: "department", department: "그로서리", label: "그로서리" },
-    m1234: { role: "restaurant", department: "", label: "레스토랑" },
-    madmin: { role: "admin", department: "", label: "관리자" }
+    c1234: { role: "department", department: "카페테리아", label: "카페테리아", userName: "c1234", name: "카페테리아" },
+    v1234: { role: "department", department: "야채", label: "야채", userName: "v1234", name: "야채" },
+    g1234: { role: "department", department: "그로서리", label: "그로서리", userName: "g1234", name: "그로서리" },
+    m1234: { role: "restaurant", department: "", label: "레스토랑", userName: "m1234", name: "레스토랑" },
+    madmin: { role: "admin", department: "", label: "관리자", userName: "madmin", name: "관리자" }
   };
   const defaultIngredients = [
     { id: "item-donkatsu", name: "돈까스", nameKo: "돈까스", nameEn: "Pork Cutlet", section: "반조리", unit: "개", target: "카페테리아", enabled: true },
@@ -485,7 +485,16 @@
   }
 
   function accessAccounts() {
-    return Object.keys(dataState.accessAccounts).length ? dataState.accessAccounts : defaultAccessCodes;
+    const source = Object.keys(dataState.accessAccounts).length ? dataState.accessAccounts : defaultAccessCodes;
+    return Object.fromEntries(Object.entries(source).map(([password, account]) => [
+      password,
+      {
+        ...account,
+        userName: account.userName || account.user_name || password,
+        name: account.name || account.label || account.department || account.role,
+        label: account.label || account.name || account.department || account.role
+      }
+    ]));
   }
 
   function setAccessAccounts(accounts) {
@@ -844,6 +853,27 @@
     return `\ufeff${lines.join("\n")}`;
   }
 
+  function menusToCsv(rows) {
+    const header = ["id", "recipeId", "category", "nameKo", "nameEn", "seasonal", "discontinued", "price", "currency", "notes", "sortOrder"];
+    const lines = [header.map(csvEscape).join(",")];
+    rows.forEach((menu) => {
+      lines.push([
+        menu.id,
+        menu.recipeId,
+        menu.category,
+        menu.nameKo,
+        menu.nameEn,
+        menu.seasonal ? "true" : "false",
+        menu.discontinued ? "true" : "false",
+        menu.price,
+        menu.currency || "CAD",
+        menu.notes,
+        menu.sortOrder
+      ].map(csvEscape).join(","));
+    });
+    return `\ufeff${lines.join("\n")}`;
+  }
+
   function headerMap(header) {
     return header.reduce((acc, name, index) => {
       acc[String(name || "").trim()] = index;
@@ -924,6 +954,29 @@
         imageUrl: field(row, map, ["imageUrl", "이미지 URL"]),
         enabled: field(row, map, ["enabled", "사용"]) !== "false",
         updatedAt: field(row, map, ["updatedAt", "수정일"]) || today()
+      })];
+    });
+  }
+
+  function menusFromCsv(text) {
+    const rows = parseCsv(text);
+    if (rows.length < 2) return [];
+    const map = headerMap(rows[0]);
+    return rows.slice(1).flatMap((row) => {
+      const nameKo = field(row, map, ["nameKo", "메뉴명", "한글 메뉴명", "name", "Name"]);
+      if (!nameKo) return [];
+      return [normalizeMenu({
+        id: field(row, map, ["id"]) || id("menu"),
+        recipeId: field(row, map, ["recipeId", "recipe_id", "레시피ID"]),
+        category: field(row, map, ["category", "카테고리"]),
+        nameKo,
+        nameEn: field(row, map, ["nameEn", "영문 메뉴명", "englishName"]),
+        seasonal: ["true", "Y", "1", "계절"].includes(field(row, map, ["seasonal", "계절메뉴"])),
+        discontinued: ["true", "Y", "1", "판매중지"].includes(field(row, map, ["discontinued", "판매중지"])),
+        price: field(row, map, ["price", "가격"]),
+        currency: field(row, map, ["currency", "통화"]) || "CAD",
+        notes: field(row, map, ["notes", "메모"]),
+        sortOrder: field(row, map, ["sortOrder", "sort_order", "순서"])
       })];
     });
   }
@@ -1215,6 +1268,8 @@
     historyFromCsv,
     recipesToCsv,
     recipesFromCsv,
+    menusToCsv,
+    menusFromCsv,
     normalizeRecipe,
     parseRecipeItems,
     parseRecipeSteps,

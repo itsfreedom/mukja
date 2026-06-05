@@ -10,9 +10,7 @@
   const addToggle = document.getElementById("add-access-toggle");
   let activeForm = null;
 
-  const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
-  const deleteIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12" /><path d="M9 7V5h6v2" /><path d="M9 11v6" /><path d="M15 11v6" /><path d="M8 7l1 14h6l1-14" /></svg>';
 
   function escapeHtml(value) {
     return String(value || "")
@@ -27,21 +25,38 @@
     if (text) setTimeout(() => (status.textContent = ""), 2400);
   }
 
-  function roleOptions(selected = "department") {
+  function roleValue(account = {}) {
+    if (account.role === "admin") return "admin";
+    if (account.role === "restaurant") return "restaurant";
+    if (account.department === "야채") return "vegetable";
+    if (account.department === "그로서리") return "grocery";
+    return "cafeteria";
+  }
+
+  function roleFromValue(value) {
+    if (value === "admin") return { role: "admin", department: "", label: "관리자" };
+    if (value === "restaurant") return { role: "restaurant", department: "", label: "레스토랑" };
+    if (value === "vegetable") return { role: "department", department: "야채", label: "야채" };
+    if (value === "grocery") return { role: "department", department: "그로서리", label: "그로서리" };
+    return { role: "department", department: "카페테리아", label: "카페테리아" };
+  }
+
+  function roleOptions(selected = "cafeteria") {
     return [
-      ["department", "부서"],
+      ["cafeteria", "카페테리아"],
+      ["vegetable", "야채"],
+      ["grocery", "그로서리"],
       ["restaurant", "레스토랑"],
       ["admin", "관리자"]
     ].map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${label}</option>`).join("");
   }
 
-  function departmentOptions(selected = "") {
-    return [
-      ["", "-"],
-      ["카페테리아", "카페테리아"],
-      ["야채", "야채"],
-      ["그로서리", "그로서리"]
-    ].map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${label}</option>`).join("");
+  function accountBadge(account = {}) {
+    if (account.role === "admin") return "A";
+    if (account.role === "restaurant") return "R";
+    if (account.department === "야채") return "V";
+    if (account.department === "그로서리") return "G";
+    return "C";
   }
 
   function accessForm(mode, password = "", account = {}) {
@@ -49,26 +64,19 @@
     return `
       <div class="recipe-item-form admin-access-form" data-access-form data-mode="${mode}" data-old-password="${escapeHtml(password)}">
         <label><span>비밀번호</span><input data-access-password value="${escapeHtml(password)}" autocomplete="off" /></label>
-        <label><span>권한</span><select data-access-role>${roleOptions(account.role || "department")}</select></label>
-        <label><span>부서</span><select data-access-department>${departmentOptions(account.department || "")}</select></label>
-        <label><span>이름</span><input data-access-label value="${escapeHtml(account.label || account.department || "")}" /></label>
+        <label><span>권한</span><select data-access-role>${roleOptions(roleValue(account))}</select></label>
         <div class="recipe-item-form-actions admin-access-form-actions">
           <button class="button" data-access-action="save" type="button">${isEdit ? "저장" : "추가"}</button>
+          ${isEdit ? `<button class="danger-button" data-access-action="delete" data-password="${escapeHtml(password)}" type="button">삭제</button>` : ""}
           <button class="ghost-button" data-access-action="cancel" type="button">취소</button>
         </div>
       </div>
     `;
   }
 
-  function accountSummary(account) {
-    const roleLabel = account.role === "admin" ? "관리자" : account.role === "restaurant" ? "레스토랑" : "부서";
-    const detail = account.role === "department" ? account.department || "-" : account.label || roleLabel;
-    return `${roleLabel} · ${detail}`;
-  }
-
   function renderFormSlot() {
     if (activeForm?.mode === "create") {
-      formSlot.innerHTML = accessForm("create", "", { role: "department", department: "카페테리아", label: "카페테리아" });
+      formSlot.innerHTML = accessForm("create", "", { role: "department", department: "카페테리아" });
       return;
     }
     formSlot.innerHTML = "";
@@ -76,16 +84,15 @@
 
   function renderAccessAccounts() {
     const accounts = Store.getAccessAccounts();
-    accessList.innerHTML = Object.entries(accounts).map(([password, account]) => `
+    accessList.innerHTML = Object.entries(accounts).map(([password, account], index) => `
       <article class="list-card admin-access-row">
         <div class="admin-access-main">
-          <strong>${escapeHtml(account.label || account.department || password)}</strong>
-          <span>${escapeHtml(accountSummary(account))}</span>
+          <span class="admin-access-number">${index + 1}</span>
           <code>${escapeHtml(password)}</code>
+          <span class="admin-role-badge">${escapeHtml(accountBadge(account))}</span>
         </div>
         <div class="menu-row-actions admin-access-actions">
           <button class="menu-row-action is-edit" data-access-action="edit" data-password="${escapeHtml(password)}" type="button" aria-label="수정">${editIcon}</button>
-          <button class="menu-row-action is-danger" data-access-action="delete" data-password="${escapeHtml(password)}" type="button" aria-label="삭제">${deleteIcon}</button>
         </div>
       </article>
       ${activeForm?.mode === "edit" && activeForm.password === password ? accessForm("edit", password, account) : ""}
@@ -106,15 +113,9 @@
     const mode = form.dataset.mode;
     const oldPassword = form.dataset.oldPassword || "";
     const password = form.querySelector("[data-access-password]")?.value.trim() || "";
-    const role = form.querySelector("[data-access-role]")?.value || "department";
-    const department = role === "department" ? form.querySelector("[data-access-department]")?.value || "" : "";
-    const label = form.querySelector("[data-access-label]")?.value.trim() || department || (role === "admin" ? "관리자" : "레스토랑");
+    const selected = roleFromValue(form.querySelector("[data-access-role]")?.value || "cafeteria");
     if (!password) {
       setStatus("비밀번호를 입력하세요.");
-      return;
-    }
-    if (role === "department" && !department) {
-      setStatus("부서를 선택하세요.");
       return;
     }
     if ((mode === "create" || password !== oldPassword) && accounts[password]) {
@@ -123,7 +124,11 @@
     }
     const next = { ...accounts };
     if (mode === "edit" && oldPassword && oldPassword !== password) delete next[oldPassword];
-    next[password] = { role, department, label };
+    next[password] = {
+      ...selected,
+      userName: accounts[oldPassword]?.userName || accounts[oldPassword]?.user_name || password,
+      name: accounts[oldPassword]?.name || selected.label
+    };
     Store.setAccessAccounts(next);
     activeForm = null;
     setStatus(mode === "edit" ? "수정했습니다." : "추가했습니다.");
@@ -145,6 +150,46 @@
     if (activeForm?.password === password) activeForm = null;
     setStatus("삭제했습니다.");
     renderAll();
+  }
+
+  function exportCsv(kind) {
+    if (kind === "history") {
+      Store.downloadText("mukja-request-history.csv", Store.historyToCsv(Store.getHistory()), "text/csv;charset=utf-8");
+    } else if (kind === "menus") {
+      Store.downloadText("mukja-menus.csv", Store.menusToCsv(Store.getMenus()), "text/csv;charset=utf-8");
+    } else if (kind === "recipes") {
+      Store.downloadText("mukja-recipes.csv", Store.recipesToCsv(Store.getRecipes()), "text/csv;charset=utf-8");
+    }
+    setStatus("CSV를 내보냈습니다.");
+  }
+
+  async function importCsv(kind, fileInput) {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      if (kind === "history") {
+        const history = Store.historyFromCsv(text);
+        if (!history.length) throw new Error("empty");
+        if (!window.confirm("요청 목록 CSV를 가져올까요? 기존 요청 목록이 교체됩니다.")) return;
+        Store.replaceHistory(history);
+      } else if (kind === "menus") {
+        const menus = Store.menusFromCsv(text);
+        if (!menus.length) throw new Error("empty");
+        if (!window.confirm("메뉴 CSV를 가져올까요? 기존 메뉴 목록이 교체됩니다.")) return;
+        Store.setMenus(menus);
+      } else if (kind === "recipes") {
+        const recipes = Store.recipesFromCsv(text);
+        if (!recipes.length) throw new Error("empty");
+        if (!window.confirm("레시피 CSV를 가져올까요? 기존 레시피 목록이 교체됩니다.")) return;
+        Store.setRecipes(recipes);
+      }
+      setStatus("CSV를 가져왔습니다.");
+    } catch {
+      setStatus("CSV 내용을 확인하세요.");
+    } finally {
+      fileInput.value = "";
+    }
   }
 
   function attachEvents() {
@@ -174,6 +219,12 @@
           renderAll();
         }
       };
+    });
+    document.querySelectorAll("[data-export-csv]").forEach((button) => {
+      button.onclick = () => exportCsv(button.dataset.exportCsv);
+    });
+    document.querySelectorAll("[data-import-csv]").forEach((input) => {
+      input.onchange = () => importCsv(input.dataset.importCsv, input);
     });
   }
 

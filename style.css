@@ -755,12 +755,11 @@ td { color: #dbe2ff; font-size: 0.9rem; }
 
 .admin-access-main {
   min-width: 0;
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.admin-access-main strong,
-.admin-access-main span,
 .admin-access-main code {
   min-width: 0;
   overflow: hidden;
@@ -768,15 +767,30 @@ td { color: #dbe2ff; font-size: 0.9rem; }
   white-space: nowrap;
 }
 
-.admin-access-main span {
+.admin-access-number {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 700;
+  min-width: 20px;
 }
 
 .admin-access-main code {
   color: #d9e3ff;
-  font-size: 0.8rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.admin-role-badge {
+  width: var(--ui-round-action-size);
+  height: var(--ui-round-action-size);
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #10131f;
+  background: #ffd861;
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .admin-access-form {
@@ -784,7 +798,25 @@ td { color: #dbe2ff; font-size: 0.9rem; }
 }
 
 .admin-access-form-actions {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+}
+
+.admin-csv-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-csv-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ui-row-gap);
+  align-items: center;
+}
+
+.admin-csv-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .recipe-image {
