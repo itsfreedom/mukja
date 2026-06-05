@@ -276,9 +276,11 @@
   function saveMenuFromEditor() {
     const nameKo = editFields.nameKo.value.trim();
     if (!nameKo) return;
+    const isActive = editFields.active.checked;
+    const confirmMessage = isActive ? "메뉴 정보를 저장할까요?" : "메뉴를 판매 중지 상태로 저장할까요?";
+    if (!confirm(confirmMessage)) return;
     const existing = editingMenuId ? Store.getMenus().find((row) => row.id === editingMenuId) : null;
     const existingRecipe = existing ? recipeFor(existing) : null;
-    const isActive = editFields.active.checked;
     const recipe = existingRecipe || {
       id: editFields.recipe.value || Store.id("recipe"),
       name: nameKo,
@@ -321,24 +323,10 @@
     render();
   }
 
-  function discontinueMenu(menu) {
-    if (!menu) {
-      alert("판매 중지할 메뉴를 하나 선택해 주세요.");
-      return;
-    }
-    if (!confirm(`${I18n.menuName(menu)} 메뉴를 판매 중단 처리할까요?`)) return;
-    Store.discontinueMenu(menu.id);
-    const recipe = recipeFor(menu);
-    if (recipe) Store.saveRecipe({ ...recipe, enabled: false, updatedAt: Store.today() });
-    renderFilters();
-    render();
-  }
-
   function actionButton(action, label, menu, extraClass = "") {
     const icons = {
       create: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>',
       edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>',
-      discontinue: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>',
       recipe: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>'
     };
     return `
@@ -353,7 +341,6 @@
       <div class="menu-row-actions">
         ${canManageMenu ? actionButton("create", "+", menu, "is-create") : ""}
         ${canManageMenu ? actionButton("edit", "U", menu, "is-edit") : ""}
-        ${canManageMenu ? actionButton("discontinue", "-", menu, "is-danger") : ""}
         ${actionButton("recipe", "레시피", menu, "is-recipe")}
       </div>
     `;
@@ -401,7 +388,6 @@
         if (!menu) return;
         if (button.dataset.menuAction === "create") openMenuEditor(null, { category: menu.category });
         if (button.dataset.menuAction === "edit") openMenuEditor(menu);
-        if (button.dataset.menuAction === "discontinue") discontinueMenu(menu);
         if (button.dataset.menuAction === "recipe") openRecipe(menu);
       });
     });
