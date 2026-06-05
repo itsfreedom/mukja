@@ -2048,7 +2048,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  margin-bottom: 14px;
+  margin-top: 14px;
 }
 
 .menu-recipe-actions.hidden {
@@ -2057,6 +2057,19 @@ body {
 
 .menu-recipe-actions button {
   min-height: 42px;
+}
+
+.recipe-footer-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.recipe-action-button {
+  width: 100%;
+  min-height: 44px;
+  font-weight: 900;
 }
 
 .delete-disabled-note {

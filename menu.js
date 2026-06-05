@@ -945,15 +945,7 @@
   saveMenuEdit.addEventListener("click", saveMenuFromEditor);
   deleteMenuEdit.addEventListener("click", deleteMenuFromEditor);
   cancelMenuEdit.addEventListener("click", closeMenuEditor);
-  editRecipeFromMenu.addEventListener("click", () => {
-    const menu = activeRecipeMenu();
-    const recipe = menu ? ensureRecipeForMenu(menu) : null;
-    if (!recipe) {
-      alert("수정할 레시피가 없습니다.");
-      return;
-    }
-    openRecipeEditor(recipe);
-  });
+  editRecipeFromMenu.addEventListener("click", closeRecipe);
   deleteRecipeFromMenu.addEventListener("click", deleteActiveRecipeFromMenu);
   saveRecipeEdit.addEventListener("click", saveRecipeFromEditor);
   deleteRecipeEdit.addEventListener("click", deleteRecipeFromEditor);

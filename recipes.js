@@ -175,14 +175,14 @@
     `;
   }
 
-  function recipeSaveButton(position) {
+  function recipeFooterActions() {
     if (!canManageRecipes) return "";
-    return `<button class="danger-button recipe-save-button" data-save-recipe="${position}" type="button">레시피 수정</button>`;
-  }
-
-  function recipeDeleteButton() {
-    if (!canManageRecipes) return "";
-    return `<button class="danger-button recipe-save-button" data-delete-recipe type="button">레시피 삭제</button>`;
+    return `
+      <section class="recipe-footer-actions">
+        <button class="ghost-button recipe-action-button" data-close-recipe-detail type="button">닫기</button>
+        <button class="danger-button recipe-action-button" data-delete-recipe type="button">삭제</button>
+      </section>
+    `;
   }
 
   function renderDetail(recipe) {
@@ -196,15 +196,12 @@
         <span class="badge ${recipe.enabled ? "green" : "yellow"} recipe-status-badge">${recipe.enabled ? I18n.t("activeMenu") : I18n.t("discontinuedMenu")}</span>
       </div>
       <hr class="recipe-detail-rule" />
-      <p class="recipe-delete-warning">삭제는 확인 후 진행됩니다.</p>
-      ${recipeSaveButton("top")}
-      ${recipeDeleteButton()}
       ${recipeTextArea("recipe-description-inline", "설명", recipe.description || "", "설명")}
       ${ingredientCrudSection(recipe)}
       ${stepCrudSection(recipe)}
       ${recipeTextArea("recipe-notes-inline", I18n.t("notes"), recipe.notes || "", I18n.t("notes"))}
-      ${recipeSaveButton("bottom")}
       <p class="muted">${I18n.t("updatedAt")}: ${recipe.updatedAt || "-"}</p>
+      ${recipeFooterActions()}
     `;
   }
 
@@ -442,7 +439,10 @@
   search.addEventListener("input", render);
   section.addEventListener("change", render);
   detail.addEventListener("click", (event) => {
-    if (event.target.closest("[data-save-recipe]")) saveInlineRecipe();
+    if (event.target.closest("[data-close-recipe-detail]")) {
+      window.location.href = "menu.html";
+      return;
+    }
     if (event.target.closest("[data-delete-recipe]")) deleteInlineRecipe();
     handleIngredientAction(event);
     handleStepAction(event);

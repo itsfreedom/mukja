@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>메뉴</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-recipe-leading-drag" />
+    <link rel="stylesheet" href="style.css?v=20260604-recipe-bottom-actions" />
   </head>
   <body>
     <div class="shell">
@@ -52,11 +52,11 @@
           <span id="menu-recipe-status" class="badge green"></span>
           <button id="close-menu-recipe" class="icon-close-button" type="button" aria-label="닫기">×</button>
         </header>
-        <section id="menu-recipe-actions" class="menu-recipe-actions hidden" aria-label="레시피 관리">
-          <button id="edit-recipe-from-menu" class="danger-button recipe-save-button" type="button">레시피 수정</button>
-          <button id="delete-recipe-from-menu" class="danger-button recipe-save-button" type="button">레시피 삭제</button>
-        </section>
         <div id="menu-recipe-content" class="history-detail-content"></div>
+        <section id="menu-recipe-actions" class="menu-recipe-actions hidden" aria-label="레시피 관리">
+          <button id="edit-recipe-from-menu" class="ghost-button recipe-action-button" type="button">닫기</button>
+          <button id="delete-recipe-from-menu" class="danger-button recipe-action-button" type="button">삭제</button>
+        </section>
       </article>
     </div>
     <div id="menu-recipe-edit-modal" class="recipe-modal hidden" role="dialog" aria-modal="true" aria-labelledby="menu-recipe-edit-title">
@@ -134,8 +134,8 @@
         </div>
       </article>
     </div>
-    <script src="storage.js?v=20260604-recipe-leading-drag"></script>
-    <script src="i18n.js?v=20260604-recipe-leading-drag"></script>
-    <script src="menu.js?v=20260604-recipe-leading-drag"></script>
+    <script src="storage.js?v=20260604-recipe-bottom-actions"></script>
+    <script src="i18n.js?v=20260604-recipe-bottom-actions"></script>
+    <script src="menu.js?v=20260604-recipe-bottom-actions"></script>
   </body>
 </html>
