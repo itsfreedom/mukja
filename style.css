@@ -23,8 +23,9 @@
   --ui-row-padding: 10px 12px;
   --ui-row-gap: 10px;
   --ui-checkbox-size: 18px;
-  --ui-action-button-size: 40px;
-  --ui-action-icon-size: 22px;
+  --ui-action-button-size: 35px;
+  --ui-action-icon-size: 18px;
+  --ui-action-row-padding-y: 4.5px;
   --ui-table-border: 1px solid rgba(184, 196, 240, 0.12);
   --ui-table-row-border: 1px solid rgba(184, 196, 240, 0.1);
   --ui-table-radius: 14px;
@@ -2657,6 +2658,13 @@ body.modal-open {
   min-height: var(--ui-row-min-height);
   padding: var(--ui-row-padding);
   gap: var(--ui-row-gap);
+}
+
+.menu-row,
+.request-item-row,
+.recipe-crud-row {
+  padding-top: var(--ui-action-row-padding-y);
+  padding-bottom: var(--ui-action-row-padding-y);
 }
 
 .receive-row-main strong,
