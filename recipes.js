@@ -7,8 +7,29 @@
   const section = document.getElementById("recipe-section");
   const list = document.getElementById("recipe-list");
   const detail = document.getElementById("recipe-detail");
+  const manageActions = document.getElementById("recipe-manage-actions");
+  const createRecipe = document.getElementById("create-recipe");
+  const editRecipe = document.getElementById("edit-recipe");
+  const editModal = document.getElementById("recipe-edit-modal");
+  const editModalTitle = document.getElementById("recipe-edit-title");
+  const closeRecipeEdit = document.getElementById("close-recipe-edit");
+  const saveRecipeEdit = document.getElementById("save-recipe-edit");
+  const cancelRecipeEdit = document.getElementById("cancel-recipe-edit");
+  const editFields = {
+    name: document.getElementById("edit-recipe-name"),
+    section: document.getElementById("edit-recipe-section"),
+    description: document.getElementById("edit-recipe-description"),
+    ingredients: document.getElementById("edit-recipe-ingredients"),
+    seasonings: document.getElementById("edit-recipe-seasonings"),
+    steps: document.getElementById("edit-recipe-steps"),
+    notes: document.getElementById("edit-recipe-notes"),
+    enabled: document.getElementById("edit-recipe-enabled")
+  };
   const params = new URLSearchParams(window.location.search);
   let activeId = params.get("id") || "";
+  let editingRecipeId = "";
+  const session = Store.getAuth();
+  const canManageRecipes = session?.role === "admin";
   const closeButton = document.getElementById("close-recipe");
   if (params.get("from") === "menu") closeButton.classList.remove("hidden");
   closeButton.addEventListener("click", () => {
@@ -17,6 +38,7 @@
 
   function renderFilters() {
     section.innerHTML = `<option value="">${I18n.t("all")}</option>` + Store.getSections().map((s) => `<option value="${s}">${I18n.sectionLabel(s)}</option>`).join("");
+    editFields.section.innerHTML = Store.getSections().map((s) => `<option value="${s}">${I18n.sectionLabel(s)}</option>`).join("");
   }
 
   function filtered() {
@@ -86,7 +108,64 @@
     `;
   }
 
+  function selectedRecipe() {
+    return Store.getRecipes().find((recipe) => recipe.id === activeId) || null;
+  }
+
+  function openRecipeEditor(recipe = null) {
+    editingRecipeId = recipe?.id || "";
+    editModalTitle.textContent = recipe ? "레시피 수정" : "레시피 생성";
+    editFields.name.value = recipe?.name || "";
+    editFields.section.value = recipe?.section || Store.getSections()[0] || "기타";
+    editFields.description.value = recipe?.description || "";
+    editFields.ingredients.value = Store.recipeItemsToLines(recipe?.ingredientItems?.length ? recipe.ingredientItems : recipe?.ingredients);
+    editFields.seasonings.value = Store.recipeItemsToLines(recipe?.seasoningItems?.length ? recipe.seasoningItems : recipe?.seasonings);
+    editFields.steps.value = Store.recipeStepsToLines(recipe?.stepItems?.length ? recipe.stepItems : recipe?.steps);
+    editFields.notes.value = recipe?.notes || "";
+    editFields.enabled.checked = recipe ? recipe.enabled !== false : true;
+    editModal.classList.remove("hidden");
+    document.body.classList.add("modal-open");
+    editFields.name.focus();
+  }
+
+  function closeRecipeEditor() {
+    editModal.classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  }
+
+  function saveRecipeFromEditor() {
+    const name = editFields.name.value.trim();
+    if (!name) return;
+    const existing = editingRecipeId ? Store.getRecipes().find((recipe) => recipe.id === editingRecipeId) : null;
+    const ingredientItems = Store.parseRecipeItems(editFields.ingredients.value);
+    const seasoningItems = Store.parseRecipeItems(editFields.seasonings.value);
+    const stepItems = Store.parseRecipeSteps(editFields.steps.value);
+    const recipe = {
+      ...(existing || {}),
+      id: editingRecipeId || Store.id("recipe"),
+      name,
+      section: editFields.section.value,
+      description: editFields.description.value.trim(),
+      ingredients: Store.recipeItemsToLines(ingredientItems),
+      seasonings: Store.recipeItemsToLines(seasoningItems),
+      steps: Store.recipeStepsToLines(stepItems),
+      notes: editFields.notes.value.trim(),
+      imageUrl: existing?.imageUrl || "",
+      ingredientItems,
+      seasoningItems,
+      stepItems,
+      enabled: editFields.enabled.checked,
+      updatedAt: Store.today()
+    };
+    Store.saveRecipe(recipe);
+    activeId = recipe.id;
+    closeRecipeEditor();
+    renderFilters();
+    render();
+  }
+
   function render() {
+    manageActions.classList.toggle("hidden", !canManageRecipes);
     const recipes = filtered();
     if (!recipes.length) {
       list.innerHTML = `<div class="panel muted">${I18n.t("noRecipes")}</div>`;
@@ -112,6 +191,20 @@
 
   search.addEventListener("input", render);
   section.addEventListener("change", render);
+  createRecipe.addEventListener("click", () => openRecipeEditor());
+  editRecipe.addEventListener("click", () => {
+    const recipe = selectedRecipe();
+    if (recipe) openRecipeEditor(recipe);
+  });
+  saveRecipeEdit.addEventListener("click", saveRecipeFromEditor);
+  cancelRecipeEdit.addEventListener("click", closeRecipeEditor);
+  closeRecipeEdit.addEventListener("click", closeRecipeEditor);
+  editModal.querySelectorAll("[data-close-recipe-edit]").forEach((button) => {
+    button.addEventListener("click", closeRecipeEditor);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !editModal.classList.contains("hidden")) closeRecipeEditor();
+  });
   renderFilters();
   render();
   I18n.applyI18n();
