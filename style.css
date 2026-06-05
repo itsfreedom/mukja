@@ -2093,6 +2093,52 @@ body {
   max-width: 560px;
 }
 
+.menu-form-grid {
+  gap: 10px;
+}
+
+.menu-form-field {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.menu-form-field > span {
+  color: #d9e3ff;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.menu-check-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border: 1px solid rgba(184, 196, 240, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+}
+
+.menu-check-option {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(184, 196, 240, 0.1);
+  border-radius: 10px;
+  background: rgba(8, 10, 21, 0.35);
+  padding: 9px 10px;
+  color: #d9e3ff;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.menu-check-option input[type="checkbox"] {
+  flex: 0 0 20px;
+  min-height: 20px;
+}
+
 .recipe-edit-grid textarea {
   min-height: 110px;
 }

@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>메뉴</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-menu-row-actions" />
+    <link rel="stylesheet" href="style.css?v=20260604-menu-form-labels" />
   </head>
   <body>
     <div class="shell">
@@ -92,14 +92,34 @@
           </div>
           <button id="close-menu-edit" class="icon-close-button" type="button" aria-label="닫기">×</button>
         </header>
-        <div class="form-grid">
-          <input id="edit-menu-name-ko" data-i18n-placeholder="name" />
-          <input id="edit-menu-name-en" data-i18n-placeholder="englishName" />
-          <input id="edit-menu-category" data-i18n-placeholder="menuCategory" />
-          <input id="edit-menu-price" data-i18n-placeholder="price" inputmode="decimal" />
+        <div class="form-grid menu-form-grid">
+          <label class="menu-form-field">
+            <span>한글 메뉴명</span>
+            <input id="edit-menu-name-ko" data-i18n-placeholder="name" />
+          </label>
+          <label class="menu-form-field">
+            <span>영문 메뉴명</span>
+            <input id="edit-menu-name-en" data-i18n-placeholder="englishName" />
+          </label>
+          <label class="menu-form-field">
+            <span>카테고리</span>
+            <input id="edit-menu-category" data-i18n-placeholder="menuCategory" />
+          </label>
+          <label class="menu-form-field">
+            <span>가격 (CAD)</span>
+            <input id="edit-menu-price" data-i18n-placeholder="price" inputmode="decimal" />
+          </label>
           <select id="edit-menu-recipe" class="hidden"></select>
-          <label class="field"><span data-i18n="seasonalMenu">계절 메뉴</span><input id="edit-menu-seasonal" type="checkbox" /></label>
-          <label class="field"><span data-i18n="activeMenu">판매중</span><input id="edit-menu-active" type="checkbox" checked /></label>
+          <div class="menu-check-card">
+            <label class="menu-check-option">
+              <input id="edit-menu-active" type="checkbox" checked />
+              <span data-i18n="activeMenu">판매중</span>
+            </label>
+            <label class="menu-check-option">
+              <input id="edit-menu-seasonal" type="checkbox" />
+              <span data-i18n="seasonalMenu">계절 메뉴</span>
+            </label>
+          </div>
         </div>
         <div class="button-row admin-section">
           <button id="save-menu-edit" class="button" type="button" data-i18n="save">저장</button>
@@ -107,8 +127,8 @@
         </div>
       </article>
     </div>
-    <script src="storage.js?v=20260604-menu-row-actions"></script>
-    <script src="i18n.js?v=20260604-menu-row-actions"></script>
-    <script src="menu.js?v=20260604-menu-row-actions"></script>
+    <script src="storage.js?v=20260604-menu-form-labels"></script>
+    <script src="i18n.js?v=20260604-menu-form-labels"></script>
+    <script src="menu.js?v=20260604-menu-form-labels"></script>
   </body>
 </html>
