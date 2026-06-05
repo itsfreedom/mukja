@@ -94,6 +94,23 @@
     return category || "기타";
   }
 
+  function categoriesForTarget(target) {
+    return uniqueList([
+      ...Store.getRequestCategories(target),
+      ...(target === "야채" ? ["야채"] : ["기타"])
+    ]);
+  }
+
+  function categoryOptions(target, selectedCategory = "") {
+    const categories = categoriesForTarget(target);
+    const selected = categories.includes(selectedCategory)
+      ? selectedCategory
+      : sectionForTargetCategory(target, categories[0]);
+    return categories.map((category) =>
+      `<option value="${escapeHtml(category)}" ${category === selected ? "selected" : ""}>${I18n.sectionLabel(category)}</option>`
+    ).join("");
+  }
+
   function categoryKey(target, category) {
     return `${target}|${category || ""}`;
   }
@@ -212,7 +229,7 @@
         <label><span>부서</span><select data-order-item-target>
           ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
         </select></label>
-        <label><span>카테고리</span><input data-order-item-section value="${escapeHtml(section)}" /></label>
+        <label><span>카테고리</span><select data-order-item-section>${categoryOptions(target, section)}</select></label>
         <label><span>단위</span><input data-order-item-unit value="${escapeHtml(item?.unit || "")}" /></label>
         <div class="recipe-item-form-actions">
           <button class="button" data-order-item-action="save" data-order-item-id="${item?.id || ""}" type="button">저장</button>
@@ -375,6 +392,14 @@
       input.addEventListener("change", () => {
         if (input.checked) selected.add(input.dataset.item);
         else selected.delete(input.dataset.item);
+      });
+    });
+    els.list.querySelectorAll("[data-order-item-target]").forEach((select) => {
+      select.addEventListener("change", () => {
+        const form = select.closest("[data-order-item-form]");
+        const categorySelect = form?.querySelector("[data-order-item-section]");
+        if (!categorySelect) return;
+        categorySelect.innerHTML = categoryOptions(select.value);
       });
     });
     els.list.querySelectorAll("[data-order-item-action]").forEach((button) => {
