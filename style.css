@@ -2357,6 +2357,10 @@ body.modal-open {
   padding: 10px 12px;
 }
 
+.recipe-crud-row.recipe-sortable-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
 .recipe-crud-main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2413,13 +2417,17 @@ body.modal-open {
 
 .recipe-crud-actions {
   display: grid;
-  grid-template-columns: repeat(2, 30px);
+  grid-template-columns: 30px;
   gap: 6px;
   justify-content: end;
 }
 
 .recipe-drag-handle {
   cursor: grab;
+}
+
+.recipe-leading-drag-handle {
+  background: rgba(255, 255, 255, 0.055);
 }
 
 .recipe-drag-handle:active {

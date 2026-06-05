@@ -15,6 +15,7 @@
   const closeButton = document.getElementById("close-recipe");
   let activeIngredientEdit = null;
   let activeStepEdit = null;
+  let draggedIngredientIndex = null;
   let draggedStepIndex = null;
   if (params.get("from") === "menu") closeButton.classList.remove("hidden");
   closeButton.addEventListener("click", () => {
@@ -90,6 +91,7 @@
 
   function ingredientCrudSection(recipe) {
     const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
@@ -100,7 +102,8 @@
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
             return `
-              <article class="list-card recipe-crud-row">
+              <article class="list-card recipe-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
+                ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} 순서 이동">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
                   <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
@@ -132,6 +135,7 @@
 
   function stepCrudSection(recipe) {
     const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
@@ -140,7 +144,8 @@
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
-            <article class="list-card recipe-crud-row recipe-step-crud-row" data-step-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
+            <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
+              ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <span class="recipe-step-number">${index + 1}</span>
                 <p>${escapeHtml(step.text || "-")}</p>
@@ -149,7 +154,6 @@
               ${canManageRecipes ? `
                 <div class="recipe-crud-actions">
                   <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1}번 조리 순서 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
-                  <button class="menu-row-action recipe-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01" /><path d="M15 6h.01" /><path d="M9 12h.01" /><path d="M15 12h.01" /><path d="M9 18h.01" /><path d="M15 18h.01" /></svg></button>
                 </div>
               ` : ""}
             </article>
@@ -316,6 +320,43 @@
     }
   }
 
+  function reorderIngredients(fromIndex, toIndex) {
+    const recipe = selectedRecipe();
+    if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
+    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    if (!rows[fromIndex] || !rows[toIndex]) return;
+    const next = rows.slice();
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    Store.saveRecipe(recipeWithIngredientItems(recipe, next));
+    activeIngredientEdit = null;
+    draggedIngredientIndex = null;
+    renderFilters();
+    render();
+  }
+
+  function handleIngredientDragStart(event) {
+    const row = event.target.closest("[data-ingredient-index]");
+    if (!row || !canManageRecipes) return;
+    draggedIngredientIndex = Number(row.dataset.ingredientIndex);
+    event.dataTransfer?.setData("text/plain", String(draggedIngredientIndex));
+    event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
+  }
+
+  function handleIngredientDragOver(event) {
+    if (!event.target.closest("[data-ingredient-index]")) return;
+    event.preventDefault();
+  }
+
+  function handleIngredientDrop(event) {
+    const row = event.target.closest("[data-ingredient-index]");
+    if (!row || !canManageRecipes) return;
+    event.preventDefault();
+    const from = draggedIngredientIndex ?? Number(event.dataTransfer?.getData("text/plain"));
+    const to = Number(row.dataset.ingredientIndex);
+    reorderIngredients(from, to);
+  }
+
   function handleStepAction(event) {
     const button = event.target.closest("[data-step-action]");
     if (!button || !canManageRecipes) return;
@@ -406,6 +447,9 @@
     handleIngredientAction(event);
     handleStepAction(event);
   });
+  detail.addEventListener("dragstart", handleIngredientDragStart);
+  detail.addEventListener("dragover", handleIngredientDragOver);
+  detail.addEventListener("drop", handleIngredientDrop);
   detail.addEventListener("dragstart", handleStepDragStart);
   detail.addEventListener("dragover", handleStepDragOver);
   detail.addEventListener("drop", handleStepDrop);

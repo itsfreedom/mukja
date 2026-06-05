@@ -52,6 +52,7 @@
   let activeIngredientEdit = null;
   let activeStepEdit = null;
   let activeMenuEdit = null;
+  let draggedIngredientIndex = null;
   let draggedStepIndex = null;
   let draggedMenuId = null;
   const session = Store.getAuth();
@@ -216,6 +217,7 @@
 
   function ingredientCrudList(recipe) {
     const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
@@ -226,7 +228,8 @@
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
             return `
-              <article class="list-card recipe-crud-row">
+              <article class="list-card recipe-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
+                ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} 순서 이동">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
                   <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
@@ -258,6 +261,7 @@
 
   function stepCrudList(recipe) {
     const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
     return `
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
@@ -266,7 +270,8 @@
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
-            <article class="list-card recipe-crud-row recipe-step-crud-row" data-step-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
+            <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
+              ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <span class="recipe-step-number">${index + 1}</span>
                 <p>${escapeHtml(step.text || "-")}</p>
@@ -275,7 +280,6 @@
               ${canManageMenu ? `
                 <div class="recipe-crud-actions">
                   <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1}번 조리 순서 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
-                  <button class="menu-row-action recipe-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01" /><path d="M15 6h.01" /><path d="M9 12h.01" /><path d="M15 12h.01" /><path d="M9 18h.01" /><path d="M15 18h.01" /></svg></button>
                 </div>
               ` : ""}
             </article>
@@ -489,6 +493,43 @@
       activeIngredientEdit = null;
       rerenderActiveRecipe();
     }
+  }
+
+  function reorderIngredients(fromIndex, toIndex) {
+    const menu = activeRecipeMenu();
+    const recipe = menu ? recipeFor(menu) : null;
+    if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
+    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    if (!rows[fromIndex] || !rows[toIndex]) return;
+    const next = rows.slice();
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    Store.saveRecipe(recipeWithIngredientItems(recipe, next));
+    activeIngredientEdit = null;
+    draggedIngredientIndex = null;
+    rerenderActiveRecipe();
+  }
+
+  function handleIngredientDragStart(event) {
+    const row = event.target.closest("[data-ingredient-index]");
+    if (!row || !canManageMenu) return;
+    draggedIngredientIndex = Number(row.dataset.ingredientIndex);
+    event.dataTransfer?.setData("text/plain", String(draggedIngredientIndex));
+    event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
+  }
+
+  function handleIngredientDragOver(event) {
+    if (!event.target.closest("[data-ingredient-index]")) return;
+    event.preventDefault();
+  }
+
+  function handleIngredientDrop(event) {
+    const row = event.target.closest("[data-ingredient-index]");
+    if (!row || !canManageMenu) return;
+    event.preventDefault();
+    const from = draggedIngredientIndex ?? Number(event.dataTransfer?.getData("text/plain"));
+    const to = Number(row.dataset.ingredientIndex);
+    reorderIngredients(from, to);
   }
 
   function handleStepAction(event) {
@@ -920,6 +961,9 @@
   modalClose.addEventListener("click", closeRecipe);
   modalContent.addEventListener("click", handleIngredientAction);
   modalContent.addEventListener("click", handleStepAction);
+  modalContent.addEventListener("dragstart", handleIngredientDragStart);
+  modalContent.addEventListener("dragover", handleIngredientDragOver);
+  modalContent.addEventListener("drop", handleIngredientDrop);
   modalContent.addEventListener("dragstart", handleStepDragStart);
   modalContent.addEventListener("dragover", handleStepDragOver);
   modalContent.addEventListener("drop", handleStepDrop);
