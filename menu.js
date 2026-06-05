@@ -42,7 +42,6 @@
     section: document.getElementById("menu-edit-recipe-section"),
     description: document.getElementById("menu-edit-recipe-description"),
     ingredients: document.getElementById("menu-edit-recipe-ingredients"),
-    seasonings: document.getElementById("menu-edit-recipe-seasonings"),
     steps: document.getElementById("menu-edit-recipe-steps"),
     notes: document.getElementById("menu-edit-recipe-notes")
   };
@@ -51,6 +50,8 @@
   let activeRecipeMenuId = "";
   let editingRecipeId = "";
   let activeIngredientEdit = null;
+  let activeStepEdit = null;
+  let draggedStepIndex = null;
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
@@ -170,6 +171,16 @@
     };
   }
 
+  function recipeWithStepItems(recipe, items) {
+    const stepItems = Store.parseRecipeSteps(items);
+    return {
+      ...recipe,
+      stepItems,
+      steps: Store.recipeStepsToLines(stepItems),
+      updatedAt: Store.today()
+    };
+  }
+
   function ingredientEditForm(item = {}, index = 0) {
     const amount = splitAmount(item.amount);
     return `
@@ -209,6 +220,51 @@
             `;
           }).join("") : `<p class="muted">-</p>`}
           ${activeIngredientEdit?.isNew ? ingredientEditForm({}, rows.length) : ""}
+        </div>
+      </section>
+    `;
+  }
+
+  function stepEditForm(step = {}, index = 0) {
+    return `
+      <div class="recipe-item-form" data-step-form="${index}">
+        <label><span>조리 순서</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
+        <label><span>사진 URL</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
+        <div class="recipe-item-form-actions">
+          <button class="button" data-step-action="save" data-index="${index}" type="button">저장</button>
+          <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">삭제</button>
+          <button class="ghost-button" data-step-action="cancel" type="button">취소</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function stepCrudList(recipe) {
+    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    return `
+      <section class="history-detail-card recipe-detail-section recipe-crud-section">
+        <div class="recipe-section-title-row">
+          <h2>${I18n.t("steps")}</h2>
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+        </div>
+        <div class="recipe-crud-list">
+          ${rows.length ? rows.map((step, index) => `
+            <article class="list-card recipe-crud-row recipe-step-crud-row" data-step-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
+              <div class="recipe-step-crud-main">
+                <span class="recipe-step-number">${index + 1}</span>
+                <p>${escapeHtml(step.text || "-")}</p>
+                ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
+              </div>
+              ${canManageMenu ? `
+                <div class="recipe-crud-actions">
+                  <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1}번 조리 순서 수정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
+                  <button class="menu-row-action recipe-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1}번 조리 순서 이동"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01" /><path d="M15 6h.01" /><path d="M9 12h.01" /><path d="M15 12h.01" /><path d="M9 18h.01" /><path d="M15 18h.01" /></svg></button>
+                </div>
+              ` : ""}
+            </article>
+            ${activeStepEdit?.index === index ? stepEditForm(step, index) : ""}
+          `).join("") : `<p class="muted">-</p>`}
+          ${activeStepEdit?.isNew ? stepEditForm({}, rows.length) : ""}
         </div>
       </section>
     `;
@@ -257,8 +313,7 @@
     if (!recipe) return `<section class="history-detail-card"><p class="muted">${I18n.t("noRecipes")}</p></section>`;
     return `
       ${ingredientCrudList(recipe)}
-      ${measuredList(I18n.t("seasonings"), recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings)}
-      ${stepList(recipe)}
+      ${stepCrudList(recipe)}
       ${(recipe.notes || menu.notes) ? `<section class="history-detail-card recipe-detail-section"><h2>${I18n.t("notes")}</h2><p class="preview-box">${recipe.notes || menu.notes}</p></section>` : ""}
     `;
   }
@@ -266,7 +321,10 @@
   function openRecipe(menu, options = {}) {
     const recipe = ensureRecipeForMenu(menu);
     activeRecipeMenuId = menu.id;
-    if (options.resetIngredientEdit !== false) activeIngredientEdit = null;
+    if (options.resetIngredientEdit !== false) {
+      activeIngredientEdit = null;
+      activeStepEdit = null;
+    }
     modalTitle.textContent = I18n.menuName(menu);
     modalStatus.textContent = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     modalStatus.className = `badge ${menu.discontinued ? "yellow" : "green"}`;
@@ -282,6 +340,8 @@
   function closeRecipe() {
     modal.classList.add("hidden");
     activeIngredientEdit = null;
+    activeStepEdit = null;
+    draggedStepIndex = null;
     document.body.classList.remove("modal-open");
   }
 
@@ -296,7 +356,6 @@
     recipeEditFields.section.value = recipe?.section || Store.getSections()[0] || "기타";
     recipeEditFields.description.value = recipe?.description || "";
     recipeEditFields.ingredients.value = Store.recipeItemsToLines(recipe?.ingredientItems?.length ? recipe.ingredientItems : recipe?.ingredients);
-    recipeEditFields.seasonings.value = Store.recipeItemsToLines(recipe?.seasoningItems?.length ? recipe.seasoningItems : recipe?.seasonings);
     recipeEditFields.steps.value = Store.recipeStepsToLines(recipe?.stepItems?.length ? recipe.stepItems : recipe?.steps);
     recipeEditFields.notes.value = recipe?.notes || "";
     recipeEditModal.classList.remove("hidden");
@@ -314,7 +373,6 @@
     if (!name) return;
     const existing = editingRecipeId ? Store.getRecipes().find((recipe) => recipe.id === editingRecipeId) : null;
     const ingredientItems = Store.parseRecipeItems(recipeEditFields.ingredients.value);
-    const seasoningItems = Store.parseRecipeItems(recipeEditFields.seasonings.value);
     const stepItems = Store.parseRecipeSteps(recipeEditFields.steps.value);
     const recipe = {
       ...(existing || {}),
@@ -323,12 +381,12 @@
       section: recipeEditFields.section.value,
       description: recipeEditFields.description.value.trim(),
       ingredients: Store.recipeItemsToLines(ingredientItems),
-      seasonings: Store.recipeItemsToLines(seasoningItems),
+      seasonings: existing?.seasonings || "",
       steps: Store.recipeStepsToLines(stepItems),
       notes: recipeEditFields.notes.value.trim(),
       imageUrl: existing?.imageUrl || "",
       ingredientItems,
-      seasoningItems,
+      seasoningItems: existing?.seasoningItems || [],
       stepItems,
       enabled: existing?.enabled !== false,
       updatedAt: Store.today()
@@ -414,6 +472,87 @@
       activeIngredientEdit = null;
       rerenderActiveRecipe();
     }
+  }
+
+  function handleStepAction(event) {
+    const button = event.target.closest("[data-step-action]");
+    if (!button || !canManageMenu) return;
+    const menu = activeRecipeMenu();
+    const recipe = menu ? recipeFor(menu) : null;
+    if (!recipe) return;
+    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const action = button.dataset.stepAction;
+    const index = Number(button.dataset.index || rows.length);
+    if (action === "add") {
+      activeStepEdit = { index: rows.length, isNew: true };
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "edit") {
+      activeStepEdit = { index, isNew: false };
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "cancel") {
+      activeStepEdit = null;
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "delete") {
+      if (!confirm("조리 순서를 삭제할까요?")) return;
+      Store.saveRecipe(recipeWithStepItems(recipe, rows.filter((_, rowIndex) => rowIndex !== index)));
+      activeStepEdit = null;
+      rerenderActiveRecipe();
+      return;
+    }
+    if (action === "save") {
+      const form = button.closest("[data-step-form]");
+      const text = form?.querySelector("[data-step-text]")?.value.trim() || "";
+      const imageUrl = form?.querySelector("[data-step-image]")?.value.trim() || "";
+      if (!text && !imageUrl) return;
+      const next = rows.slice();
+      next[index] = { text, imageUrl };
+      Store.saveRecipe(recipeWithStepItems(recipe, next));
+      activeStepEdit = null;
+      rerenderActiveRecipe();
+    }
+  }
+
+  function reorderSteps(fromIndex, toIndex) {
+    const menu = activeRecipeMenu();
+    const recipe = menu ? recipeFor(menu) : null;
+    if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
+    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    if (!rows[fromIndex] || !rows[toIndex]) return;
+    const next = rows.slice();
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    Store.saveRecipe(recipeWithStepItems(recipe, next));
+    activeStepEdit = null;
+    draggedStepIndex = null;
+    rerenderActiveRecipe();
+  }
+
+  function handleStepDragStart(event) {
+    const row = event.target.closest("[data-step-index]");
+    if (!row || !canManageMenu) return;
+    draggedStepIndex = Number(row.dataset.stepIndex);
+    event.dataTransfer?.setData("text/plain", String(draggedStepIndex));
+    event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
+  }
+
+  function handleStepDragOver(event) {
+    if (!event.target.closest("[data-step-index]")) return;
+    event.preventDefault();
+  }
+
+  function handleStepDrop(event) {
+    const row = event.target.closest("[data-step-index]");
+    if (!row || !canManageMenu) return;
+    event.preventDefault();
+    const from = draggedStepIndex ?? Number(event.dataTransfer?.getData("text/plain"));
+    const to = Number(row.dataset.stepIndex);
+    reorderSteps(from, to);
   }
 
   function openMenuEditor(menu = null, defaults = {}) {
@@ -597,6 +736,10 @@
   cancelRecipeEdit.addEventListener("click", closeRecipeEditor);
   modalClose.addEventListener("click", closeRecipe);
   modalContent.addEventListener("click", handleIngredientAction);
+  modalContent.addEventListener("click", handleStepAction);
+  modalContent.addEventListener("dragstart", handleStepDragStart);
+  modalContent.addEventListener("dragover", handleStepDragOver);
+  modalContent.addEventListener("drop", handleStepDrop);
   closeRecipeEdit.addEventListener("click", closeRecipeEditor);
   editModalClose.addEventListener("click", closeMenuEditor);
   modal.querySelectorAll("[data-close-recipe-modal]").forEach((button) => {

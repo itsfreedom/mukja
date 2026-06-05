@@ -2356,6 +2356,57 @@ body.modal-open {
   text-align: right;
 }
 
+.recipe-step-crud-row {
+  align-items: start;
+}
+
+.recipe-step-crud-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.recipe-step-crud-main p,
+.recipe-step-crud-main small {
+  margin: 0;
+  min-width: 0;
+}
+
+.recipe-step-crud-main small {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.recipe-step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(130, 168, 255, 0.22);
+  color: #d9e3ff;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.recipe-crud-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 30px);
+  gap: 6px;
+  justify-content: end;
+}
+
+.recipe-drag-handle {
+  cursor: grab;
+}
+
+.recipe-drag-handle:active {
+  cursor: grabbing;
+}
+
 .recipe-item-form {
   display: grid;
   gap: 10px;
