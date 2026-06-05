@@ -1790,7 +1790,8 @@ body.modal-open {
 }
 
 .order-page #order-save-row {
-  margin-bottom: 22px;
+  margin-top: 12px;
+  margin-bottom: 0;
 }
 
 .order-bulk-panel {

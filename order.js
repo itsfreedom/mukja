@@ -70,8 +70,8 @@
     els.saveRow?.classList.toggle("hidden", edit || !canCreateRequest);
     els.memoPanel?.classList.toggle("hidden", edit || !canCreateRequest);
     els.memoDivider?.classList.toggle("hidden", edit || !canCreateRequest);
-    els.bulkPanel?.classList.toggle("hidden", !edit);
-    if (edit) {
+    els.bulkPanel?.classList.toggle("hidden", !canCreateRequest);
+    if (canCreateRequest) {
       fillBulkTargets();
       fillBulkCategories();
     }
@@ -689,7 +689,7 @@
   }
 
   function jumpToCategory() {
-    if (!isEditMode()) return;
+    if (!canCreateRequest) return;
     const target = els.bulkTarget?.value || "카페테리아";
     const category = els.bulkCategory?.value || "";
     const row = [...els.list.querySelectorAll("[data-request-category-row]")]
