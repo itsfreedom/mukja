@@ -44,8 +44,7 @@
     ingredients: document.getElementById("menu-edit-recipe-ingredients"),
     seasonings: document.getElementById("menu-edit-recipe-seasonings"),
     steps: document.getElementById("menu-edit-recipe-steps"),
-    notes: document.getElementById("menu-edit-recipe-notes"),
-    enabled: document.getElementById("menu-edit-recipe-enabled")
+    notes: document.getElementById("menu-edit-recipe-notes")
   };
   let searchQuery = "";
   let selectedMenuId = "";
@@ -203,7 +202,6 @@
     recipeEditFields.seasonings.value = Store.recipeItemsToLines(recipe?.seasoningItems?.length ? recipe.seasoningItems : recipe?.seasonings);
     recipeEditFields.steps.value = Store.recipeStepsToLines(recipe?.stepItems?.length ? recipe.stepItems : recipe?.steps);
     recipeEditFields.notes.value = recipe?.notes || "";
-    recipeEditFields.enabled.checked = recipe ? recipe.enabled !== false : true;
     recipeEditModal.classList.remove("hidden");
     document.body.classList.add("modal-open");
     recipeEditFields.name.focus();
@@ -235,7 +233,7 @@
       ingredientItems,
       seasoningItems,
       stepItems,
-      enabled: recipeEditFields.enabled.checked,
+      enabled: existing?.enabled !== false,
       updatedAt: Store.today()
     };
     Store.saveRecipe(recipe);
@@ -336,6 +334,8 @@
     }
     if (!confirm(`${I18n.menuName(menu)} 메뉴를 판매 중단 처리할까요?`)) return;
     Store.discontinueMenu(menu.id);
+    const recipe = recipeFor(menu);
+    if (recipe) Store.saveRecipe({ ...recipe, enabled: false, updatedAt: Store.today() });
     selectedMenuId = menu.id;
     renderFilters();
     render();

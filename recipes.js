@@ -25,7 +25,6 @@
   function filtered() {
     const q = search.value.trim().toLowerCase();
     return Store.getRecipes().filter((recipe) => {
-      if (!recipe.enabled) return false;
       if (section.value && recipe.section !== section.value) return false;
       if (q && !`${recipe.name} ${recipe.description} ${recipe.ingredients} ${recipe.seasonings}`.toLowerCase().includes(q)) return false;
       return true;
@@ -60,14 +59,10 @@
       detail.textContent = I18n.t("noRecipes");
       return;
     }
-    const disabled = canManageRecipes ? "" : "disabled";
     detail.innerHTML = `
       <div class="recipe-detail-title-row">
         <h2>${recipe.name}</h2>
-        <label class="badge ${recipe.enabled ? "green" : "yellow"} recipe-status-toggle">
-          <input id="recipe-enabled-inline" type="checkbox" ${recipe.enabled ? "checked" : ""} ${disabled} />
-          <span>${recipe.enabled ? I18n.t("activeMenu") : I18n.t("discontinuedMenu")}</span>
-        </label>
+        <span class="badge ${recipe.enabled ? "green" : "yellow"} recipe-status-badge">${recipe.enabled ? I18n.t("activeMenu") : I18n.t("discontinuedMenu")}</span>
       </div>
       <hr class="recipe-detail-rule" />
       <p class="recipe-delete-warning">레시피는 삭제 불가합니다</p>
@@ -103,7 +98,7 @@
       ingredientItems,
       seasoningItems,
       stepItems,
-      enabled: document.getElementById("recipe-enabled-inline")?.checked !== false,
+      enabled: existing.enabled !== false,
       updatedAt: Store.today()
     };
     Store.saveRecipe(recipe);
@@ -141,14 +136,6 @@
   section.addEventListener("change", render);
   detail.addEventListener("click", (event) => {
     if (event.target.closest("[data-save-recipe]")) saveInlineRecipe();
-  });
-  detail.addEventListener("change", (event) => {
-    if (event.target.id !== "recipe-enabled-inline") return;
-    const label = event.target.closest(".recipe-status-toggle");
-    const text = label?.querySelector("span");
-    label?.classList.toggle("green", event.target.checked);
-    label?.classList.toggle("yellow", !event.target.checked);
-    if (text) text.textContent = event.target.checked ? I18n.t("activeMenu") : I18n.t("discontinuedMenu");
   });
   renderFilters();
   render();
