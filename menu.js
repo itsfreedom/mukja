@@ -58,6 +58,7 @@
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
   const nonSaleCategories = ["반조리"];
+  const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
 
   function isNonSaleCategory(menu) {
     return nonSaleCategories.includes(String(menu.category || "").trim());
@@ -218,7 +219,7 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("ingredients")}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
@@ -262,7 +263,7 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("steps")}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
@@ -809,7 +810,7 @@
 
   function actionButton(action, label, menu, extraClass = "") {
     const icons = {
-      create: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>',
+      create: addIcon,
       edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>',
       drag: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>',
       recipe: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>'
@@ -850,7 +851,7 @@
       <section class="menu-category-group">
         <div class="recipe-section-title-row menu-category-title-row">
           <h2>${group}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+          ${canManageMenu ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
         </div>
         <div class="list admin-section">
           ${groupMenus.map((menu) => `

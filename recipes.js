@@ -13,6 +13,7 @@
   const session = Store.getAuth();
   const canManageRecipes = session?.role === "admin";
   const closeButton = document.getElementById("close-recipe");
+  const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   let activeIngredientEdit = null;
   let activeStepEdit = null;
   let draggedIngredientIndex = null;
@@ -96,7 +97,7 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("ingredients")}</h2>
-          ${canManageRecipes ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+          ${canManageRecipes ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="재료 추가">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
@@ -140,7 +141,7 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("steps")}</h2>
-          ${canManageRecipes ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg></button>` : ""}
+          ${canManageRecipes ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="조리 순서 추가">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
