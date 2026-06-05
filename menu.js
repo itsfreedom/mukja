@@ -309,7 +309,7 @@
   }
 
   function stepList(recipe) {
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     return `
       <section class="history-detail-card recipe-detail-section">
         <h2>${I18n.t("steps")}</h2>
@@ -332,7 +332,7 @@
     if (!recipe) return `<section class="history-detail-card"><p class="muted">${I18n.t("noRecipes")}</p></section>`;
     return `
       ${ingredientCrudList(recipe)}
-      ${stepCrudList(recipe)}
+      ${isMenuEditMode() ? stepCrudList(recipe) : stepList(recipe)}
       ${(I18n.recipeNotes(recipe) || menu.notes) ? `<section class="history-detail-card recipe-detail-section"><h2>${I18n.t("notes")}</h2><p class="preview-box">${I18n.recipeNotes(recipe) || menu.notes}</p></section>` : ""}
     `;
   }

@@ -1796,7 +1796,7 @@ body.modal-open {
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
   gap: 10px;
-  align-items: start;
+  align-items: center;
 }
 
 .recipe-step-row span {
@@ -1811,7 +1811,7 @@ body.modal-open {
 }
 
 .recipe-step-row p {
-  margin: 2px 0 0;
+  margin: 0;
   line-height: 1.55;
   white-space: pre-wrap;
 }
