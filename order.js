@@ -57,10 +57,11 @@
     const target = targetFor(item);
     const section = item.section || "기타";
     if (target === "그로서리" && section === "식재료") return "상온";
-    if (target === "그로서리" && ["상온", "냉장", "냉동", "기타"].includes(section)) return section;
+    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(section)) return section;
     if (target === "그로서리") return "기타";
+    if (target === "야채" && Store.getRequestCategories("야채").includes(section)) return section;
     if (target === "야채") return "야채";
-    const cafeteriaSections = [...Store.getSections(), "기타"];
+    const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
     if (cafeteriaSections.includes(section)) return section;
     return "기타";
   }
@@ -72,6 +73,10 @@
     ];
   }
 
+  function uniqueList(items) {
+    return [...new Set((items || []).filter(Boolean))];
+  }
+
   function escapeHtml(value) {
     return String(value || "")
       .replaceAll("&", "&amp;")
@@ -81,8 +86,8 @@
   }
 
   function sectionForTargetCategory(target, category) {
-    if (target === "야채") return "야채";
     if (target === "그로서리") return category || "기타";
+    if (target === "야채") return category || "야채";
     return category || "기타";
   }
 
@@ -92,10 +97,11 @@
 
   function categoryForm(target, category = "", mode = "edit") {
     const isNew = mode === "create";
-    const canDelete = !isNew && category !== "기타";
+    const fallback = target === "야채" ? "야채" : "기타";
+    const canDelete = !isNew && category !== fallback;
     return `
       <div class="recipe-item-form request-category-form" data-request-category-form data-category-target="${escapeHtml(target)}" data-category-old-name="${escapeHtml(category)}" data-category-mode="${mode}">
-        <label><span>카테고리</span><input data-request-category-name value="${escapeHtml(category)}" placeholder="카테고리명" /></label>
+        <label><span>카테고리명</span><input data-request-category-name value="${escapeHtml(category)}" placeholder="카테고리명" /></label>
         <div class="recipe-item-form-actions">
           <button class="button" data-request-category-action="save" type="button">저장</button>
           <button class="danger-button ${canDelete ? "" : "hidden"}" data-request-category-action="delete" type="button">삭제</button>
@@ -114,20 +120,16 @@
       setStatus("카테고리명을 입력하세요.");
       return;
     }
-    if (target !== "카페테리아") {
-      setStatus("카페테리아 카테고리부터 수정합니다.");
-      return;
-    }
-    const sections = Store.getSections();
-    if (sections.includes(nextName) && nextName !== oldName) {
+    const categories = Store.getRequestCategories(target);
+    if (categories.includes(nextName) && nextName !== oldName) {
       setStatus("이미 있는 카테고리입니다.");
       return;
     }
-    Store.setSections(mode === "create"
-      ? [...sections, nextName]
-      : sections.includes(oldName)
-        ? sections.map((section) => section === oldName ? nextName : section)
-        : [...sections, nextName]);
+    Store.setRequestCategories(target, mode === "create"
+      ? [...categories, nextName]
+      : categories.includes(oldName)
+        ? categories.map((category) => category === oldName ? nextName : category)
+        : [...categories, nextName]);
     if (mode !== "create") {
       Store.setIngredients(Store.getIngredients().map((item) =>
         targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: nextName } : item
@@ -141,14 +143,11 @@
     const target = form?.dataset.categoryTarget || "카페테리아";
     const oldName = form?.dataset.categoryOldName || "";
     if (!oldName) return;
-    if (target !== "카페테리아") {
-      setStatus("카페테리아 카테고리부터 수정합니다.");
-      return;
-    }
-    if (!window.confirm(`${oldName} 카테고리를 삭제할까요? 이 카테고리의 품목은 기타로 이동합니다.`)) return;
-    Store.setSections(Store.getSections().filter((section) => section !== oldName));
+    const fallback = target === "야채" ? "야채" : "기타";
+    if (!window.confirm(`${oldName} 카테고리를 삭제할까요? 이 카테고리의 품목은 ${fallback}로 이동합니다.`)) return;
+    Store.setRequestCategories(target, Store.getRequestCategories(target).filter((category) => category !== oldName));
     Store.setIngredients(Store.getIngredients().map((item) =>
-      targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: "기타" } : item
+      targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: fallback } : item
     ));
     activeCategoryEdit = null;
     renderItems();
@@ -227,11 +226,10 @@
   }
 
   function categoryActions(target, category) {
-    const canEditCategory = target === "카페테리아";
     return `
       <div class="menu-row-actions request-row-actions">
         <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 품목 추가">${addIcon}</button>
-        ${canEditCategory ? `<button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 카테고리 수정">${editIcon}</button>` : ""}
+        <button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 카테고리 수정">${editIcon}</button>
       </div>
     `;
   }
@@ -266,9 +264,9 @@
 
     const targetOrder = ["카페테리아", "야채", "그로서리"];
     const categoryOrders = {
-      "카페테리아": [...Store.getSections(), "기타"],
-      "야채": ["야채"],
-      "그로서리": ["상온", "냉장", "냉동", "기타"]
+      "카페테리아": uniqueList([...Store.getRequestCategories("카페테리아"), "기타"]),
+      "야채": uniqueList(Store.getRequestCategories("야채")),
+      "그로서리": uniqueList(Store.getRequestCategories("그로서리"))
     };
     const groups = Store.getIngredients()
       .reduce((acc, item) => {
@@ -300,12 +298,10 @@
         <section class="department-group request-target-group">
           <div class="section-title-row menu-category-title-row">
             <h2>${I18n.targetLabel(target)}</h2>
+            <button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">카테고리 추가</button>
           </div>
           <hr class="section-divider department-divider" />
-          ${target === "카페테리아" ? `
-            <button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">카테고리 추가</button>
-            ${activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
-          ` : ""}
+          ${activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
           <div class="department-card request-target-section">
             ${categories.map((category) => `
               <section class="item-section home-request-section request-category-section">

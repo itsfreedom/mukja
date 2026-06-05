@@ -14,6 +14,7 @@
   const dataState = {
     employees: [],
     sections: [],
+    requestCategories: {},
     accessAccounts: {},
     ingredients: [],
     recipes: [],
@@ -27,6 +28,11 @@
     { id: "emp-2", name: "직원2", enabled: true }
   ];
   const defaultTargets = ["카페테리아", "야채", "그로서리"];
+  const defaultRequestCategories = {
+    "카페테리아": defaultSections,
+    "야채": ["야채"],
+    "그로서리": ["상온", "냉장", "냉동", "기타"]
+  };
   const defaultAccessCodes = {
     c1234: { role: "department", department: "카페테리아", label: "카페테리아" },
     v1234: { role: "department", department: "야채", label: "야채" },
@@ -604,13 +610,17 @@
       const settings = data.settings && typeof data.settings === "object" ? data.settings : {};
       dataState.sections = Array.isArray(settings.sections) && settings.sections.length ? settings.sections : defaultSections.slice();
       dataState.employees = Array.isArray(settings.employees) && settings.employees.length ? settings.employees : defaultEmployees.slice();
-      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees)) {
+      dataState.requestCategories = settings.requestCategories && typeof settings.requestCategories === "object"
+        ? { ...defaultRequestCategories, ...settings.requestCategories, "카페테리아": dataState.sections }
+        : { ...defaultRequestCategories, "카페테리아": dataState.sections };
+      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees) || !settings.requestCategories) {
         await apiRequest("/settings", {
           method: "PUT",
           body: JSON.stringify({
             settings: {
               sections: dataState.sections,
-              employees: dataState.employees
+              employees: dataState.employees,
+              requestCategories: dataState.requestCategories
             }
           })
         });
@@ -627,7 +637,8 @@
       body: JSON.stringify({
         settings: {
           sections: dataState.sections,
-          employees: dataState.employees
+          employees: dataState.employees,
+          requestCategories: dataState.requestCategories
         }
       })
     }));
@@ -725,6 +736,7 @@
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
     dataState.employees = defaultEmployees.slice();
     dataState.sections = defaultSections.slice();
+    dataState.requestCategories = { ...defaultRequestCategories, "카페테리아": dataState.sections };
     dataState.accessAccounts = defaultAccessCodes;
     dataState.ingredients = defaultIngredients.map(normalizeIngredient);
     dataState.recipes = defaultRecipes.map(normalizeRecipe);
@@ -1143,6 +1155,19 @@
     getSections: () => dataState.sections.length ? dataState.sections.slice() : defaultSections.slice(),
     setSections: (v) => {
       dataState.sections = Array.isArray(v) ? v : defaultSections.slice();
+      dataState.requestCategories = { ...dataState.requestCategories, "카페테리아": dataState.sections };
+      syncSettings();
+    },
+    getRequestCategories: (target) => {
+      const categories = dataState.requestCategories?.[target] || defaultRequestCategories[target] || [];
+      return categories.slice();
+    },
+    setRequestCategories: (target, categories) => {
+      dataState.requestCategories = {
+        ...dataState.requestCategories,
+        [target]: Array.isArray(categories) ? categories : (defaultRequestCategories[target] || [])
+      };
+      if (target === "카페테리아") dataState.sections = dataState.requestCategories[target].filter((category) => category !== "기타");
       syncSettings();
     },
     getTargets: () => defaultTargets.slice(),

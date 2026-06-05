@@ -1751,7 +1751,7 @@ body.modal-open {
 
 .order-page .order-reset-row {
   margin-top: 0;
-  margin-bottom: 24px;
+  margin-bottom: 34px;
 }
 
 .order-page .order-reset-row .danger-button {
@@ -1777,13 +1777,14 @@ body.modal-open {
 }
 
 .request-category-add-text {
-  justify-self: start;
+  align-self: end;
+  justify-self: end;
   border: 0;
   background: transparent;
-  color: #ffffff;
-  font-size: 1.05rem;
-  font-weight: 900;
-  line-height: 1.2;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.35;
   padding: 2px;
   cursor: pointer;
 }
@@ -1793,12 +1794,16 @@ body.modal-open {
 }
 
 .request-category-form {
-  margin: 2px 0 6px;
+  margin: 0 0 6px;
 }
 
 .request-category-section {
   display: grid;
   gap: 8px;
+}
+
+.order-page .request-target-group {
+  gap: 4px;
 }
 
 .request-item-row {
