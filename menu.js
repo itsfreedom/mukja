@@ -107,9 +107,8 @@
   }
 
   function menuStatusBadges(menu) {
-    const statusText = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     return `
-      <span class="tiny-badge ${menu.discontinued ? "is-paused" : "is-live"}">${statusText}</span>
+      <span class="menu-status-dot ${menu.discontinued ? "is-paused" : "is-live"}" aria-label="${menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu")}"></span>
       ${menu.seasonal ? `<span class="tiny-badge is-seasonal">${I18n.t("seasonalMenu")}</span>` : ""}
     `;
   }
@@ -368,14 +367,12 @@
             <article class="list-card menu-row ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}">
               <div class="menu-row-main">
                 <div class="menu-title-line">
-                  <strong>${I18n.menuName(menu)}</strong>
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
+                  <strong>${I18n.menuName(menu)}</strong>
+                  <span class="menu-inline-price">${money(menu)}</span>
                 </div>
               </div>
-              <div class="menu-row-price">
-                <strong>${money(menu)}</strong>
-                ${rowActions(menu)}
-              </div>
+              ${rowActions(menu)}
             </article>
           `).join("")}
         </div>
