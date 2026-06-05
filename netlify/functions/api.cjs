@@ -183,6 +183,7 @@ async function ensureSchema(client) {
       unit text,
       target text,
       enabled boolean not null default true,
+      sort_order integer not null default 0,
       changed_by_identity_id text references access_identities(id) on delete set null,
       changed_ip text,
       changed_user_agent text,
@@ -212,6 +213,7 @@ async function ensureSchema(client) {
     alter table menus add column if not exists sort_order integer not null default 0;
     alter table order_items add column if not exists name_en text;
     alter table ingredients add column if not exists name_en text;
+    alter table ingredients add column if not exists sort_order integer not null default 0;
     alter table recipes add column if not exists ingredient_items jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists seasonings text;
     alter table recipes add column if not exists seasoning_items jsonb not null default '[]'::jsonb;
@@ -561,10 +563,10 @@ async function upsertIngredient(client, ingredient, info) {
   const nameKo = ingredient.nameKo || ingredient.name || "";
   await client.query(`
     insert into ingredients (
-      id, name_ko, name_en, section, unit, target, enabled,
+      id, name_ko, name_en, section, unit, target, enabled, sort_order,
       changed_by_identity_id, changed_ip, changed_user_agent, synced_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
     on conflict (id) do update set
       name_ko = excluded.name_ko,
       name_en = excluded.name_en,
@@ -572,6 +574,7 @@ async function upsertIngredient(client, ingredient, info) {
       unit = excluded.unit,
       target = excluded.target,
       enabled = excluded.enabled,
+      sort_order = excluded.sort_order,
       changed_by_identity_id = excluded.changed_by_identity_id,
       changed_ip = excluded.changed_ip,
       changed_user_agent = excluded.changed_user_agent,
@@ -584,6 +587,7 @@ async function upsertIngredient(client, ingredient, info) {
     ingredient.unit || "",
     ingredient.target || "",
     ingredient.enabled !== false,
+    Number.isFinite(Number(ingredient.sortOrder ?? ingredient.sort_order)) ? Number(ingredient.sortOrder ?? ingredient.sort_order) : 0,
     info.memberId,
     info.ip,
     info.userAgent
@@ -591,7 +595,7 @@ async function upsertIngredient(client, ingredient, info) {
 }
 
 async function listIngredients(client) {
-  const ingredients = await client.query("select * from ingredients order by target asc, section asc, name_ko asc");
+  const ingredients = await client.query("select * from ingredients order by sort_order asc, target asc, section asc, name_ko asc");
   return ingredients.rows.map((row) => ({
     id: row.id,
     name: row.name_ko,
@@ -600,7 +604,8 @@ async function listIngredients(client) {
     section: row.section || "",
     unit: row.unit || "",
     target: row.target || "",
-    enabled: row.enabled
+    enabled: row.enabled,
+    sortOrder: row.sort_order || 0
   }));
 }
 

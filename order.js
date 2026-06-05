@@ -234,10 +234,10 @@
       ...orderedCategories,
       ...existing.filter((category) => !orderedCategories.includes(category))
     ]);
-    Store.setRequestCategories(target, next);
+    return Store.setRequestCategories(target, next);
   }
 
-  function moveCategory(target, fromCategory, toCategory) {
+  async function moveCategory(target, fromCategory, toCategory) {
     if (!target || !fromCategory || !toCategory || fromCategory === toCategory) return;
     const rows = [...els.list.querySelectorAll("[data-request-category-row]")]
       .filter((row) => row.dataset.categoryTarget === target);
@@ -247,12 +247,12 @@
     if (from < 0 || to < 0) return;
     const [moved] = ordered.splice(from, 1);
     ordered.splice(to, 0, moved);
-    saveCategoryOrder(target, ordered);
+    await saveCategoryOrder(target, ordered);
     draggedCategory = null;
     renderItems();
   }
 
-  function moveItem(target, category, fromId, toId) {
+  async function moveItem(target, category, fromId, toId) {
     if (!target || !category || !fromId || !toId || fromId === toId) return;
     const rows = [...els.list.querySelectorAll("[data-request-item-row]")]
       .filter((row) => row.dataset.itemTarget === target && row.dataset.itemCategory === category);
@@ -273,7 +273,7 @@
       .filter((item) => orderMap.has(item.id))
       .sort((a, b) => orderMap.get(a.id) - orderMap.get(b.id));
     let nextIndex = 0;
-    Store.setIngredients(ingredients.map((item) => orderMap.has(item.id) ? matching[nextIndex++] : item));
+    await Store.setIngredients(ingredients.map((item) => orderMap.has(item.id) ? matching[nextIndex++] : item));
     draggedItem = null;
     renderItems();
   }
@@ -300,7 +300,7 @@
   }
 
   function bulkSelectionAnchorId() {
-    if (!editSelected.size) return null;
+    if (editSelected.size < 2) return null;
     if (lastSelectedItemId && editSelected.has(lastSelectedItemId)) return lastSelectedItemId;
     return [...editSelected][editSelected.size - 1] || null;
   }
@@ -346,16 +346,18 @@
     Store.setIngredients(rows.some((row) => row.id === nextItem.id)
       ? rows.map((row) => row.id === nextItem.id ? nextItem : row)
       : [...rows, nextItem]);
+    editSelected.clear();
+    lastSelectedItemId = null;
     activeItemEdit = null;
     renderItems();
   }
 
-  function saveBulkSelectionFromForm(form) {
+  async function saveBulkSelectionFromForm(form) {
     const ids = [...editSelected];
     if (!ids.length) return;
     const target = form?.querySelector("[data-bulk-selection-target]")?.value || "카페테리아";
     const section = form?.querySelector("[data-bulk-selection-section]")?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
-    Store.setIngredients(Store.getIngredients().map((item) =>
+    await Store.setIngredients(Store.getIngredients().map((item) =>
       ids.includes(item.id) ? { ...item, target, section } : item
     ));
     editSelected.clear();
@@ -501,12 +503,16 @@
           if (input.checked) {
             editSelected.add(input.dataset.itemId);
             lastSelectedItemId = input.dataset.itemId;
-            activeItemEdit = null;
           } else {
             editSelected.delete(input.dataset.itemId);
             if (lastSelectedItemId === input.dataset.itemId) {
               lastSelectedItemId = [...editSelected][editSelected.size - 1] || null;
             }
+          }
+          if (editSelected.size === 1) {
+            activeItemEdit = { id: [...editSelected][0] };
+          } else {
+            activeItemEdit = null;
           }
           renderItems();
           return;

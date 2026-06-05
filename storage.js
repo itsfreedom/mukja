@@ -551,7 +551,7 @@
   }
 
   function syncQuietly(task) {
-    task().catch((error) => {
+    return task().catch((error) => {
       apiState.checked = true;
       apiState.available = false;
       apiState.error = error?.message || "API unavailable";
@@ -632,7 +632,7 @@
   }
 
   function syncSettings() {
-    syncQuietly(() => apiRequest("/settings", {
+    return syncQuietly(() => apiRequest("/settings", {
       method: "PUT",
       body: JSON.stringify({
         settings: {
@@ -727,7 +727,10 @@
       ...normalized,
       name: nameKo,
       nameKo,
-      nameEn: normalized.nameEn || normalized.name_en || seed?.nameEn || ""
+      nameEn: normalized.nameEn || normalized.name_en || seed?.nameEn || "",
+      sortOrder: Number.isFinite(Number(normalized.sortOrder ?? normalized.sort_order))
+        ? Number(normalized.sortOrder ?? normalized.sort_order)
+        : 0
     };
   }
 
@@ -1076,9 +1079,12 @@
   }
 
   function setIngredients(ingredients) {
-    const normalized = (ingredients || []).map(normalizeIngredient);
+    const normalized = (ingredients || []).map((item, index) => ({
+      ...normalizeIngredient(item),
+      sortOrder: index
+    }));
     dataState.ingredients = normalized;
-    syncQuietly(() => apiRequest("/ingredients", {
+    return syncQuietly(() => apiRequest("/ingredients", {
       method: "PUT",
       body: JSON.stringify({ ingredients: normalized })
     }));
@@ -1168,7 +1174,7 @@
         [target]: Array.isArray(categories) ? categories : (defaultRequestCategories[target] || [])
       };
       if (target === "카페테리아") dataState.sections = dataState.requestCategories[target].filter((category) => category !== "기타");
-      syncSettings();
+      return syncSettings();
     },
     getTargets: () => defaultTargets.slice(),
     normalizeTargetName,
