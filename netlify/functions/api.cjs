@@ -895,7 +895,10 @@ exports.handler = async (event) => {
 
     const recipeDeleteMatch = path.match(/^\/recipes\/([^/]+)$/);
     if (method === "DELETE" && recipeDeleteMatch) {
-      return json(405, { ok: false, error: "Recipes cannot be deleted. Disable instead." });
+      await client.query("begin");
+      await client.query("delete from recipes where id = $1", [decodeURIComponent(recipeDeleteMatch[1])]);
+      await client.query("commit");
+      return json(200, { ok: true });
     }
 
     const deleteMatch = path.match(/^\/history\/([^/]+)$/);

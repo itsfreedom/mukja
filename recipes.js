@@ -54,6 +54,11 @@
     return `<button class="danger-button recipe-save-button" data-save-recipe="${position}" type="button">레시피 수정</button>`;
   }
 
+  function recipeDeleteButton() {
+    if (!canManageRecipes) return "";
+    return `<button class="danger-button recipe-save-button" data-delete-recipe type="button">레시피 삭제</button>`;
+  }
+
   function renderDetail(recipe) {
     if (!recipe) {
       detail.textContent = I18n.t("noRecipes");
@@ -65,8 +70,9 @@
         <span class="badge ${recipe.enabled ? "green" : "yellow"} recipe-status-badge">${recipe.enabled ? I18n.t("activeMenu") : I18n.t("discontinuedMenu")}</span>
       </div>
       <hr class="recipe-detail-rule" />
-      <p class="recipe-delete-warning">레시피는 삭제 불가합니다</p>
+      <p class="recipe-delete-warning">삭제는 확인 후 진행됩니다.</p>
       ${recipeSaveButton("top")}
+      ${recipeDeleteButton()}
       ${recipeTextArea("recipe-description-inline", "설명", recipe.description || "", "설명")}
       ${recipeTextArea("recipe-ingredients-inline", I18n.t("ingredients"), Store.recipeItemsToLines(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients), "재료명 | 양")}
       ${recipeTextArea("recipe-seasonings-inline", I18n.t("seasonings"), Store.recipeItemsToLines(recipe.seasoningItems?.length ? recipe.seasoningItems : recipe.seasonings), "양념명 | 양")}
@@ -107,6 +113,16 @@
     render();
   }
 
+  function deleteInlineRecipe() {
+    const recipe = selectedRecipe();
+    if (!recipe || !canManageRecipes) return;
+    if (!confirm(`${recipe.name} 레시피를 삭제할까요?`)) return;
+    Store.deleteRecipe(recipe.id);
+    activeId = "";
+    renderFilters();
+    render();
+  }
+
   function render() {
     manageActions.classList.toggle("hidden", !canManageRecipes);
     const recipes = filtered();
@@ -136,6 +152,7 @@
   section.addEventListener("change", render);
   detail.addEventListener("click", (event) => {
     if (event.target.closest("[data-save-recipe]")) saveInlineRecipe();
+    if (event.target.closest("[data-delete-recipe]")) deleteInlineRecipe();
   });
   renderFilters();
   render();

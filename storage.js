@@ -1031,10 +1031,11 @@
   }
 
   function deleteRecipe(idValue) {
-    const recipes = dataState.recipes.map((recipe) =>
-      recipe.id === idValue ? { ...recipe, enabled: false, updatedAt: today() } : recipe
+    dataState.recipes = dataState.recipes.filter((recipe) => recipe.id !== idValue);
+    dataState.menus = dataState.menus.map((menu) =>
+      menu.recipeId === idValue ? { ...menu, recipeId: "" } : menu
     );
-    setRecipes(recipes);
+    syncQuietly(() => apiRequest(`/recipes/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
   }
 
   function isEmptyRecipe(recipe) {

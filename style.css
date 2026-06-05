@@ -469,6 +469,13 @@ input, select, textarea {
   min-height: 48px;
   padding: 12px;
 }
+select {
+  height: 48px;
+  min-height: 48px;
+  line-height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
 textarea { min-height: 92px; resize: vertical; line-height: 1.5; }
 input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
 
@@ -878,9 +885,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   align-items: center;
 }
 .inline-field select {
-  height: 40px;
-  min-height: 40px;
-  padding: 8px 12px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 12px;
 }
 .last-order-meta { display: flex; flex-wrap: wrap; gap: 8px; }
 .section-history-grid {
