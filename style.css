@@ -303,6 +303,15 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
   padding: 0;
   cursor: pointer;
 }
+
+.icon-close-button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
 .home-title-row {
   display: flex;
   align-items: baseline;
@@ -714,23 +723,6 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-}
-.menu-status-dot {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.68);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.045);
-}
-.menu-status-dot.is-live {
-  background: #4f7dff;
-}
-.menu-status-dot.is-paused {
-  background: #e5485d;
-}
-.menu-status-dot.is-unavailable {
-  background: #8d94a8;
 }
 .tiny-badge {
   display: inline-flex;

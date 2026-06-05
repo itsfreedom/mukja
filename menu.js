@@ -9,7 +9,6 @@
   const list = document.getElementById("menu-list");
   const modal = document.getElementById("menu-recipe-modal");
   const modalTitle = document.getElementById("menu-recipe-title");
-  const modalStatus = document.getElementById("menu-recipe-status");
   const modalContent = document.getElementById("menu-recipe-content");
   const modalClose = document.getElementById("close-menu-recipe");
   const recipeActions = document.getElementById("menu-recipe-actions");
@@ -149,10 +148,7 @@
   }
 
   function menuStatusBadges(menu) {
-    const statusClass = isNonSaleCategory(menu) ? "is-unavailable" : menu.discontinued ? "is-paused" : "is-live";
-    const statusLabel = isNonSaleCategory(menu) ? "판매 불가" : menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     return `
-      <span class="menu-status-dot ${statusClass}" aria-label="${statusLabel}"></span>
       ${menu.seasonal ? `<span class="tiny-badge is-seasonal">${I18n.t("seasonalMenu")}</span>` : ""}
     `;
   }
@@ -346,8 +342,6 @@
       activeStepEdit = null;
     }
     modalTitle.textContent = I18n.menuName(menu);
-    modalStatus.textContent = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
-    modalStatus.className = `badge ${menu.discontinued ? "yellow" : "green"}`;
     modalContent.innerHTML = `
       ${recipeSections(menu, recipe)}
     `;
