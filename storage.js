@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v151";
+  const appAssetVersion = "v152";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -35,6 +35,33 @@
     "카페테리아": defaultSections,
     "야채": ["야채"],
     "그로서리": ["상온", "냉장", "냉동", "기타"]
+  };
+  const categoryEnglishLabels = {
+    "반조리": "Semi-prepared",
+    "야채": "Vegetables",
+    "반찬": "Side Dishes",
+    "소스": "Sauces",
+    "식재료": "Ingredients",
+    "상온": "Room Temp",
+    "냉장": "Refrigerated",
+    "냉동": "Frozen",
+    "기타": "Other",
+    "고기": "Meat",
+    "해물": "Seafood",
+    "신선": "Fresh",
+    "두부": "Tofu",
+    "분말": "Powder",
+    "소스류": "Sauces",
+    "곡류": "Grains",
+    "면류": "Noodles",
+    "포장 박스": "Packaging",
+    "식사": "Meals",
+    "찌개": "Stews",
+    "사이드": "Sides",
+    "분식": "Bunsik",
+    "덮밥": "Rice Bowls",
+    "국": "Soups",
+    "면": "Noodles"
   };
   const defaultAccessCodes = {
     c1234: { role: "department", department: "카페테리아", label: "카페테리아", userName: "c1234", name: "카페테리아" },
@@ -411,8 +438,11 @@
   function normalizeMenu(menu) {
     if (!menu) return menu;
     const seed = defaultMenuSeeds.find((row) => row.nameKo === menu.nameKo || row.recipeName === menu.recipeName);
+    const category = menu.category || seed?.category || "";
     return {
       ...menu,
+      category,
+      categoryEn: menu.categoryEn || menu.category_en || categoryEnglishLabels[category] || "",
       nameKo: menu.nameKo || menu.name || seed?.nameKo || "",
       nameEn: menu.nameEn || seed?.nameEn || "",
       sortOrder: Number.isFinite(Number(menu.sortOrder)) ? Number(menu.sortOrder) : 0
@@ -930,13 +960,14 @@
   }
 
   function menusToCsv(rows) {
-    const header = ["id", "recipeId", "category", "nameKo", "nameEn", "seasonal", "discontinued", "price", "currency", "notes", "sortOrder"];
+    const header = ["id", "recipeId", "category", "categoryEn", "nameKo", "nameEn", "seasonal", "discontinued", "price", "currency", "notes", "sortOrder"];
     const lines = [header.map(csvEscape).join(",")];
     rows.forEach((menu) => {
       lines.push([
         menu.id,
         menu.recipeId,
         menu.category,
+        menu.categoryEn,
         menu.nameKo,
         menu.nameEn,
         menu.seasonal ? "true" : "false",
@@ -1072,6 +1103,7 @@
         id: field(row, map, ["id"]) || id("menu"),
         recipeId: field(row, map, ["recipeId", "recipe_id", "레시피ID"]),
         category: field(row, map, ["category", "카테고리"]),
+        categoryEn: field(row, map, ["categoryEn", "category_en", "영문 카테고리", "English Category"]),
         nameKo,
         nameEn: field(row, map, ["nameEn", "영문 메뉴명", "englishName"]),
         seasonal: ["true", "Y", "1", "계절"].includes(field(row, map, ["seasonal", "계절메뉴"])),

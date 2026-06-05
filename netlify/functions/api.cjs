@@ -203,6 +203,7 @@ async function ensureSchema(client) {
       id text primary key,
       recipe_id text references recipes(id) on delete set null,
       category text,
+      category_en text,
       name_ko text not null,
       name_en text,
       seasonal boolean not null default false,
@@ -219,6 +220,7 @@ async function ensureSchema(client) {
     );
 
     alter table menus add column if not exists category text;
+    alter table menus add column if not exists category_en text;
     alter table menus add column if not exists sort_order integer not null default 0;
     alter table order_items add column if not exists name_en text;
     alter table ingredients add column if not exists name_en text;
@@ -665,13 +667,14 @@ async function upsertMenu(client, menu, info) {
   const price = menu.price === "" || menu.price === undefined || menu.price === null ? null : Number(menu.price);
   await client.query(`
     insert into menus (
-      id, recipe_id, category, name_ko, name_en, seasonal, discontinued, price, currency, notes, sort_order,
+      id, recipe_id, category, category_en, name_ko, name_en, seasonal, discontinued, price, currency, notes, sort_order,
       changed_by_identity_id, changed_ip, changed_user_agent, updated_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now())
     on conflict (id) do update set
       recipe_id = excluded.recipe_id,
       category = excluded.category,
+      category_en = excluded.category_en,
       name_ko = excluded.name_ko,
       name_en = excluded.name_en,
       seasonal = excluded.seasonal,
@@ -688,6 +691,7 @@ async function upsertMenu(client, menu, info) {
     menu.id,
     menu.recipeId || null,
     menu.category || "",
+    menu.categoryEn || menu.category_en || "",
     menu.nameKo,
     menu.nameEn || "",
     Boolean(menu.seasonal),
@@ -716,6 +720,7 @@ async function listMenus(client) {
     recipeId: row.recipe_id || "",
     recipeName: row.recipe_name || "",
     category: row.category || "",
+    categoryEn: row.category_en || "",
     nameKo: row.name_ko,
     nameEn: row.name_en || "",
     seasonal: row.seasonal,

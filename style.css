@@ -35,6 +35,10 @@
   --ui-pager-bg: rgba(255, 255, 255, 0.04);
 }
 
+html[data-preferred-lang="en"] body:not(.i18n-ready) {
+  visibility: hidden;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -1772,6 +1776,19 @@ body.modal-open {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+}
+
+.recipe-step-photo-preview {
+  display: grid;
+  gap: 8px;
+}
+
+.recipe-step-photo-preview img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(184, 196, 240, 0.14);
 }
 
 .recipe-step-list {

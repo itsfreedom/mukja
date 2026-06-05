@@ -8,10 +8,14 @@
   const list = document.getElementById("recipe-list");
   const detail = document.getElementById("recipe-detail");
   const manageActions = document.getElementById("recipe-manage-actions");
+  const modeRow = document.getElementById("recipe-mode-row");
+  const viewModeButton = document.getElementById("recipe-mode-view");
+  const editModeButton = document.getElementById("recipe-mode-edit");
   const params = new URLSearchParams(window.location.search);
   let activeId = params.get("id") || "";
   const session = Store.getAuth();
   const canManageRecipes = session?.role === "admin";
+  let recipeMode = "view";
   const closeButton = document.getElementById("close-recipe");
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   let activeIngredientEdit = null;
@@ -23,6 +27,17 @@
   closeButton.addEventListener("click", () => {
     window.location.href = "menu.html";
   });
+
+  function isRecipeEditMode() {
+    return canManageRecipes && recipeMode === "edit";
+  }
+
+  function updateRecipeModeUI() {
+    const edit = isRecipeEditMode();
+    modeRow?.classList.toggle("hidden", !canManageRecipes);
+    viewModeButton?.classList.toggle("is-active", !edit);
+    editModeButton?.classList.toggle("is-active", edit);
+  }
 
   function renderFilters() {
     section.innerHTML = `<option value="">${I18n.t("all")}</option>` + Store.getSections().map((s) => `<option value="${s}">${I18n.sectionLabel(s)}</option>`).join("");
@@ -55,8 +70,29 @@
     return [quantity, unit].map((part) => String(part || "").trim()).filter(Boolean).join(" ");
   }
 
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        resolve("");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   function recipeWithIngredientItems(recipe, items) {
     const ingredientItems = Store.parseRecipeItems(items);
+    if (I18n.lang() === "en") {
+      return {
+        ...recipe,
+        ingredientItemsEn: ingredientItems,
+        ingredientsEn: Store.recipeItemsToLines(ingredientItems),
+        updatedAt: Store.today()
+      };
+    }
     return {
       ...recipe,
       ingredientItems,
@@ -67,6 +103,14 @@
 
   function recipeWithStepItems(recipe, items) {
     const stepItems = Store.parseRecipeSteps(items);
+    if (I18n.lang() === "en") {
+      return {
+        ...recipe,
+        stepItemsEn: stepItems,
+        stepsEn: Store.recipeStepsToLines(stepItems),
+        updatedAt: Store.today()
+      };
+    }
     return {
       ...recipe,
       stepItems,
@@ -98,19 +142,19 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("ingredients")}</h2>
-          ${canManageRecipes ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="${I18n.t("addIngredient")}">${addIcon}</button>` : ""}
+          ${isRecipeEditMode() ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="${I18n.t("addIngredient")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
             return `
-              <article class="list-card recipe-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
-                ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
+              <article class="list-card recipe-crud-row ${isRecipeEditMode() ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${isRecipeEditMode() ? 'draggable="true"' : ""}>
+                ${isRecipeEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
                   <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
                 </div>
-                ${canManageRecipes ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
+                ${isRecipeEditMode() ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
               </article>
               ${activeIngredientEdit?.index === index ? ingredientEditForm(item, index) : ""}
             `;
@@ -125,7 +169,14 @@
     return `
       <div class="recipe-item-form" data-step-form="${index}">
         <label><span>${I18n.t("steps")}</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
-        <label><span>${I18n.t("photoUrl")}</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
+        <label><span>${I18n.t("photo")}</span><input data-step-image-file type="file" accept="image/*" capture="environment" /></label>
+        <input data-step-image-current type="hidden" value="${escapeHtml(step.imageUrl)}" />
+        ${step.imageUrl ? `
+          <div class="recipe-step-photo-preview">
+            <img src="${escapeHtml(step.imageUrl)}" alt="${I18n.t("photo")}" />
+            <label class="menu-check-option"><input data-step-remove-image type="checkbox" /><span>${I18n.t("removePhoto")}</span></label>
+          </div>
+        ` : ""}
         <div class="recipe-item-form-actions">
           <button class="button" data-step-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
           <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
@@ -142,17 +193,17 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("steps")}</h2>
-          ${canManageRecipes ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
+          ${isRecipeEditMode() ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
-            <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageRecipes ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageRecipes ? 'draggable="true"' : ""}>
-              ${canManageRecipes ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
+            <article class="list-card recipe-crud-row recipe-step-crud-row ${isRecipeEditMode() ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${isRecipeEditMode() ? 'draggable="true"' : ""}>
+              ${isRecipeEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
                 ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>
-              ${canManageRecipes ? `
+              ${isRecipeEditMode() ? `
                 <div class="recipe-crud-actions">
                   <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
                 </div>
@@ -167,7 +218,7 @@
   }
 
   function recipeTextArea(id, title, value, placeholder) {
-    const disabled = canManageRecipes ? "" : "disabled";
+    const disabled = isRecipeEditMode() ? "" : "disabled";
     return `
       <section class="history-detail-card recipe-detail-section">
         <h2>${title}</h2>
@@ -177,11 +228,31 @@
   }
 
   function recipeFooterActions() {
-    if (!canManageRecipes) return "";
+    if (!isRecipeEditMode()) return "";
     return `
       <section class="recipe-footer-actions">
         <button class="ghost-button recipe-action-button" data-close-recipe-detail type="button">${I18n.t("close")}</button>
         <button class="danger-button recipe-action-button" data-delete-recipe type="button">${I18n.t("delete")}</button>
+      </section>
+    `;
+  }
+
+  function stepViewSection(recipe) {
+    const rows = I18n.recipeStepItems(recipe);
+    return `
+      <section class="history-detail-card recipe-detail-section">
+        <h2>${I18n.t("steps")}</h2>
+        <div class="recipe-step-list">
+          ${rows.length ? rows.map((step, index) => `
+            <article class="recipe-step-row">
+              ${step.imageUrl ? `<img src="${escapeHtml(step.imageUrl)}" alt="${I18n.recipeName(recipe)} ${index + 1}" />` : ""}
+              <div>
+                <span>${index + 1}</span>
+                <p>${escapeHtml(step.text || "-")}</p>
+              </div>
+            </article>
+          `).join("") : `<p class="muted">-</p>`}
+        </div>
       </section>
     `;
   }
@@ -198,7 +269,7 @@
       <hr class="recipe-detail-rule" />
       ${recipeTextArea("recipe-description-inline", I18n.t("description"), I18n.recipeDescription(recipe), I18n.t("description"))}
       ${ingredientCrudSection(recipe)}
-      ${stepCrudSection(recipe)}
+      ${isRecipeEditMode() ? stepCrudSection(recipe) : stepViewSection(recipe)}
       ${recipeTextArea("recipe-notes-inline", I18n.t("notes"), I18n.recipeNotes(recipe), I18n.t("notes"))}
       <p class="muted">${I18n.t("updatedAt")}: ${recipe.updatedAt || "-"}</p>
       ${recipeFooterActions()}
@@ -211,9 +282,11 @@
 
   function saveInlineRecipe() {
     const existing = selectedRecipe();
-    if (!existing || !canManageRecipes) return;
+    if (!existing || !isRecipeEditMode()) return;
     const ingredientItems = Store.parseRecipeItems(existing.ingredientItems?.length ? existing.ingredientItems : existing.ingredients);
+    const ingredientItemsEn = Store.parseRecipeItems(existing.ingredientItemsEn?.length ? existing.ingredientItemsEn : existing.ingredientsEn);
     const stepItems = Store.parseRecipeSteps(existing.stepItems?.length ? existing.stepItems : existing.steps);
+    const stepItemsEn = Store.parseRecipeSteps(existing.stepItemsEn?.length ? existing.stepItemsEn : existing.stepsEn);
     const descriptionValue = document.getElementById("recipe-description-inline")?.value.trim() || "";
     const notesValue = document.getElementById("recipe-notes-inline")?.value.trim() || "";
     const recipe = {
@@ -221,14 +294,18 @@
       description: I18n.lang() === "en" ? existing.description || "" : descriptionValue,
       descriptionEn: I18n.lang() === "en" ? descriptionValue : existing.descriptionEn || "",
       ingredients: Store.recipeItemsToLines(ingredientItems),
+      ingredientsEn: Store.recipeItemsToLines(ingredientItemsEn),
       seasonings: existing.seasonings || "",
       steps: Store.recipeStepsToLines(stepItems),
+      stepsEn: Store.recipeStepsToLines(stepItemsEn),
       notes: I18n.lang() === "en" ? existing.notes || "" : notesValue,
       notesEn: I18n.lang() === "en" ? notesValue : existing.notesEn || "",
       imageUrl: existing?.imageUrl || "",
       ingredientItems,
+      ingredientItemsEn,
       seasoningItems: existing.seasoningItems || [],
       stepItems,
+      stepItemsEn,
       enabled: existing.enabled !== false,
       updatedAt: Store.today()
     };
@@ -240,7 +317,7 @@
 
   function deleteInlineRecipe() {
     const recipe = selectedRecipe();
-    if (!recipe || !canManageRecipes) return;
+    if (!recipe || !isRecipeEditMode()) return;
     if (!confirm(I18n.format("confirmDeleteRecipe", { name: I18n.recipeName(recipe) }))) return;
     Store.deleteRecipe(recipe.id);
     activeId = "";
@@ -249,6 +326,7 @@
   }
 
   function render() {
+    updateRecipeModeUI();
     manageActions.classList.toggle("hidden", !canManageRecipes);
     const recipes = filtered();
     if (!recipes.length) {
@@ -275,10 +353,10 @@
 
   function handleIngredientAction(event) {
     const button = event.target.closest("[data-ingredient-action]");
-    if (!button || !canManageRecipes) return;
+    if (!button || !isRecipeEditMode()) return;
     const recipe = selectedRecipe();
     if (!recipe) return;
-    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const rows = I18n.recipeIngredientItems(recipe);
     const action = button.dataset.ingredientAction;
     const index = Number(button.dataset.index || rows.length);
     if (action === "add") {
@@ -351,7 +429,7 @@
   function reorderIngredients(fromIndex, toIndex, position = "before") {
     const recipe = selectedRecipe();
     if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
-    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const rows = I18n.recipeIngredientItems(recipe);
     if (!rows[fromIndex] || !rows[toIndex]) return;
     const next = reorderedRows(rows, fromIndex, toIndex, position);
     Store.saveRecipe(recipeWithIngredientItems(recipe, next));
@@ -364,7 +442,7 @@
 
   function handleIngredientDragStart(event) {
     const row = event.target.closest("[data-ingredient-index]");
-    if (!row || !canManageRecipes) return;
+    if (!row || !isRecipeEditMode()) return;
     draggedIngredientIndex = Number(row.dataset.ingredientIndex);
     event.dataTransfer?.setData("text/plain", String(draggedIngredientIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -379,7 +457,7 @@
 
   function handleIngredientDrop(event) {
     const row = event.target.closest("[data-ingredient-index]");
-    if (!row || !canManageRecipes) return;
+    if (!row || !isRecipeEditMode()) return;
     event.preventDefault();
     const position = markDropPosition(row, event);
     const from = draggedIngredientIndex ?? Number(event.dataTransfer?.getData("text/plain"));
@@ -387,12 +465,12 @@
     reorderIngredients(from, to, position);
   }
 
-  function handleStepAction(event) {
+  async function handleStepAction(event) {
     const button = event.target.closest("[data-step-action]");
-    if (!button || !canManageRecipes) return;
+    if (!button || !isRecipeEditMode()) return;
     const recipe = selectedRecipe();
     if (!recipe) return;
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     const action = button.dataset.stepAction;
     const index = Number(button.dataset.index || rows.length);
     if (action === "add") {
@@ -421,7 +499,10 @@
     if (action === "save") {
       const form = button.closest("[data-step-form]");
       const text = form?.querySelector("[data-step-text]")?.value.trim() || "";
-      const imageUrl = form?.querySelector("[data-step-image]")?.value.trim() || "";
+      const file = form?.querySelector("[data-step-image-file]")?.files?.[0] || null;
+      const currentImage = form?.querySelector("[data-step-image-current]")?.value || "";
+      const removeImage = Boolean(form?.querySelector("[data-step-remove-image]")?.checked);
+      const imageUrl = removeImage ? "" : (file ? await fileToDataUrl(file) : currentImage);
       if (!text && !imageUrl) return;
       const next = rows.slice();
       next[index] = { text, imageUrl };
@@ -435,7 +516,7 @@
   function reorderSteps(fromIndex, toIndex, position = "before") {
     const recipe = selectedRecipe();
     if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     if (!rows[fromIndex] || !rows[toIndex]) return;
     const next = reorderedRows(rows, fromIndex, toIndex, position);
     Store.saveRecipe(recipeWithStepItems(recipe, next));
@@ -448,7 +529,7 @@
 
   function handleStepDragStart(event) {
     const row = event.target.closest("[data-step-index]");
-    if (!row || !canManageRecipes) return;
+    if (!row || !isRecipeEditMode()) return;
     draggedStepIndex = Number(row.dataset.stepIndex);
     event.dataTransfer?.setData("text/plain", String(draggedStepIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -463,7 +544,7 @@
 
   function handleStepDrop(event) {
     const row = event.target.closest("[data-step-index]");
-    if (!row || !canManageRecipes) return;
+    if (!row || !isRecipeEditMode()) return;
     event.preventDefault();
     const position = markDropPosition(row, event);
     const from = draggedStepIndex ?? Number(event.dataTransfer?.getData("text/plain"));
@@ -473,6 +554,17 @@
 
   search.addEventListener("input", render);
   section.addEventListener("change", render);
+  function setRecipeMode(mode) {
+    recipeMode = canManageRecipes && mode === "edit" ? "edit" : "view";
+    activeIngredientEdit = null;
+    activeStepEdit = null;
+    draggedIngredientIndex = null;
+    draggedStepIndex = null;
+    clearDropMarker();
+    render();
+  }
+  viewModeButton?.addEventListener("click", () => setRecipeMode("view"));
+  editModeButton?.addEventListener("click", () => setRecipeMode("edit"));
   detail.addEventListener("click", (event) => {
     if (event.target.closest("[data-close-recipe-detail]")) {
       window.location.href = "menu.html";

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#080a15" />
     <meta name="format-detection" content="telephone=no" />
+    <script>document.documentElement.dataset.preferredLang=localStorage.getItem("restaurant_lang")||"ko";document.documentElement.lang=document.documentElement.dataset.preferredLang;</script>
     <title>관리자</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=v151" />
+    <link rel="stylesheet" href="style.css?v=v152" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -36,7 +37,7 @@
 
             <section class="panel admin-section">
               <div class="section-title-row menu-category-title-row">
-                <h2>CSV 관리</h2>
+                <h2 data-i18n="csvManagement">CSV 관리</h2>
               </div>
               <hr class="section-divider department-divider" />
               <div class="admin-csv-list">
@@ -94,8 +95,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=20260605-admin-csv-access"></script>
-    <script src="i18n.js?v=20260605-item-category-dropdown"></script>
-    <script src="admin.js?v=20260605-admin-four-csv"></script>
+    <script src="storage.js?v=v152"></script>
+    <script src="i18n.js?v=v152"></script>
+    <script src="admin.js?v=v152"></script>
   </body>
 </html>

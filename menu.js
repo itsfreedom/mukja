@@ -77,7 +77,7 @@
 
   function renderFilters() {
     category.innerHTML = `<option value="">${I18n.t("all")}</option>` + Store.getMenuCategories()
-      .map((name) => `<option value="${name}">${name}</option>`)
+      .map((name) => `<option value="${name}">${I18n.menuCategoryLabel(name)}</option>`)
       .join("");
     editFields.recipe.innerHTML = `<option value="">${I18n.t("recipeDetail")}</option>` + Store.getRecipes()
       .map((recipe) => `<option value="${recipe.id}">${I18n.recipeName(recipe)}</option>`)
@@ -92,7 +92,7 @@
     const selected = String(selectedValue || "");
     if (selected && !categories.includes(selected)) categories.push(selected);
     editFields.category.innerHTML = categories
-      .map((name) => `<option value="${name}">${name}</option>`)
+      .map((name) => `<option value="${name}">${I18n.menuCategoryLabel(name)}</option>`)
       .join("");
     if (selected && !categories.length) {
       editFields.category.innerHTML = `<option value="${selected}">${selected}</option>`;
@@ -105,7 +105,7 @@
     const selected = String(selectedValue || "");
     if (selected && !categories.includes(selected)) categories.push(selected);
     return categories
-      .map((name) => `<option value="${name}" ${name === selected ? "selected" : ""}>${name}</option>`)
+      .map((name) => `<option value="${name}" ${name === selected ? "selected" : ""}>${I18n.menuCategoryLabel(name)}</option>`)
       .join("");
   }
 
@@ -178,8 +178,29 @@
     return [quantity, unit].map((part) => String(part || "").trim()).filter(Boolean).join(" ");
   }
 
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        resolve("");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   function recipeWithIngredientItems(recipe, items) {
     const ingredientItems = Store.parseRecipeItems(items);
+    if (I18n.lang() === "en") {
+      return {
+        ...recipe,
+        ingredientItemsEn: ingredientItems,
+        ingredientsEn: Store.recipeItemsToLines(ingredientItems),
+        updatedAt: Store.today()
+      };
+    }
     return {
       ...recipe,
       ingredientItems,
@@ -190,6 +211,14 @@
 
   function recipeWithStepItems(recipe, items) {
     const stepItems = Store.parseRecipeSteps(items);
+    if (I18n.lang() === "en") {
+      return {
+        ...recipe,
+        stepItemsEn: stepItems,
+        stepsEn: Store.recipeStepsToLines(stepItems),
+        updatedAt: Store.today()
+      };
+    }
     return {
       ...recipe,
       stepItems,
@@ -248,7 +277,14 @@
     return `
       <div class="recipe-item-form" data-step-form="${index}">
         <label><span>${I18n.t("steps")}</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
-        <label><span>${I18n.t("photoUrl")}</span><input data-step-image value="${escapeHtml(step.imageUrl)}" /></label>
+        <label><span>${I18n.t("photo")}</span><input data-step-image-file type="file" accept="image/*" capture="environment" /></label>
+        <input data-step-image-current type="hidden" value="${escapeHtml(step.imageUrl)}" />
+        ${step.imageUrl ? `
+          <div class="recipe-step-photo-preview">
+            <img src="${escapeHtml(step.imageUrl)}" alt="${I18n.t("photo")}" />
+            <label class="menu-check-option"><input data-step-remove-image type="checkbox" /><span>${I18n.t("removePhoto")}</span></label>
+          </div>
+        ` : ""}
         <div class="recipe-item-form-actions">
           <button class="button" data-step-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
           <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
@@ -450,7 +486,7 @@
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe) return;
-    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const rows = I18n.recipeIngredientItems(recipe);
     const action = button.dataset.ingredientAction;
     const index = Number(button.dataset.index || rows.length);
     if (action === "add") {
@@ -505,7 +541,7 @@
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
-    const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
+    const rows = I18n.recipeIngredientItems(recipe);
     if (!rows[fromIndex] || !rows[toIndex]) return;
     const next = reorderedRows(rows, fromIndex, toIndex, position);
     Store.saveRecipe(recipeWithIngredientItems(recipe, next));
@@ -540,13 +576,13 @@
     reorderIngredients(from, to, position);
   }
 
-  function handleStepAction(event) {
+  async function handleStepAction(event) {
     const button = event.target.closest("[data-step-action]");
     if (!button || !isMenuEditMode()) return;
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe) return;
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     const action = button.dataset.stepAction;
     const index = Number(button.dataset.index || rows.length);
     if (action === "add") {
@@ -574,7 +610,10 @@
     if (action === "save") {
       const form = button.closest("[data-step-form]");
       const text = form?.querySelector("[data-step-text]")?.value.trim() || "";
-      const imageUrl = form?.querySelector("[data-step-image]")?.value.trim() || "";
+      const file = form?.querySelector("[data-step-image-file]")?.files?.[0] || null;
+      const currentImage = form?.querySelector("[data-step-image-current]")?.value || "";
+      const removeImage = Boolean(form?.querySelector("[data-step-remove-image]")?.checked);
+      const imageUrl = removeImage ? "" : (file ? await fileToDataUrl(file) : currentImage);
       if (!text && !imageUrl) return;
       const next = rows.slice();
       next[index] = { text, imageUrl };
@@ -588,7 +627,7 @@
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
-    const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
+    const rows = I18n.recipeStepItems(recipe);
     if (!rows[fromIndex] || !rows[toIndex]) return;
     const next = reorderedRows(rows, fromIndex, toIndex, position);
     Store.saveRecipe(recipeWithStepItems(recipe, next));
@@ -887,7 +926,7 @@
     list.innerHTML = Object.entries(groups).map(([group, groupMenus]) => `
       <section class="menu-category-group">
         <div class="section-title-row menu-category-title-row">
-          <h2>${group}</h2>
+          <h2>${I18n.menuCategoryLabel(group, groupMenus[0])}</h2>
           ${isMenuEditMode() ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
         </div>
         <hr class="section-divider section-title-divider" />
