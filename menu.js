@@ -14,6 +14,7 @@
   const modalClose = document.getElementById("close-menu-recipe");
   const recipeActions = document.getElementById("menu-recipe-actions");
   const editRecipeFromMenu = document.getElementById("edit-recipe-from-menu");
+  const deleteRecipeFromMenu = document.getElementById("delete-recipe-from-menu");
   const recipeEditModal = document.getElementById("menu-recipe-edit-modal");
   const recipeEditModalTitle = document.getElementById("menu-recipe-edit-title");
   const closeRecipeEdit = document.getElementById("close-menu-recipe-edit");
@@ -277,6 +278,17 @@
     render();
   }
 
+  function deleteActiveRecipeFromMenu() {
+    const menu = activeRecipeMenu();
+    const recipe = menu ? recipeFor(menu) : null;
+    if (!recipe) return;
+    if (!confirm(`${recipe.name} 레시피를 삭제할까요?`)) return;
+    Store.deleteRecipe(recipe.id);
+    closeRecipe();
+    renderFilters();
+    render();
+  }
+
   function openMenuEditor(menu = null, defaults = {}) {
     editingMenuId = menu?.id || "";
     editModalTitle.textContent = menu ? "메뉴 수정" : "메뉴 추가";
@@ -452,6 +464,7 @@
     }
     openRecipeEditor(recipe);
   });
+  deleteRecipeFromMenu.addEventListener("click", deleteActiveRecipeFromMenu);
   saveRecipeEdit.addEventListener("click", saveRecipeFromEditor);
   deleteRecipeEdit.addEventListener("click", deleteRecipeFromEditor);
   cancelRecipeEdit.addEventListener("click", closeRecipeEditor);
