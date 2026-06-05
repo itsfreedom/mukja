@@ -2564,3 +2564,66 @@ body.modal-open {
 .order-page .order-action-row .button {
   width: 100%;
 }
+
+/* Shared list row module. Request/order rows are the visual baseline. */
+.list-card,
+.receive-row,
+.item-row,
+.simple .item-row,
+.recipe-crud-row,
+.history-row,
+.history-detail-row,
+.memo-entry {
+  border: var(--ui-row-border);
+  border-radius: var(--ui-row-radius);
+  background: var(--ui-row-bg);
+  box-shadow: none;
+}
+
+.list-card,
+.receive-row,
+.item-row,
+.simple .item-row,
+.recipe-crud-row,
+.history-row,
+.history-detail-row {
+  min-height: var(--ui-row-min-height);
+  padding: var(--ui-row-padding);
+  gap: var(--ui-row-gap);
+}
+
+.receive-row-main strong,
+.item-name,
+.menu-title-line strong,
+.recipe-crud-main strong,
+.recipe-step-crud-main p,
+.history-detail-row strong,
+.history-row strong,
+.list-card-header strong {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.menu-inline-price,
+.recipe-crud-main span,
+.receive-row-main span,
+.item-meta {
+  font-size: 0.82rem;
+}
+
+.item-section-list,
+.receive-list,
+.simple-history-list,
+.recipe-crud-list,
+.list {
+  gap: 8px;
+}
+
+.history-detail-row {
+  border-bottom: var(--ui-row-border);
+}
+
+.history-detail-row:last-child {
+  border-bottom: var(--ui-row-border);
+}
