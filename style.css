@@ -755,7 +755,7 @@ td { color: #dbe2ff; font-size: 0.9rem; }
   --sidebar-open: 264px;
   --sidebar-closed: 66px;
   --content-pad: clamp(14px, 3vw, 30px);
-  --desktop-app-width: clamp(430px, calc(100dvh * 0.481), 500px);
+  --desktop-app-width: 500px;
 }
 
 body {
