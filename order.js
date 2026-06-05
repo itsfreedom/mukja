@@ -776,7 +776,9 @@
       setStatus("카테고리를 찾을 수 없습니다.");
       return;
     }
-    row.scrollIntoView({ behavior: "smooth", block: "start" });
+    const stickyOffset = (els.bulkPanel?.offsetHeight || 0) + 14;
+    const top = row.getBoundingClientRect().top + window.scrollY - stickyOffset;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     row.classList.add("is-jump-focused");
     setTimeout(() => row.classList.remove("is-jump-focused"), 1400);
   }
