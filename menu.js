@@ -367,11 +367,11 @@
         <h2>${group}</h2>
         <div class="list admin-section">
           ${groupMenus.map((menu) => `
-            <article class="list-card menu-row ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}">
+            <article class="list-card menu-row" data-menu="${menu.id}">
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
-                  <strong>${I18n.menuName(menu)}</strong>
+                  <strong class="${menu.discontinued ? "is-discontinued" : ""}">${I18n.menuName(menu)}</strong>
                   <span class="menu-inline-price">${money(menu)}</span>
                 </div>
               </div>

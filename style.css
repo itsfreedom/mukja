@@ -697,6 +697,11 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-title-line strong {
   font-weight: 800;
 }
+.menu-title-line strong.is-discontinued {
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: rgba(229, 72, 93, 0.92);
+}
 .menu-title-badges {
   display: inline-flex;
   flex-wrap: wrap;
@@ -750,9 +755,9 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   height: 30px;
   min-height: 30px;
   border-radius: 999px;
-  border: 1px solid rgba(184, 196, 240, 0.18);
-  background: rgba(255, 255, 255, 0.045);
-  color: #d9e3ff;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(130, 168, 255, 0.15);
+  color: #ffffff;
   display: grid;
   place-items: center;
   font-size: 1.02rem;
@@ -762,13 +767,13 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 .menu-row-action.is-create {
-  color: #bff9df;
-  border-color: rgba(65, 204, 116, 0.28);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.34);
 }
 
 .menu-row-action.is-edit {
-  color: #d9e3ff;
-  border-color: rgba(130, 168, 255, 0.28);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.34);
 }
 
 .menu-row-action.is-danger {
