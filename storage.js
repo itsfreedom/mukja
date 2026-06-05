@@ -11,6 +11,7 @@
     available: false,
     error: ""
   };
+  const loadedDatasets = new Set();
   const dataState = {
     employees: [],
     sections: [],
@@ -711,6 +712,37 @@
     }
   }
 
+  const datasetOrder = ["access", "settings", "ingredients", "history", "recipes", "menus"];
+  const datasetLoaders = {
+    access: hydrateAccessAccountsFromApi,
+    settings: hydrateSettingsFromApi,
+    ingredients: hydrateIngredientsFromApi,
+    history: hydrateHistoryFromApi,
+    recipes: hydrateRecipesFromApi,
+    menus: hydrateMenusFromApi
+  };
+
+  function requestedDatasets(options) {
+    const selected = Array.isArray(options)
+      ? options
+      : Array.isArray(options?.datasets)
+        ? options.datasets
+        : datasetOrder.filter((name) => name !== "access");
+    return selected.includes("all")
+      ? datasetOrder.filter((name) => name !== "access")
+      : selected.filter((name) => datasetLoaders[name] && name !== "access");
+  }
+
+  async function ensureData(datasets = []) {
+    const selected = requestedDatasets({ datasets });
+    const ordered = datasetOrder.filter((name) => selected.includes(name) || (datasets || []).includes(name));
+    for (const name of ordered) {
+      if (loadedDatasets.has(name)) continue;
+      await datasetLoaders[name]();
+      loadedDatasets.add(name);
+    }
+  }
+
   function normalizeTarget(item) {
     if (!item) return item;
     if (item.target === "마트") return { ...item, target: item.section === "야채" ? "야채" : "그로서리" };
@@ -743,9 +775,10 @@
     };
   }
 
-  async function init() {
+  async function init(options) {
     if (!localStorage.getItem(keys.lang)) localStorage.setItem(keys.lang, "ko");
     if (!localStorage.getItem(keys.mode)) localStorage.setItem(keys.mode, "simple");
+    loadedDatasets.clear();
     dataState.employees = defaultEmployees.slice();
     dataState.sections = defaultSections.slice();
     dataState.requestCategories = { ...defaultRequestCategories, "카페테리아": dataState.sections };
@@ -754,12 +787,8 @@
     dataState.recipes = defaultRecipes.map(normalizeRecipe);
     dataState.menus = buildDefaultMenus(dataState.recipes).map(normalizeMenu);
     dataState.history = [];
-    await hydrateAccessAccountsFromApi();
-    await hydrateSettingsFromApi();
-    await hydrateIngredientsFromApi();
-    await hydrateHistoryFromApi();
-    await hydrateRecipesFromApi();
-    await hydrateMenusFromApi();
+    await ensureData(["access"]);
+    await ensureData(requestedDatasets(options));
     clearLegacyLocalData();
     localStorage.setItem(keys.initialized, "true");
   }
@@ -1240,6 +1269,7 @@
   window.Store = {
     keys,
     init,
+    ensureData,
     id,
     today,
     nowTime,

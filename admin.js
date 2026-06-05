@@ -1,5 +1,5 @@
 (async function () {
-  await Store.init();
+  await Store.init({ datasets: [] });
   AppUI.renderSidebar("admin");
   AppUI.registerServiceWorker();
 
@@ -162,14 +162,18 @@
     renderAll();
   }
 
-  function exportCsv(kind) {
+  async function exportCsv(kind) {
     if (kind === "history") {
+      await Store.ensureData(["history"]);
       Store.downloadText("mukja-request-history.csv", Store.historyToCsv(Store.getHistory()), "text/csv;charset=utf-8");
     } else if (kind === "ingredients") {
+      await Store.ensureData(["settings", "ingredients"]);
       Store.downloadText("mukja-ingredients.csv", Store.ingredientsToCsv(Store.getIngredients()), "text/csv;charset=utf-8");
     } else if (kind === "menus") {
+      await Store.ensureData(["recipes", "menus"]);
       Store.downloadText("mukja-menus.csv", Store.menusToCsv(Store.getMenus()), "text/csv;charset=utf-8");
     } else if (kind === "recipes") {
+      await Store.ensureData(["recipes"]);
       Store.downloadText("mukja-recipes.csv", Store.recipesToCsv(Store.getRecipes()), "text/csv;charset=utf-8");
     }
     setStatus("CSV를 내보냈습니다.");

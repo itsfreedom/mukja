@@ -1,5 +1,5 @@
 (async function () {
-  await Store.init();
+  await Store.init({ datasets: ["settings", "ingredients", "history"] });
   AppUI.renderSidebar("order");
   AppUI.registerServiceWorker();
 
