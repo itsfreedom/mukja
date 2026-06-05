@@ -1212,10 +1212,8 @@
         ["admin", "admin.html", "A"]
       ];
       const sidebarStateKey = "restaurant_sidebar_collapsed";
-      const savedSidebarState = localStorage.getItem(sidebarStateKey);
-      const sidebarCollapsed = savedSidebarState
-        ? savedSidebarState === "1"
-        : window.matchMedia("(max-width: 900px)").matches;
+      localStorage.setItem(sidebarStateKey, "1");
+      const sidebarCollapsed = true;
       document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
       const toggleLabel = sidebarCollapsed ? "메뉴 열기" : "메뉴 닫기";
       sidebar.innerHTML = `
@@ -1252,7 +1250,7 @@
       if (sidebarToggle) {
         sidebarToggle.addEventListener("click", () => {
           const collapsed = document.body.classList.toggle("sidebar-collapsed");
-          localStorage.setItem(sidebarStateKey, collapsed ? "1" : "0");
+          localStorage.setItem(sidebarStateKey, "1");
           sidebarToggle.setAttribute("aria-expanded", String(!collapsed));
           sidebarToggle.setAttribute("aria-label", collapsed ? "메뉴 열기" : "메뉴 닫기");
         });
