@@ -781,16 +781,23 @@ td { color: #dbe2ff; font-size: 0.9rem; }
 }
 
 .admin-role-badge {
-  width: var(--ui-round-action-size);
-  height: var(--ui-round-action-size);
-  border-radius: 999px;
-  display: inline-grid;
-  place-items: center;
   flex: 0 0 auto;
+  width: var(--ui-action-button-size);
+  height: var(--ui-action-button-size);
+}
+
+.admin-role-badge circle {
+  fill: #ffd861;
+  stroke: rgba(255, 255, 255, 0.34);
+  stroke-width: 1;
+}
+
+.admin-role-badge text {
   color: #10131f;
-  background: #ffd861;
-  font-size: 0.78rem;
+  fill: #10131f;
+  font-size: 11px;
   font-weight: 900;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", Pretendard, sans-serif;
 }
 
 .admin-access-form {
@@ -811,12 +818,23 @@ td { color: #dbe2ff; font-size: 0.9rem; }
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--ui-row-gap);
   align-items: center;
+  min-height: var(--ui-row-min-height);
+  padding: var(--ui-row-padding);
+}
+
+.admin-csv-row strong {
+  font-size: 0.92rem;
+  line-height: 1.2;
 }
 
 .admin-csv-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+}
+
+.admin-csv-actions .menu-row-action {
+  flex: 0 0 var(--ui-action-button-size);
 }
 
 .recipe-image {

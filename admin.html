@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>관리자</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260605-admin-csv-access" />
+    <link rel="stylesheet" href="style.css?v=20260605-admin-icon-csv" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -43,9 +43,11 @@
                 <article class="list-card admin-csv-row">
                   <strong>요청 목록</strong>
                   <div class="admin-csv-actions">
-                    <button class="ghost-button" data-export-csv="history" type="button">내보내기</button>
-                    <label class="ghost-button">
-                      <span>가져오기</span>
+                    <button class="menu-row-action" data-export-csv="history" type="button" aria-label="요청 목록 CSV 내보내기">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v16H5z" /><path d="M8 4v6h8V4" /><path d="M12 13v6" /><path d="M9 16l3 3 3-3" /></svg>
+                    </button>
+                    <label class="menu-row-action" aria-label="요청 목록 CSV 가져오기">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v16H5z" /><path d="M8 4v6h8V4" /><path d="M12 19v-6" /><path d="M9 16l3-3 3 3" /></svg>
                       <input class="hidden" data-import-csv="history" type="file" accept=".csv,text/csv" />
                     </label>
                   </div>
@@ -53,9 +55,11 @@
                 <article class="list-card admin-csv-row">
                   <strong>메뉴</strong>
                   <div class="admin-csv-actions">
-                    <button class="ghost-button" data-export-csv="menus" type="button">내보내기</button>
-                    <label class="ghost-button">
-                      <span>가져오기</span>
+                    <button class="menu-row-action" data-export-csv="menus" type="button" aria-label="메뉴 CSV 내보내기">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v16H5z" /><path d="M8 4v6h8V4" /><path d="M12 13v6" /><path d="M9 16l3 3 3-3" /></svg>
+                    </button>
+                    <label class="menu-row-action" aria-label="메뉴 CSV 가져오기">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v16H5z" /><path d="M8 4v6h8V4" /><path d="M12 19v-6" /><path d="M9 16l3-3 3 3" /></svg>
                       <input class="hidden" data-import-csv="menus" type="file" accept=".csv,text/csv" />
                     </label>
                   </div>
@@ -63,9 +67,11 @@
                 <article class="list-card admin-csv-row">
                   <strong>레시피</strong>
                   <div class="admin-csv-actions">
-                    <button class="ghost-button" data-export-csv="recipes" type="button">내보내기</button>
-                    <label class="ghost-button">
-                      <span>가져오기</span>
+                    <button class="menu-row-action" data-export-csv="recipes" type="button" aria-label="레시피 CSV 내보내기">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v16H5z" /><path d="M8 4v6h8V4" /><path d="M12 13v6" /><path d="M9 16l3 3 3-3" /></svg>
+                    </button>
+                    <label class="menu-row-action" aria-label="레시피 CSV 가져오기">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v16H5z" /><path d="M8 4v6h8V4" /><path d="M12 19v-6" /><path d="M9 16l3-3 3 3" /></svg>
                       <input class="hidden" data-import-csv="recipes" type="file" accept=".csv,text/csv" />
                     </label>
                   </div>
@@ -78,6 +84,6 @@
     </div>
     <script src="storage.js?v=20260605-admin-csv-access"></script>
     <script src="i18n.js?v=20260605-item-category-dropdown"></script>
-    <script src="admin.js?v=20260605-admin-csv-access"></script>
+    <script src="admin.js?v=20260605-admin-icon-csv"></script>
   </body>
 </html>

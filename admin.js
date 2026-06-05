@@ -59,6 +59,15 @@
     return "C";
   }
 
+  function badgeIcon(label) {
+    return `
+      <svg class="admin-role-badge" viewBox="0 0 28 28" aria-hidden="true">
+        <circle cx="14" cy="14" r="13" />
+        <text x="14" y="14" dominant-baseline="central" text-anchor="middle">${escapeHtml(label)}</text>
+      </svg>
+    `;
+  }
+
   function accessForm(mode, password = "", account = {}) {
     const isEdit = mode === "edit";
     return `
@@ -89,7 +98,7 @@
         <div class="admin-access-main">
           <span class="admin-access-number">${index + 1}</span>
           <code>${escapeHtml(password)}</code>
-          <span class="admin-role-badge">${escapeHtml(accountBadge(account))}</span>
+          ${badgeIcon(accountBadge(account))}
         </div>
         <div class="menu-row-actions admin-access-actions">
           <button class="menu-row-action is-edit" data-access-action="edit" data-password="${escapeHtml(password)}" type="button" aria-label="수정">${editIcon}</button>
