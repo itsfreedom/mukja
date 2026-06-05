@@ -54,6 +54,7 @@
   let draggedIngredientIndex = null;
   let draggedStepIndex = null;
   let draggedMenuId = null;
+  let activeDropElement = null;
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
@@ -475,18 +476,27 @@
     }
   }
 
-  function reorderIngredients(fromIndex, toIndex) {
+  function reorderedRows(rows, fromIndex, toIndex, position = "before") {
+    const moved = rows[fromIndex];
+    const target = rows[toIndex];
+    if (!moved || !target) return rows;
+    const next = rows.filter((_, index) => index !== fromIndex);
+    const targetAfterMove = next.indexOf(target);
+    next.splice(position === "after" ? targetAfterMove + 1 : targetAfterMove, 0, moved);
+    return next;
+  }
+
+  function reorderIngredients(fromIndex, toIndex, position = "before") {
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
     const rows = Store.parseRecipeItems(recipe.ingredientItems?.length ? recipe.ingredientItems : recipe.ingredients);
     if (!rows[fromIndex] || !rows[toIndex]) return;
-    const next = rows.slice();
-    const [moved] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, moved);
+    const next = reorderedRows(rows, fromIndex, toIndex, position);
     Store.saveRecipe(recipeWithIngredientItems(recipe, next));
     activeIngredientEdit = null;
     draggedIngredientIndex = null;
+    clearDropMarker();
     rerenderActiveRecipe();
   }
 
@@ -499,17 +509,20 @@
   }
 
   function handleIngredientDragOver(event) {
-    if (!event.target.closest("[data-ingredient-index]")) return;
+    const row = event.target.closest("[data-ingredient-index]");
+    if (!row) return;
     event.preventDefault();
+    markDropPosition(row, event);
   }
 
   function handleIngredientDrop(event) {
     const row = event.target.closest("[data-ingredient-index]");
     if (!row || !canManageMenu) return;
     event.preventDefault();
+    const position = markDropPosition(row, event);
     const from = draggedIngredientIndex ?? Number(event.dataTransfer?.getData("text/plain"));
     const to = Number(row.dataset.ingredientIndex);
-    reorderIngredients(from, to);
+    reorderIngredients(from, to, position);
   }
 
   function handleStepAction(event) {
@@ -556,18 +569,17 @@
     }
   }
 
-  function reorderSteps(fromIndex, toIndex) {
+  function reorderSteps(fromIndex, toIndex, position = "before") {
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe || fromIndex === null || toIndex === null || fromIndex === toIndex) return;
     const rows = Store.parseRecipeSteps(recipe.stepItems?.length ? recipe.stepItems : recipe.steps);
     if (!rows[fromIndex] || !rows[toIndex]) return;
-    const next = rows.slice();
-    const [moved] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, moved);
+    const next = reorderedRows(rows, fromIndex, toIndex, position);
     Store.saveRecipe(recipeWithStepItems(recipe, next));
     activeStepEdit = null;
     draggedStepIndex = null;
+    clearDropMarker();
     rerenderActiveRecipe();
   }
 
@@ -580,17 +592,20 @@
   }
 
   function handleStepDragOver(event) {
-    if (!event.target.closest("[data-step-index]")) return;
+    const row = event.target.closest("[data-step-index]");
+    if (!row) return;
     event.preventDefault();
+    markDropPosition(row, event);
   }
 
   function handleStepDrop(event) {
     const row = event.target.closest("[data-step-index]");
     if (!row || !canManageMenu) return;
     event.preventDefault();
+    const position = markDropPosition(row, event);
     const from = draggedStepIndex ?? Number(event.dataTransfer?.getData("text/plain"));
     const to = Number(row.dataset.stepIndex);
-    reorderSteps(from, to);
+    reorderSteps(from, to, position);
   }
 
   function openMenuEditor(menu = null, defaults = {}) {
@@ -771,7 +786,24 @@
     render();
   }
 
-  function reorderMenus(fromId, toId) {
+  function clearDropMarker() {
+    if (!activeDropElement) return;
+    activeDropElement.classList.remove("is-drop-before", "is-drop-after");
+    activeDropElement = null;
+  }
+
+  function markDropPosition(row, event) {
+    if (!row) return "before";
+    const rect = row.getBoundingClientRect();
+    const position = event.clientY > rect.top + rect.height / 2 ? "after" : "before";
+    if (activeDropElement !== row) clearDropMarker();
+    activeDropElement = row;
+    row.classList.toggle("is-drop-before", position === "before");
+    row.classList.toggle("is-drop-after", position === "after");
+    return position;
+  }
+
+  function reorderMenus(fromId, toId, position = "before") {
     if (!fromId || !toId || fromId === toId) return;
     const menus = Store.getMenus();
     const fromMenu = menus.find((menu) => menu.id === fromId);
@@ -783,14 +815,17 @@
     const fromIndex = categoryMenus.findIndex((menu) => menu.id === fromId);
     const toIndex = categoryMenus.findIndex((menu) => menu.id === toId);
     if (fromIndex < 0 || toIndex < 0) return;
-    const nextCategoryMenus = categoryMenus.slice();
-    const [moved] = nextCategoryMenus.splice(fromIndex, 1);
-    nextCategoryMenus.splice(toIndex, 0, moved);
+    const moved = categoryMenus[fromIndex];
+    const target = categoryMenus[toIndex];
+    const nextCategoryMenus = categoryMenus.filter((menu) => menu.id !== fromId);
+    const targetAfterMove = nextCategoryMenus.findIndex((menu) => menu.id === target.id);
+    nextCategoryMenus.splice(position === "after" ? targetAfterMove + 1 : targetAfterMove, 0, moved);
     const orderById = new Map(nextCategoryMenus.map((menu, index) => [menu.id, index + 1]));
     const nextMenus = menus.map((menu) => orderById.has(menu.id) ? { ...menu, sortOrder: orderById.get(menu.id) } : menu);
     Store.setMenus(nextMenus);
     activeMenuEdit = null;
     draggedMenuId = null;
+    clearDropMarker();
     render();
   }
 
@@ -902,12 +937,18 @@
       row.addEventListener("dragover", (event) => {
         if (!canManageMenu) return;
         event.preventDefault();
+        markDropPosition(row, event);
       });
       row.addEventListener("drop", (event) => {
         if (!canManageMenu) return;
         event.preventDefault();
+        const position = markDropPosition(row, event);
         const fromId = draggedMenuId || event.dataTransfer?.getData("text/plain");
-        reorderMenus(fromId, row.dataset.menu);
+        reorderMenus(fromId, row.dataset.menu, position);
+      });
+      row.addEventListener("dragend", () => {
+        draggedMenuId = null;
+        clearDropMarker();
       });
     });
   }
@@ -939,6 +980,7 @@
   modalContent.addEventListener("dragstart", handleStepDragStart);
   modalContent.addEventListener("dragover", handleStepDragOver);
   modalContent.addEventListener("drop", handleStepDrop);
+  modalContent.addEventListener("dragend", clearDropMarker);
   closeRecipeEdit.addEventListener("click", closeRecipeEditor);
   editModalClose.addEventListener("click", closeMenuEditor);
   modal.querySelectorAll("[data-close-recipe-modal]").forEach((button) => {

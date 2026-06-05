@@ -2022,6 +2022,35 @@ body.modal-open {
   align-items: center;
 }
 
+.request-category-section,
+.request-item-row,
+.menu-row,
+.recipe-crud-row {
+  position: relative;
+}
+
+.is-drop-before::before,
+.is-drop-after::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 214, 87, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 214, 87, 0.18), 0 0 12px rgba(255, 214, 87, 0.3);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.is-drop-before::before {
+  top: -5px;
+}
+
+.is-drop-after::after {
+  bottom: -5px;
+}
+
 .request-item-check {
   min-width: 0;
   display: grid;

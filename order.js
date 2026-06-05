@@ -15,6 +15,7 @@
   let activeCategoryEdit = null;
   let draggedCategory = null;
   let draggedItem = null;
+  let activeDropElement = null;
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
   const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
@@ -237,22 +238,41 @@
     return Store.setRequestCategories(target, next);
   }
 
-  async function moveCategory(target, fromCategory, toCategory) {
+  function clearDropMarker() {
+    if (!activeDropElement) return;
+    activeDropElement.classList.remove("is-drop-before", "is-drop-after");
+    activeDropElement = null;
+  }
+
+  function markDropPosition(row, event) {
+    if (!row) return "before";
+    const rect = row.getBoundingClientRect();
+    const position = event.clientY > rect.top + rect.height / 2 ? "after" : "before";
+    if (activeDropElement !== row) clearDropMarker();
+    activeDropElement = row;
+    row.classList.toggle("is-drop-before", position === "before");
+    row.classList.toggle("is-drop-after", position === "after");
+    return position;
+  }
+
+  function moveCategory(target, fromCategory, toCategory, position = "before") {
     if (!target || !fromCategory || !toCategory || fromCategory === toCategory) return;
     const rows = [...els.list.querySelectorAll("[data-request-category-row]")]
       .filter((row) => row.dataset.categoryTarget === target);
     const ordered = rows.map((row) => row.dataset.categoryName).filter(Boolean);
     const from = ordered.indexOf(fromCategory);
-    const to = ordered.indexOf(toCategory);
+    const targetIndex = ordered.indexOf(toCategory);
+    const to = position === "after" ? targetIndex + 1 : targetIndex;
     if (from < 0 || to < 0) return;
     const [moved] = ordered.splice(from, 1);
-    ordered.splice(to, 0, moved);
-    await saveCategoryOrder(target, ordered);
+    ordered.splice(from < to ? to - 1 : to, 0, moved);
+    saveCategoryOrder(target, ordered);
     draggedCategory = null;
+    clearDropMarker();
     renderItems();
   }
 
-  async function moveItem(target, category, fromId, toId) {
+  function moveItem(target, category, fromId, toId, position = "before") {
     if (!target || !category || !fromId || !toId || fromId === toId) return;
     const rows = [...els.list.querySelectorAll("[data-request-item-row]")]
       .filter((row) => row.dataset.itemTarget === target && row.dataset.itemCategory === category);
@@ -263,7 +283,8 @@
       : [fromId];
     if (movingIds.includes(toId)) return;
     const remainingIds = orderedIds.filter((id) => !movingIds.includes(id));
-    const to = remainingIds.indexOf(toId);
+    const targetIndex = remainingIds.indexOf(toId);
+    const to = position === "after" ? targetIndex + 1 : targetIndex;
     if (to < 0) return;
     remainingIds.splice(to, 0, ...movingIds);
 
@@ -273,8 +294,9 @@
       .filter((item) => orderMap.has(item.id))
       .sort((a, b) => orderMap.get(a.id) - orderMap.get(b.id));
     let nextIndex = 0;
-    await Store.setIngredients(ingredients.map((item) => orderMap.has(item.id) ? matching[nextIndex++] : item));
+    Store.setIngredients(ingredients.map((item) => orderMap.has(item.id) ? matching[nextIndex++] : item));
     draggedItem = null;
+    clearDropMarker();
     renderItems();
   }
 
@@ -645,11 +667,13 @@
         if (event.target.closest("[data-request-item-row]")) return;
         if (!draggedCategory || draggedCategory.target !== row.dataset.categoryTarget) return;
         event.preventDefault();
+        markDropPosition(row, event);
       });
       row.addEventListener("drop", (event) => {
         if (!isEditMode()) return;
         if (event.target.closest("[data-request-item-row]")) return;
         event.preventDefault();
+        const position = markDropPosition(row, event);
         let source = draggedCategory;
         try {
           source = source || JSON.parse(event.dataTransfer?.getData("text/plain") || "null");
@@ -657,10 +681,11 @@
           source = draggedCategory;
         }
         if (!source || source.target !== row.dataset.categoryTarget) return;
-        moveCategory(row.dataset.categoryTarget, source.category, row.dataset.categoryName);
+        moveCategory(row.dataset.categoryTarget, source.category, row.dataset.categoryName, position);
       });
       row.addEventListener("dragend", () => {
         draggedCategory = null;
+        clearDropMarker();
       });
     });
     els.list.querySelectorAll("[data-request-item-row]").forEach((row) => {
@@ -679,11 +704,13 @@
         event.stopPropagation();
         if (!draggedItem || draggedItem.target !== row.dataset.itemTarget || draggedItem.category !== row.dataset.itemCategory) return;
         event.preventDefault();
+        markDropPosition(row, event);
       });
       row.addEventListener("drop", (event) => {
         if (!isEditMode()) return;
         event.stopPropagation();
         event.preventDefault();
+        const position = markDropPosition(row, event);
         let source = draggedItem;
         try {
           source = source || JSON.parse(event.dataTransfer?.getData("text/plain") || "null");
@@ -691,10 +718,11 @@
           source = draggedItem;
         }
         if (!source || source.target !== row.dataset.itemTarget || source.category !== row.dataset.itemCategory) return;
-        moveItem(row.dataset.itemTarget, row.dataset.itemCategory, source.id, row.dataset.itemId);
+        moveItem(row.dataset.itemTarget, row.dataset.itemCategory, source.id, row.dataset.itemId, position);
       });
       row.addEventListener("dragend", () => {
         draggedItem = null;
+        clearDropMarker();
       });
     });
     updateModeUI();
@@ -773,6 +801,7 @@
     activeCategoryEdit = null;
     draggedCategory = null;
     draggedItem = null;
+    clearDropMarker();
     renderItems();
   }
 
