@@ -1232,7 +1232,7 @@ body {
 
 .history-row {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 30px;
+  grid-template-columns: 48px minmax(0, 1fr) var(--ui-action-button-size);
   align-items: center;
   min-height: 54px;
   border: 1px solid rgba(184, 196, 240, 0.13);
@@ -1241,10 +1241,13 @@ body {
   padding: 10px 14px;
 }
 
-.history-row > span:first-child,
-.history-arrow {
+.history-row > span:first-child {
   color: var(--muted);
   text-align: center;
+}
+
+.history-arrow {
+  justify-self: end;
 }
 
 .history-detail-content {

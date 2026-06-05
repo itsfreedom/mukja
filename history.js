@@ -93,7 +93,7 @@
           <a class="history-row" href="history.html?id=${encodeURIComponent(entry.id)}&week=${weekOffset}">
             <span>${index + 1}</span>
             <strong>${entry.date}</strong>
-            <span class="history-arrow">&gt;</span>
+            <span class="menu-row-action is-recipe history-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg></span>
           </a>
         `).join("")}
       </div>
