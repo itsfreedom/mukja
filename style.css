@@ -2244,8 +2244,21 @@ body {
 }
 
 .menu-search-row .button {
-  padding-left: 12px;
-  padding-right: 12px;
+  width: 48px;
+  min-width: 48px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.menu-search-row .button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .menu-category-field select {
