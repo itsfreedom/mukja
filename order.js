@@ -10,6 +10,7 @@
   let activeItemEdit = null;
   let activeCategoryEdit = null;
   let draggedCategory = null;
+  let draggedItem = null;
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
   const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
@@ -179,6 +180,28 @@
     renderItems();
   }
 
+  function moveItem(target, category, fromId, toId) {
+    if (!target || !category || !fromId || !toId || fromId === toId) return;
+    const rows = [...els.list.querySelectorAll("[data-request-item-row]")]
+      .filter((row) => row.dataset.itemTarget === target && row.dataset.itemCategory === category);
+    const orderedIds = rows.map((row) => row.dataset.itemId).filter(Boolean);
+    const from = orderedIds.indexOf(fromId);
+    const to = orderedIds.indexOf(toId);
+    if (from < 0 || to < 0) return;
+    const [moved] = orderedIds.splice(from, 1);
+    orderedIds.splice(to, 0, moved);
+
+    const ingredients = Store.getIngredients();
+    const orderMap = new Map(orderedIds.map((id, index) => [id, index]));
+    const matching = ingredients
+      .filter((item) => orderMap.has(item.id))
+      .sort((a, b) => orderMap.get(a.id) - orderMap.get(b.id));
+    let nextIndex = 0;
+    Store.setIngredients(ingredients.map((item) => orderMap.has(item.id) ? matching[nextIndex++] : item));
+    draggedItem = null;
+    renderItems();
+  }
+
   function itemForm(item = null, defaults = {}) {
     const target = item?.target || defaults.target || "카페테리아";
     const section = item?.section || sectionForTargetCategory(target, defaults.category || "기타");
@@ -247,6 +270,7 @@
     return `
       <div class="menu-row-actions request-row-actions">
         <button class="menu-row-action is-edit" data-order-item-action="edit" data-order-item-id="${item.id}" type="button" aria-label="${I18n.itemName(item)} 수정">${editIcon}</button>
+        <button class="menu-row-action request-item-drag-handle recipe-drag-handle" data-request-item-drag-handle type="button" aria-label="${I18n.itemName(item)} 순서 이동">${dragIcon}</button>
       </div>
     `;
   }
@@ -265,7 +289,7 @@
     return `
       <div class="item-section-list">
         ${items.map((item) => `
-          <article class="list-card request-item-row">
+          <article class="list-card request-item-row" data-request-item-row data-item-id="${escapeHtml(item.id)}" data-item-target="${escapeHtml(targetFor(item))}" data-item-category="${escapeHtml(categoryFor(item))}" draggable="true">
             <label class="request-item-check">
               <input type="checkbox" data-item="${itemKey(item)}" ${selected.has(itemKey(item)) ? "checked" : ""} />
               <span class="receive-row-main">
@@ -431,6 +455,7 @@
     });
     els.list.querySelectorAll("[data-request-category-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
+        if (event.target.closest("[data-request-item-row]")) return;
         draggedCategory = {
           target: row.dataset.categoryTarget,
           category: row.dataset.categoryName
@@ -438,10 +463,12 @@
         event.dataTransfer?.setData("text/plain", JSON.stringify(draggedCategory));
       });
       row.addEventListener("dragover", (event) => {
+        if (event.target.closest("[data-request-item-row]")) return;
         if (!draggedCategory || draggedCategory.target !== row.dataset.categoryTarget) return;
         event.preventDefault();
       });
       row.addEventListener("drop", (event) => {
+        if (event.target.closest("[data-request-item-row]")) return;
         event.preventDefault();
         let source = draggedCategory;
         try {
@@ -454,6 +481,37 @@
       });
       row.addEventListener("dragend", () => {
         draggedCategory = null;
+      });
+    });
+    els.list.querySelectorAll("[data-request-item-row]").forEach((row) => {
+      row.addEventListener("dragstart", (event) => {
+        event.stopPropagation();
+        draggedItem = {
+          id: row.dataset.itemId,
+          target: row.dataset.itemTarget,
+          category: row.dataset.itemCategory
+        };
+        event.dataTransfer?.setData("text/plain", JSON.stringify(draggedItem));
+      });
+      row.addEventListener("dragover", (event) => {
+        event.stopPropagation();
+        if (!draggedItem || draggedItem.target !== row.dataset.itemTarget || draggedItem.category !== row.dataset.itemCategory) return;
+        event.preventDefault();
+      });
+      row.addEventListener("drop", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+        let source = draggedItem;
+        try {
+          source = source || JSON.parse(event.dataTransfer?.getData("text/plain") || "null");
+        } catch {
+          source = draggedItem;
+        }
+        if (!source || source.target !== row.dataset.itemTarget || source.category !== row.dataset.itemCategory) return;
+        moveItem(row.dataset.itemTarget, row.dataset.itemCategory, source.id, row.dataset.itemId);
+      });
+      row.addEventListener("dragend", () => {
+        draggedItem = null;
       });
     });
   }
