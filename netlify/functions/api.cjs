@@ -570,6 +570,7 @@ async function upsertRecipe(client, recipe, info) {
     recipe.steps || "",
     recipe.stepsEn || "",
     JSON.stringify(stepItems),
+    JSON.stringify(stepItemsEn),
     recipe.notes || "",
     recipe.notesEn || "",
     recipe.imageUrl || "",
