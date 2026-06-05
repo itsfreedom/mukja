@@ -7,6 +7,9 @@
   const searchButton = document.getElementById("menu-search-button");
   const category = document.getElementById("menu-category");
   const list = document.getElementById("menu-list");
+  const modeRow = document.getElementById("menu-mode-row");
+  const viewModeButton = document.getElementById("menu-mode-view");
+  const editModeButton = document.getElementById("menu-mode-edit");
   const modal = document.getElementById("menu-recipe-modal");
   const modalTitle = document.getElementById("menu-recipe-title");
   const modalContent = document.getElementById("menu-recipe-content");
@@ -45,6 +48,7 @@
     notes: document.getElementById("menu-edit-recipe-notes")
   };
   let searchQuery = "";
+  let menuMode = "view";
   let editingMenuId = "";
   let activeRecipeMenuId = "";
   let editingRecipeId = "";
@@ -59,6 +63,17 @@
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
+
+  function isMenuEditMode() {
+    return canManageMenu && menuMode === "edit";
+  }
+
+  function updateMenuModeUI() {
+    const edit = isMenuEditMode();
+    modeRow?.classList.toggle("hidden", !canManageMenu);
+    viewModeButton?.classList.toggle("is-active", !edit);
+    editModeButton?.classList.toggle("is-active", edit);
+  }
 
   function renderFilters() {
     category.innerHTML = `<option value="">${I18n.t("all")}</option>` + Store.getMenuCategories()
@@ -206,19 +221,19 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("ingredients")}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="${I18n.t("addIngredient")}">${addIcon}</button>` : ""}
+          ${isMenuEditMode() ? `<button class="menu-row-action is-create" data-ingredient-action="add" type="button" aria-label="${I18n.t("addIngredient")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
             return `
-              <article class="list-card recipe-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
-                ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
+              <article class="list-card recipe-crud-row ${isMenuEditMode() ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${isMenuEditMode() ? 'draggable="true"' : ""}>
+                ${isMenuEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
                   <span>${escapeHtml([amount.quantity, amount.unit].filter(Boolean).join(" ") || "-")}</span>
                 </div>
-                ${canManageMenu ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
+                ${isMenuEditMode() ? `<button class="menu-row-action is-edit" data-ingredient-action="edit" data-index="${index}" type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>` : ""}
               </article>
               ${activeIngredientEdit?.index === index ? ingredientEditForm(item, index) : ""}
             `;
@@ -250,17 +265,17 @@
       <section class="history-detail-card recipe-detail-section recipe-crud-section">
         <div class="recipe-section-title-row">
           <h2>${I18n.t("steps")}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
+          ${isMenuEditMode() ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((step, index) => `
-            <article class="list-card recipe-crud-row recipe-step-crud-row ${canManageMenu ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${canManageMenu ? 'draggable="true"' : ""}>
-              ${canManageMenu ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
+            <article class="list-card recipe-crud-row recipe-step-crud-row ${isMenuEditMode() ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${isMenuEditMode() ? 'draggable="true"' : ""}>
+              ${isMenuEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
                 ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>
-              ${canManageMenu ? `
+              ${isMenuEditMode() ? `
                 <div class="recipe-crud-actions">
                   <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
                 </div>
@@ -333,7 +348,7 @@
     modalContent.innerHTML = `
       ${recipeSections(menu, recipe)}
     `;
-    recipeActions.classList.toggle("hidden", !canManageMenu);
+    recipeActions.classList.toggle("hidden", !isMenuEditMode());
     modal.classList.remove("hidden");
     document.body.classList.add("modal-open");
     modalClose.focus();
@@ -431,7 +446,7 @@
 
   function handleIngredientAction(event) {
     const button = event.target.closest("[data-ingredient-action]");
-    if (!button || !canManageMenu) return;
+    if (!button || !isMenuEditMode()) return;
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe) return;
@@ -502,7 +517,7 @@
 
   function handleIngredientDragStart(event) {
     const row = event.target.closest("[data-ingredient-index]");
-    if (!row || !canManageMenu) return;
+    if (!row || !isMenuEditMode()) return;
     draggedIngredientIndex = Number(row.dataset.ingredientIndex);
     event.dataTransfer?.setData("text/plain", String(draggedIngredientIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -517,7 +532,7 @@
 
   function handleIngredientDrop(event) {
     const row = event.target.closest("[data-ingredient-index]");
-    if (!row || !canManageMenu) return;
+    if (!row || !isMenuEditMode()) return;
     event.preventDefault();
     const position = markDropPosition(row, event);
     const from = draggedIngredientIndex ?? Number(event.dataTransfer?.getData("text/plain"));
@@ -527,7 +542,7 @@
 
   function handleStepAction(event) {
     const button = event.target.closest("[data-step-action]");
-    if (!button || !canManageMenu) return;
+    if (!button || !isMenuEditMode()) return;
     const menu = activeRecipeMenu();
     const recipe = menu ? recipeFor(menu) : null;
     if (!recipe) return;
@@ -585,7 +600,7 @@
 
   function handleStepDragStart(event) {
     const row = event.target.closest("[data-step-index]");
-    if (!row || !canManageMenu) return;
+    if (!row || !isMenuEditMode()) return;
     draggedStepIndex = Number(row.dataset.stepIndex);
     event.dataTransfer?.setData("text/plain", String(draggedStepIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -600,7 +615,7 @@
 
   function handleStepDrop(event) {
     const row = event.target.closest("[data-step-index]");
-    if (!row || !canManageMenu) return;
+    if (!row || !isMenuEditMode()) return;
     event.preventDefault();
     const position = markDropPosition(row, event);
     const from = draggedStepIndex ?? Number(event.dataTransfer?.getData("text/plain"));
@@ -846,13 +861,14 @@
   function rowActions(menu) {
     return `
       <div class="menu-row-actions">
-        ${canManageMenu ? actionButton("edit", "U", menu, "is-edit") : ""}
+        ${isMenuEditMode() ? actionButton("edit", "U", menu, "is-edit") : ""}
         ${actionButton("recipe", I18n.t("recipes"), menu, "is-recipe")}
       </div>
     `;
   }
 
   function render() {
+    updateMenuModeUI();
     if (!canViewMenu) {
       list.innerHTML = `<div class="list-card muted">${I18n.t("noAccess")}</div>`;
       return;
@@ -872,13 +888,13 @@
       <section class="menu-category-group">
         <div class="section-title-row menu-category-title-row">
           <h2>${group}</h2>
-          ${canManageMenu ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
+          ${isMenuEditMode() ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
         </div>
         <hr class="section-divider section-title-divider" />
         <div class="list">
           ${groupMenus.map((menu) => `
-            <article class="list-card menu-row ${canManageMenu ? "has-leading-action" : ""}" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
-              ${canManageMenu ? actionButton("drag", I18n.t("moveOrder"), menu, "menu-drag-handle recipe-drag-handle") : ""}
+            <article class="list-card menu-row ${isMenuEditMode() ? "has-leading-action" : ""}" data-menu="${menu.id}" ${isMenuEditMode() ? 'draggable="true"' : ""}>
+              ${isMenuEditMode() ? actionButton("drag", I18n.t("moveOrder"), menu, "menu-drag-handle recipe-drag-handle") : ""}
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
@@ -898,6 +914,7 @@
         event.stopPropagation();
         const menu = Store.getMenus().find((row) => row.id === button.dataset.menuId);
         const action = button.dataset.menuAction;
+        if (["create", "cancel", "save", "edit", "delete"].includes(action) && !isMenuEditMode()) return;
         if (action === "create") {
           activeMenuEdit = { isNew: true, category: button.dataset.menuCategory || Store.getMenuCategories()[0] || "식사" };
           render();
@@ -929,18 +946,18 @@
     });
     list.querySelectorAll("[data-menu]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
-        if (!canManageMenu) return;
+        if (!isMenuEditMode()) return;
         draggedMenuId = row.dataset.menu;
         event.dataTransfer?.setData("text/plain", draggedMenuId);
         event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
       });
       row.addEventListener("dragover", (event) => {
-        if (!canManageMenu) return;
+        if (!isMenuEditMode()) return;
         event.preventDefault();
         markDropPosition(row, event);
       });
       row.addEventListener("drop", (event) => {
-        if (!canManageMenu) return;
+        if (!isMenuEditMode()) return;
         event.preventDefault();
         const position = markDropPosition(row, event);
         const fromId = draggedMenuId || event.dataTransfer?.getData("text/plain");
@@ -958,6 +975,23 @@
     render();
   }
 
+  function setMenuMode(mode) {
+    menuMode = canManageMenu && mode === "edit" ? "edit" : "view";
+    activeMenuEdit = null;
+    activeIngredientEdit = null;
+    activeStepEdit = null;
+    draggedMenuId = null;
+    draggedIngredientIndex = null;
+    draggedStepIndex = null;
+    clearDropMarker();
+    render();
+    if (activeRecipeMenuId && !modal.classList.contains("hidden")) {
+      rerenderActiveRecipe();
+    }
+  }
+
+  viewModeButton?.addEventListener("click", () => setMenuMode("view"));
+  editModeButton?.addEventListener("click", () => setMenuMode("edit"));
   searchButton.addEventListener("click", applySearch);
   search.addEventListener("keydown", (event) => {
     if (event.key === "Enter") applySearch();

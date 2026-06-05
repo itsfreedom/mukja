@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v149";
+  const appAssetVersion = "v150";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -1421,7 +1421,7 @@
       const nav = [
         ["home", "index.html", '<img class="nav-icon-image" src="assets/icons/home-circle.svg" alt="" />'],
         ["history", "history.html", "H"],
-        ["order", "order.html", "D"],
+        ["order", "order.html", "R"],
         ["menus", "menu.html", "M"],
         ["admin", "admin.html", "A"]
       ];

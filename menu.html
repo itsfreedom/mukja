@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>메뉴</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260605-fixed-desktop-frame" />
+    <link rel="stylesheet" href="style.css?v=v150" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -19,6 +19,10 @@
               <h1 data-i18n="menus">메뉴</h1>
             </div>
           </header>
+          <div class="mode-row admin-section hidden" id="menu-mode-row">
+            <button class="ghost-button" id="menu-mode-view" type="button" data-i18n="viewMode">보기 모드</button>
+            <button class="ghost-button" id="menu-mode-edit" type="button" data-i18n="editMode">수정 모드</button>
+          </div>
           <section class="menu-filter-panel">
             <div class="menu-filter-stack">
               <label class="field menu-category-field">
