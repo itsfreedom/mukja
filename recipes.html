@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>레시피</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-semi-prep-category" />
+    <link rel="stylesheet" href="style.css?v=20260604-inline-recipe-edit" />
   </head>
   <body>
     <div class="shell">
@@ -33,9 +33,7 @@
             </div>
           </section>
           <section id="recipe-manage-actions" class="menu-manage-actions hidden" aria-label="레시피 관리">
-            <button id="create-recipe" class="button" type="button">생성</button>
-            <button id="edit-recipe" class="ghost-button" type="button">수정</button>
-            <p class="delete-disabled-note">레시피는 삭제 불가</p>
+            <p class="delete-disabled-note">레시피는 메뉴 생성 시 자동 생성됩니다.</p>
           </section>
           <section class="split admin-section">
             <div id="recipe-list" class="list"></div>
@@ -47,34 +45,8 @@
         </div>
       </main>
     </div>
-    <div id="recipe-edit-modal" class="recipe-modal hidden" role="dialog" aria-modal="true" aria-labelledby="recipe-edit-title">
-      <div class="recipe-modal-backdrop" data-close-recipe-edit></div>
-      <article class="recipe-modal-panel menu-edit-panel">
-        <header class="page-header recipe-modal-header">
-          <div>
-            <h1 id="recipe-edit-title">레시피 생성</h1>
-            <p class="page-title-meta">레시피는 삭제 불가</p>
-          </div>
-          <button id="close-recipe-edit" class="icon-close-button" type="button" aria-label="닫기">×</button>
-        </header>
-        <div class="form-grid recipe-edit-grid">
-          <input id="edit-recipe-name" data-i18n-placeholder="name" />
-          <select id="edit-recipe-section"></select>
-          <textarea id="edit-recipe-description" placeholder="설명"></textarea>
-          <textarea id="edit-recipe-ingredients" placeholder="재료명 | 양"></textarea>
-          <textarea id="edit-recipe-seasonings" placeholder="양념명 | 양"></textarea>
-          <textarea id="edit-recipe-steps" placeholder="조리순서 | 사진 URL"></textarea>
-          <textarea id="edit-recipe-notes" data-i18n-placeholder="notes"></textarea>
-          <label class="field"><span data-i18n="activeMenu">판매중</span><input id="edit-recipe-enabled" type="checkbox" checked /></label>
-        </div>
-        <div class="button-row admin-section">
-          <button id="save-recipe-edit" class="button" type="button" data-i18n="save">저장</button>
-          <button id="cancel-recipe-edit" class="ghost-button" type="button">취소</button>
-        </div>
-      </article>
-    </div>
-    <script src="storage.js?v=20260604-semi-prep-category"></script>
-    <script src="i18n.js?v=20260604-semi-prep-category"></script>
-    <script src="recipes.js?v=20260604-semi-prep-category"></script>
+    <script src="storage.js?v=20260604-inline-recipe-edit"></script>
+    <script src="i18n.js?v=20260604-inline-recipe-edit"></script>
+    <script src="recipes.js?v=20260604-inline-recipe-edit"></script>
   </body>
 </html>

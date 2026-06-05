@@ -1068,6 +1068,27 @@
     }));
   }
 
+  function saveMenuWithRecipe(recipe, menu) {
+    const normalizedRecipe = normalizeRecipe(recipe);
+    const normalizedMenu = normalizeMenu(menu);
+    dataState.recipes = dataState.recipes.some((row) => row.id === normalizedRecipe.id)
+      ? dataState.recipes.map((row) => row.id === normalizedRecipe.id ? normalizedRecipe : row)
+      : [...dataState.recipes, normalizedRecipe];
+    dataState.menus = dataState.menus.some((row) => row.id === normalizedMenu.id)
+      ? dataState.menus.map((row) => row.id === normalizedMenu.id ? normalizedMenu : row)
+      : [...dataState.menus, normalizedMenu];
+    syncQuietly(async () => {
+      await apiRequest("/recipes", {
+        method: "POST",
+        body: JSON.stringify({ recipe: normalizedRecipe })
+      });
+      await apiRequest("/menus", {
+        method: "POST",
+        body: JSON.stringify({ menu: normalizedMenu })
+      });
+    });
+  }
+
   function discontinueMenu(idValue) {
     const menus = dataState.menus.map((menu) =>
       menu.id === idValue ? { ...menu, discontinued: true } : menu
@@ -1109,6 +1130,7 @@
     getMenus: () => dataState.menus.map(normalizeMenu),
     setMenus,
     saveMenu,
+    saveMenuWithRecipe,
     discontinueMenu,
     getMenuCategories: menuCategories,
     getHistory: () => dataState.history.slice(),

@@ -7,7 +7,7 @@
     <meta name="format-detection" content="telephone=no" />
     <title>메뉴</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=20260604-semi-prep-category" />
+    <link rel="stylesheet" href="style.css?v=20260604-inline-recipe-edit" />
   </head>
   <body>
     <div class="shell">
@@ -53,14 +53,12 @@
         <header class="page-header recipe-modal-header">
           <div>
             <h1 id="menu-recipe-title" data-i18n="menuDetail">메뉴 레시피</h1>
-            <p id="menu-recipe-meta" class="page-title-meta"></p>
           </div>
           <span id="menu-recipe-status" class="badge green"></span>
           <button id="close-menu-recipe" class="icon-close-button" type="button" aria-label="닫기">×</button>
         </header>
         <section id="menu-recipe-actions" class="menu-recipe-actions hidden" aria-label="레시피 관리">
-          <button id="create-recipe-from-menu" class="button" type="button">레시피 생성</button>
-          <button id="edit-recipe-from-menu" class="ghost-button" type="button">레시피 수정</button>
+          <button id="edit-recipe-from-menu" class="danger-button recipe-save-button" type="button">레시피 수정</button>
           <p class="delete-disabled-note">레시피는 삭제 불가</p>
         </section>
         <div id="menu-recipe-content" class="history-detail-content"></div>
@@ -71,14 +69,13 @@
       <article class="recipe-modal-panel menu-edit-panel">
         <header class="page-header recipe-modal-header">
           <div>
-            <h1 id="menu-recipe-edit-title">레시피 생성</h1>
-            <p class="page-title-meta">레시피는 삭제 불가</p>
+            <h1 id="menu-recipe-edit-title">레시피 수정</h1>
           </div>
           <button id="close-menu-recipe-edit" class="icon-close-button" type="button" aria-label="닫기">×</button>
         </header>
         <div class="form-grid recipe-edit-grid">
           <input id="menu-edit-recipe-name" data-i18n-placeholder="name" />
-          <select id="menu-edit-recipe-section"></select>
+          <select id="menu-edit-recipe-section" class="hidden"></select>
           <textarea id="menu-edit-recipe-description" placeholder="설명"></textarea>
           <textarea id="menu-edit-recipe-ingredients" placeholder="재료명 | 양"></textarea>
           <textarea id="menu-edit-recipe-seasonings" placeholder="양념명 | 양"></textarea>
@@ -106,7 +103,7 @@
           <input id="edit-menu-name-en" data-i18n-placeholder="englishName" />
           <input id="edit-menu-category" data-i18n-placeholder="menuCategory" />
           <input id="edit-menu-price" data-i18n-placeholder="price" inputmode="decimal" />
-          <select id="edit-menu-recipe"></select>
+          <select id="edit-menu-recipe" class="hidden"></select>
           <label class="field"><span data-i18n="seasonalMenu">계절 메뉴</span><input id="edit-menu-seasonal" type="checkbox" /></label>
           <label class="field"><span data-i18n="activeMenu">판매중</span><input id="edit-menu-active" type="checkbox" checked /></label>
         </div>
@@ -116,8 +113,8 @@
         </div>
       </article>
     </div>
-    <script src="storage.js?v=20260604-semi-prep-category"></script>
-    <script src="i18n.js?v=20260604-semi-prep-category"></script>
-    <script src="menu.js?v=20260604-semi-prep-category"></script>
+    <script src="storage.js?v=20260604-inline-recipe-edit"></script>
+    <script src="i18n.js?v=20260604-inline-recipe-edit"></script>
+    <script src="menu.js?v=20260604-inline-recipe-edit"></script>
   </body>
 </html>

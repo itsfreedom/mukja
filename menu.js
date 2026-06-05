@@ -13,12 +13,10 @@
   const deleteMenu = document.getElementById("delete-menu");
   const modal = document.getElementById("menu-recipe-modal");
   const modalTitle = document.getElementById("menu-recipe-title");
-  const modalMeta = document.getElementById("menu-recipe-meta");
   const modalStatus = document.getElementById("menu-recipe-status");
   const modalContent = document.getElementById("menu-recipe-content");
   const modalClose = document.getElementById("close-menu-recipe");
   const recipeActions = document.getElementById("menu-recipe-actions");
-  const createRecipeFromMenu = document.getElementById("create-recipe-from-menu");
   const editRecipeFromMenu = document.getElementById("edit-recipe-from-menu");
   const recipeEditModal = document.getElementById("menu-recipe-edit-modal");
   const recipeEditModalTitle = document.getElementById("menu-recipe-edit-title");
@@ -89,6 +87,31 @@
       Store.getRecipes().find((recipe) => recipe.name === menu.recipeName);
   }
 
+  function blankRecipeForMenu(menu) {
+    const recipe = {
+      id: menu.recipeId || Store.id("recipe"),
+      name: menu.nameKo,
+      section: menu.category || "기타",
+      description: "",
+      ingredients: "",
+      seasonings: "",
+      steps: "",
+      notes: "",
+      imageUrl: "",
+      ingredientItems: [],
+      seasoningItems: [],
+      stepItems: [],
+      enabled: !menu.discontinued,
+      updatedAt: Store.today()
+    };
+    Store.saveRecipe(recipe);
+    return recipe;
+  }
+
+  function ensureRecipeForMenu(menu) {
+    return recipeFor(menu) || blankRecipeForMenu(menu);
+  }
+
   function menuStatusBadges(menu) {
     const statusText = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     return `
@@ -147,10 +170,9 @@
   }
 
   function openRecipe(menu) {
-    const recipe = recipeFor(menu);
+    const recipe = ensureRecipeForMenu(menu);
     activeRecipeMenuId = menu.id;
     modalTitle.textContent = I18n.menuName(menu);
-    modalMeta.textContent = recipe?.section ? I18n.sectionLabel(recipe.section) : "";
     modalStatus.textContent = menu.discontinued ? I18n.t("discontinuedMenu") : I18n.t("activeMenu");
     modalStatus.className = `badge ${menu.discontinued ? "yellow" : "green"}`;
     modalContent.innerHTML = `
@@ -173,7 +195,7 @@
 
   function openRecipeEditor(recipe = null) {
     editingRecipeId = recipe?.id || "";
-    recipeEditModalTitle.textContent = recipe ? "레시피 수정" : "레시피 생성";
+    recipeEditModalTitle.textContent = "레시피 수정";
     recipeEditFields.name.value = recipe?.name || "";
     recipeEditFields.section.value = recipe?.section || Store.getSections()[0] || "기타";
     recipeEditFields.description.value = recipe?.description || "";
@@ -261,13 +283,35 @@
   function saveMenuFromEditor() {
     const nameKo = editFields.nameKo.value.trim();
     if (!nameKo) return;
-    const recipe = Store.getRecipes().find((row) => row.id === editFields.recipe.value);
     const existing = editingMenuId ? Store.getMenus().find((row) => row.id === editingMenuId) : null;
+    const existingRecipe = existing ? recipeFor(existing) : null;
+    const recipe = existingRecipe || {
+      id: editFields.recipe.value || Store.id("recipe"),
+      name: nameKo,
+      section: editFields.category.value.trim() || "기타",
+      description: "",
+      ingredients: "",
+      seasonings: "",
+      steps: "",
+      notes: "",
+      imageUrl: "",
+      ingredientItems: [],
+      seasoningItems: [],
+      stepItems: [],
+      enabled: editFields.active.checked,
+      updatedAt: Store.today()
+    };
+    const recipeToSave = {
+      ...recipe,
+      name: recipe.name || nameKo,
+      enabled: editFields.active.checked,
+      updatedAt: Store.today()
+    };
     const menu = {
       ...(existing || {}),
       id: editingMenuId || Store.id("menu"),
-      recipeId: editFields.recipe.value,
-      recipeName: recipe?.name || existing?.recipeName || "",
+      recipeId: recipeToSave.id,
+      recipeName: recipeToSave.name,
       nameKo,
       nameEn: editFields.nameEn.value.trim(),
       category: editFields.category.value.trim(),
@@ -277,7 +321,7 @@
       discontinued: !editFields.active.checked,
       notes: existing?.notes || ""
     };
-    Store.saveMenu(menu);
+    Store.saveMenuWithRecipe(recipeToSave, menu);
     selectedMenuId = menu.id;
     closeMenuEditor();
     renderFilters();
@@ -381,10 +425,9 @@
   deleteMenu.addEventListener("click", discontinueSelectedMenu);
   saveMenuEdit.addEventListener("click", saveMenuFromEditor);
   cancelMenuEdit.addEventListener("click", closeMenuEditor);
-  createRecipeFromMenu.addEventListener("click", () => openRecipeEditor());
   editRecipeFromMenu.addEventListener("click", () => {
     const menu = activeRecipeMenu();
-    const recipe = menu ? recipeFor(menu) : null;
+    const recipe = menu ? ensureRecipeForMenu(menu) : null;
     if (!recipe) {
       alert("수정할 레시피가 없습니다.");
       return;
