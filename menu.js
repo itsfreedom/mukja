@@ -7,10 +7,6 @@
   const searchButton = document.getElementById("menu-search-button");
   const category = document.getElementById("menu-category");
   const list = document.getElementById("menu-list");
-  const manageActions = document.getElementById("menu-manage-actions");
-  const createMenu = document.getElementById("create-menu");
-  const editMenu = document.getElementById("edit-menu");
-  const deleteMenu = document.getElementById("delete-menu");
   const modal = document.getElementById("menu-recipe-modal");
   const modalTitle = document.getElementById("menu-recipe-title");
   const modalStatus = document.getElementById("menu-recipe-status");
@@ -47,7 +43,6 @@
     notes: document.getElementById("menu-edit-recipe-notes")
   };
   let searchQuery = "";
-  let selectedMenuId = "";
   let editingMenuId = "";
   let activeRecipeMenuId = "";
   let editingRecipeId = "";
@@ -244,26 +239,12 @@
     if (menu) openRecipe(menu);
   }
 
-  function selectedMenu() {
-    return Store.getMenus().find((menu) => menu.id === selectedMenuId) || null;
-  }
-
-  function chooseMenu(idValue, showError = false) {
-    if (selectedMenuId && selectedMenuId !== idValue && showError) {
-      alert("메뉴는 하나만 선택할 수 있습니다.");
-      return false;
-    }
-    selectedMenuId = selectedMenuId === idValue ? "" : idValue;
-    render();
-    return true;
-  }
-
-  function openMenuEditor(menu = null) {
+  function openMenuEditor(menu = null, defaults = {}) {
     editingMenuId = menu?.id || "";
     editModalTitle.textContent = menu ? "메뉴 수정" : "메뉴 생성";
     editFields.nameKo.value = menu?.nameKo || "";
     editFields.nameEn.value = menu?.nameEn || "";
-    editFields.category.value = menu?.category || "";
+    editFields.category.value = menu?.category || defaults.category || "";
     editFields.price.value = menu?.price || "";
     editFields.recipe.value = menu?.recipeId || "";
     editFields.seasonal.checked = Boolean(menu?.seasonal);
@@ -320,14 +301,12 @@
       notes: existing?.notes || ""
     };
     Store.saveMenuWithRecipe(recipeToSave, menu);
-    selectedMenuId = menu.id;
     closeMenuEditor();
     renderFilters();
     render();
   }
 
-  function discontinueSelectedMenu() {
-    const menu = selectedMenu();
+  function discontinueMenu(menu) {
     if (!menu) {
       alert("판매 중지할 메뉴를 하나 선택해 주세요.");
       return;
@@ -336,9 +315,31 @@
     Store.discontinueMenu(menu.id);
     const recipe = recipeFor(menu);
     if (recipe) Store.saveRecipe({ ...recipe, enabled: false, updatedAt: Store.today() });
-    selectedMenuId = menu.id;
     renderFilters();
     render();
+  }
+
+  function actionButton(action, label, menu, extraClass = "") {
+    return `
+      <button class="menu-row-action ${extraClass}" data-menu-action="${action}" data-menu-id="${menu.id}" type="button" aria-label="${I18n.menuName(menu)} ${label}">
+        ${action === "recipe" ? `
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        ` : label}
+      </button>
+    `;
+  }
+
+  function rowActions(menu) {
+    return `
+      <div class="menu-row-actions">
+        ${canManageMenu ? actionButton("create", "+", menu, "is-create") : ""}
+        ${canManageMenu ? actionButton("edit", "U", menu, "is-edit") : ""}
+        ${canManageMenu ? actionButton("discontinue", "-", menu, "is-danger") : ""}
+        ${actionButton("recipe", "레시피", menu, "is-recipe")}
+      </div>
+    `;
   }
 
   function render() {
@@ -347,12 +348,10 @@
       return;
     }
     const menus = filteredMenus();
-    manageActions.classList.toggle("hidden", !canManageMenu);
     if (!menus.length) {
       list.innerHTML = `<div class="list-card muted">${I18n.t("noMenus")}</div>`;
       return;
     }
-    if (selectedMenuId && !menus.some((menu) => menu.id === selectedMenuId)) selectedMenuId = "";
     const groups = menus.reduce((acc, menu) => {
       const key = menu.category || "-";
       acc[key] = acc[key] || [];
@@ -364,8 +363,7 @@
         <h2>${group}</h2>
         <div class="list admin-section">
           ${groupMenus.map((menu) => `
-            <button class="list-card menu-row ${menu.id === selectedMenuId ? "is-active" : ""} ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}" type="button">
-              <input class="menu-select-check" data-menu-check="${menu.id}" type="checkbox" ${menu.id === selectedMenuId ? "checked" : ""} aria-label="${I18n.menuName(menu)} 선택" />
+            <article class="list-card menu-row ${menu.discontinued ? "is-disabled" : ""}" data-menu="${menu.id}">
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <strong>${I18n.menuName(menu)}</strong>
@@ -375,30 +373,21 @@
               <div class="menu-row-price">
                 <strong>${money(menu)}</strong>
               </div>
-              <span class="menu-row-arrow" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </button>
+              ${rowActions(menu)}
+            </article>
           `).join("")}
         </div>
       </section>
     `).join("");
-    list.querySelectorAll("[data-menu]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const menu = Store.getMenus().find((row) => row.id === button.dataset.menu);
-        if (menu) {
-          selectedMenuId = menu.id;
-          render();
-          openRecipe(menu);
-        }
-      });
-    });
-    list.querySelectorAll("[data-menu-check]").forEach((checkbox) => {
-      checkbox.addEventListener("click", (event) => {
+    list.querySelectorAll("[data-menu-action]").forEach((button) => {
+      button.addEventListener("click", (event) => {
         event.stopPropagation();
-        if (!chooseMenu(checkbox.dataset.menuCheck, checkbox.checked)) checkbox.checked = false;
+        const menu = Store.getMenus().find((row) => row.id === button.dataset.menuId);
+        if (!menu) return;
+        if (button.dataset.menuAction === "create") openMenuEditor(null, { category: menu.category });
+        if (button.dataset.menuAction === "edit") openMenuEditor(menu);
+        if (button.dataset.menuAction === "discontinue") discontinueMenu(menu);
+        if (button.dataset.menuAction === "recipe") openRecipe(menu);
       });
     });
   }
@@ -413,16 +402,6 @@
     if (event.key === "Enter") applySearch();
   });
   category.addEventListener("change", render);
-  createMenu.addEventListener("click", () => openMenuEditor());
-  editMenu.addEventListener("click", () => {
-    const menu = selectedMenu();
-    if (!menu) {
-      alert("수정할 메뉴를 하나 선택해 주세요.");
-      return;
-    }
-    openMenuEditor(menu);
-  });
-  deleteMenu.addEventListener("click", discontinueSelectedMenu);
   saveMenuEdit.addEventListener("click", saveMenuFromEditor);
   cancelMenuEdit.addEventListener("click", closeMenuEditor);
   editRecipeFromMenu.addEventListener("click", () => {
