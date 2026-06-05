@@ -9,8 +9,10 @@
   let editingEntry = null;
   let activeItemEdit = null;
   let activeCategoryEdit = null;
+  let draggedCategory = null;
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
+  const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
   const els = {
     list: document.getElementById("items-list"),
     memo: document.getElementById("memo"),
@@ -153,6 +155,30 @@
     renderItems();
   }
 
+  function saveCategoryOrder(target, orderedCategories) {
+    const existing = Store.getRequestCategories(target);
+    const next = uniqueList([
+      ...orderedCategories,
+      ...existing.filter((category) => !orderedCategories.includes(category))
+    ]);
+    Store.setRequestCategories(target, next);
+  }
+
+  function moveCategory(target, fromCategory, toCategory) {
+    if (!target || !fromCategory || !toCategory || fromCategory === toCategory) return;
+    const rows = [...els.list.querySelectorAll("[data-request-category-row]")]
+      .filter((row) => row.dataset.categoryTarget === target);
+    const ordered = rows.map((row) => row.dataset.categoryName).filter(Boolean);
+    const from = ordered.indexOf(fromCategory);
+    const to = ordered.indexOf(toCategory);
+    if (from < 0 || to < 0) return;
+    const [moved] = ordered.splice(from, 1);
+    ordered.splice(to, 0, moved);
+    saveCategoryOrder(target, ordered);
+    draggedCategory = null;
+    renderItems();
+  }
+
   function itemForm(item = null, defaults = {}) {
     const target = item?.target || defaults.target || "카페테리아";
     const section = item?.section || sectionForTargetCategory(target, defaults.category || "기타");
@@ -230,6 +256,7 @@
       <div class="menu-row-actions request-row-actions">
         <button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 품목 추가">${addIcon}</button>
         <button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} 카테고리 수정">${editIcon}</button>
+        <button class="menu-row-action request-category-drag-handle recipe-drag-handle" data-request-category-drag-handle type="button" aria-label="${I18n.sectionLabel(category)} 순서 이동">${dragIcon}</button>
       </div>
     `;
   }
@@ -304,7 +331,7 @@
           ${activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
           <div class="department-card request-target-section">
             ${categories.map((category) => `
-              <section class="item-section home-request-section request-category-section">
+              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="true">
                 <div class="section-title-row request-category-title-row">
                   <h3>${I18n.sectionLabel(category)}</h3>
                   ${categoryActions(target, category)}
@@ -400,6 +427,33 @@
         if (action === "delete") {
           deleteCategoryFromForm(button.closest("[data-request-category-form]"));
         }
+      });
+    });
+    els.list.querySelectorAll("[data-request-category-row]").forEach((row) => {
+      row.addEventListener("dragstart", (event) => {
+        draggedCategory = {
+          target: row.dataset.categoryTarget,
+          category: row.dataset.categoryName
+        };
+        event.dataTransfer?.setData("text/plain", JSON.stringify(draggedCategory));
+      });
+      row.addEventListener("dragover", (event) => {
+        if (!draggedCategory || draggedCategory.target !== row.dataset.categoryTarget) return;
+        event.preventDefault();
+      });
+      row.addEventListener("drop", (event) => {
+        event.preventDefault();
+        let source = draggedCategory;
+        try {
+          source = source || JSON.parse(event.dataTransfer?.getData("text/plain") || "null");
+        } catch {
+          source = draggedCategory;
+        }
+        if (!source || source.target !== row.dataset.categoryTarget) return;
+        moveCategory(row.dataset.categoryTarget, source.category, row.dataset.categoryName);
+      });
+      row.addEventListener("dragend", () => {
+        draggedCategory = null;
       });
     });
   }
