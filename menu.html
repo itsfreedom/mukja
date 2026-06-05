@@ -8,7 +8,7 @@
     <script>document.documentElement.dataset.preferredLang=localStorage.getItem("restaurant_lang")||"ko";document.documentElement.lang=document.documentElement.dataset.preferredLang;</script>
     <title>메뉴</title>
     <link rel="manifest" href="manifest.json" />
-    <link rel="stylesheet" href="style.css?v=v153" />
+    <link rel="stylesheet" href="style.css?v=v154" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -58,6 +58,10 @@
           </div>
           <button id="close-menu-recipe" class="icon-close-button" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12" /><path d="M18 6 6 18" /></svg></button>
         </header>
+        <div class="mode-row admin-section hidden" id="menu-recipe-mode-row">
+          <button class="ghost-button" id="menu-recipe-mode-view" type="button" data-i18n="viewMode">보기 모드</button>
+          <button class="ghost-button" id="menu-recipe-mode-edit" type="button" data-i18n="editMode">수정 모드</button>
+        </div>
         <div id="menu-recipe-content" class="history-detail-content"></div>
         <section id="menu-recipe-actions" class="menu-recipe-actions hidden" aria-label="레시피 관리">
           <button id="edit-recipe-from-menu" class="ghost-button recipe-action-button" type="button" data-i18n="close">닫기</button>
@@ -140,8 +144,8 @@
         </div>
       </article>
     </div>
-    <script src="storage.js?v=v153"></script>
-    <script src="i18n.js?v=v153"></script>
-    <script src="menu.js?v=v153"></script>
+    <script src="storage.js?v=v154"></script>
+    <script src="i18n.js?v=v154"></script>
+    <script src="menu.js?v=v154"></script>
   </body>
 </html>

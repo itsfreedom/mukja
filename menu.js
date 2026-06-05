@@ -10,6 +10,9 @@
   const modeRow = document.getElementById("menu-mode-row");
   const viewModeButton = document.getElementById("menu-mode-view");
   const editModeButton = document.getElementById("menu-mode-edit");
+  const recipeModeRow = document.getElementById("menu-recipe-mode-row");
+  const recipeViewModeButton = document.getElementById("menu-recipe-mode-view");
+  const recipeEditModeButton = document.getElementById("menu-recipe-mode-edit");
   const modal = document.getElementById("menu-recipe-modal");
   const modalTitle = document.getElementById("menu-recipe-title");
   const modalContent = document.getElementById("menu-recipe-content");
@@ -73,6 +76,9 @@
     modeRow?.classList.toggle("hidden", !canManageMenu);
     viewModeButton?.classList.toggle("is-active", !edit);
     editModeButton?.classList.toggle("is-active", edit);
+    recipeModeRow?.classList.toggle("hidden", !canManageMenu);
+    recipeViewModeButton?.classList.toggle("is-active", !edit);
+    recipeEditModeButton?.classList.toggle("is-active", edit);
   }
 
   function renderFilters() {
@@ -373,6 +379,17 @@
     `;
   }
 
+  function setRecipeUrl(menuId = "") {
+    if (!window.history?.replaceState) return;
+    const url = new URL(window.location.href);
+    if (menuId) {
+      url.searchParams.set("recipe", menuId);
+    } else {
+      url.searchParams.delete("recipe");
+    }
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
   function openRecipe(menu, options = {}) {
     const recipe = ensureRecipeForMenu(menu);
     activeRecipeMenuId = menu.id;
@@ -387,6 +404,7 @@
     recipeActions.classList.toggle("hidden", !isMenuEditMode());
     modal.classList.remove("hidden");
     document.body.classList.add("modal-open");
+    if (options.updateUrl !== false) setRecipeUrl(menu.id);
     modalClose.focus();
   }
 
@@ -396,6 +414,7 @@
     activeStepEdit = null;
     draggedStepIndex = null;
     document.body.classList.remove("modal-open");
+    setRecipeUrl("");
   }
 
   function activeRecipeMenu() {
@@ -1031,6 +1050,8 @@
 
   viewModeButton?.addEventListener("click", () => setMenuMode("view"));
   editModeButton?.addEventListener("click", () => setMenuMode("edit"));
+  recipeViewModeButton?.addEventListener("click", () => setMenuMode("view"));
+  recipeEditModeButton?.addEventListener("click", () => setMenuMode("edit"));
   searchButton.addEventListener("click", applySearch);
   search.addEventListener("keydown", (event) => {
     if (event.key === "Enter") applySearch();
@@ -1079,5 +1100,14 @@
   });
   renderFilters();
   render();
+  const recipeParam = new URLSearchParams(window.location.search).get("recipe") || "";
+  if (recipeParam) {
+    const menu = Store.getMenus().find((row) => row.id === recipeParam);
+    if (menu) {
+      openRecipe(menu, { updateUrl: false });
+    } else {
+      setRecipeUrl("");
+    }
+  }
   I18n.applyI18n();
 })();
