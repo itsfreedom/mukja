@@ -1037,6 +1037,18 @@
     setRecipes(recipes);
   }
 
+  function isEmptyRecipe(recipe) {
+    if (!recipe) return false;
+    return !recipe.description &&
+      !recipe.ingredients &&
+      !recipe.seasonings &&
+      !recipe.steps &&
+      !recipe.notes &&
+      !(recipe.ingredientItems || []).length &&
+      !(recipe.seasoningItems || []).length &&
+      !(recipe.stepItems || []).length;
+  }
+
   function setMenus(menus) {
     const normalized = (menus || []).map(normalizeMenu);
     dataState.menus = normalized;
@@ -1096,6 +1108,16 @@
     setMenus(menus);
   }
 
+  function deleteMenu(idValue) {
+    const menu = dataState.menus.find((row) => row.id === idValue);
+    dataState.menus = dataState.menus.filter((row) => row.id !== idValue);
+    if (menu?.recipeId && !dataState.menus.some((row) => row.recipeId === menu.recipeId)) {
+      const recipe = dataState.recipes.find((row) => row.id === menu.recipeId);
+      if (isEmptyRecipe(recipe)) dataState.recipes = dataState.recipes.filter((row) => row.id !== menu.recipeId);
+    }
+    syncQuietly(() => apiRequest(`/menus/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+  }
+
   function menuCategories() {
     return Array.from(new Set(dataState.menus.map((menu) => menu.category).filter(Boolean)));
   }
@@ -1132,6 +1154,7 @@
     saveMenu,
     saveMenuWithRecipe,
     discontinueMenu,
+    deleteMenu,
     getMenuCategories: menuCategories,
     getHistory: () => dataState.history.slice(),
     refreshHistory: hydrateHistoryFromApi,

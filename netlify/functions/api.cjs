@@ -869,7 +869,28 @@ exports.handler = async (event) => {
 
     const menuDeleteMatch = path.match(/^\/menus\/([^/]+)$/);
     if (method === "DELETE" && menuDeleteMatch) {
-      return json(405, { ok: false, error: "Menus cannot be deleted. Mark discontinued instead." });
+      const menuId = decodeURIComponent(menuDeleteMatch[1]);
+      await client.query("begin");
+      const menu = await client.query("select recipe_id from menus where id = $1", [menuId]);
+      const recipeId = menu.rows[0]?.recipe_id || "";
+      await client.query("delete from menus where id = $1", [menuId]);
+      if (recipeId) {
+        await client.query(`
+          delete from recipes
+          where id = $1
+            and not exists (select 1 from menus where recipe_id = $1)
+            and coalesce(description, '') = ''
+            and coalesce(ingredients, '') = ''
+            and coalesce(seasonings, '') = ''
+            and coalesce(steps, '') = ''
+            and coalesce(notes, '') = ''
+            and jsonb_array_length(coalesce(ingredient_items, '[]'::jsonb)) = 0
+            and jsonb_array_length(coalesce(seasoning_items, '[]'::jsonb)) = 0
+            and jsonb_array_length(coalesce(step_items, '[]'::jsonb)) = 0
+        `, [recipeId]);
+      }
+      await client.query("commit");
+      return json(200, { ok: true });
     }
 
     const recipeDeleteMatch = path.match(/^\/recipes\/([^/]+)$/);

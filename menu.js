@@ -23,6 +23,7 @@
   const editModalTitle = document.getElementById("menu-edit-title");
   const editModalClose = document.getElementById("close-menu-edit");
   const saveMenuEdit = document.getElementById("save-menu-edit");
+  const deleteMenuEdit = document.getElementById("delete-menu-edit");
   const cancelMenuEdit = document.getElementById("cancel-menu-edit");
   const editFields = {
     nameKo: document.getElementById("edit-menu-name-ko"),
@@ -274,6 +275,7 @@
     editFields.seasonal.checked = Boolean(menu?.seasonal);
     editFields.active.checked = menu ? !menu.discontinued : true;
     editFields.discontinued.checked = menu ? Boolean(menu.discontinued) : false;
+    deleteMenuEdit.classList.toggle("hidden", !menu);
     editModal.classList.remove("hidden");
     document.body.classList.add("modal-open");
     editFields.nameKo.focus();
@@ -329,6 +331,17 @@
       notes: existing?.notes || ""
     };
     Store.saveMenuWithRecipe(recipeToSave, menu);
+    closeMenuEditor();
+    renderFilters();
+    render();
+  }
+
+  function deleteMenuFromEditor() {
+    if (!editingMenuId) return;
+    const menu = Store.getMenus().find((row) => row.id === editingMenuId);
+    if (!menu) return;
+    if (!confirm(`${I18n.menuName(menu)} 메뉴를 삭제할까요?`)) return;
+    Store.deleteMenu(editingMenuId);
     closeMenuEditor();
     renderFilters();
     render();
@@ -415,6 +428,7 @@
   });
   category.addEventListener("change", render);
   saveMenuEdit.addEventListener("click", saveMenuFromEditor);
+  deleteMenuEdit.addEventListener("click", deleteMenuFromEditor);
   cancelMenuEdit.addEventListener("click", closeMenuEditor);
   editRecipeFromMenu.addEventListener("click", () => {
     const menu = activeRecipeMenu();
