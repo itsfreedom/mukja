@@ -16,6 +16,7 @@
   const session = Store.getAuth();
   const canManageRecipes = session?.role === "admin";
   let recipeMode = "view";
+  const fromMenu = params.get("from") === "menu";
   const closeButton = document.getElementById("close-recipe");
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   let activeIngredientEdit = null;
@@ -23,7 +24,7 @@
   let draggedIngredientIndex = null;
   let draggedStepIndex = null;
   let activeDropElement = null;
-  if (params.get("from") === "menu") closeButton.classList.remove("hidden");
+  if (fromMenu) closeButton.classList.remove("hidden");
   closeButton.addEventListener("click", () => {
     window.location.href = "menu.html";
   });
@@ -231,7 +232,7 @@
     if (!isRecipeEditMode()) return "";
     return `
       <section class="recipe-footer-actions">
-        <button class="ghost-button recipe-action-button" data-close-recipe-detail type="button">${I18n.t("close")}</button>
+        ${fromMenu ? `<button class="ghost-button recipe-action-button" data-close-recipe-detail type="button">${I18n.t("close")}</button>` : ""}
         <button class="danger-button recipe-action-button" data-delete-recipe type="button">${I18n.t("delete")}</button>
       </section>
     `;
