@@ -855,7 +855,7 @@
         </div>
         <div class="list admin-section">
           ${groupMenus.map((menu) => `
-            <article class="list-card menu-row" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
+            <article class="list-card menu-row ${canManageMenu ? "has-leading-action" : ""}" data-menu="${menu.id}" ${canManageMenu ? 'draggable="true"' : ""}>
               ${canManageMenu ? actionButton("drag", "순서 이동", menu, "menu-drag-handle recipe-drag-handle") : ""}
               <div class="menu-row-main">
                 <div class="menu-title-line">

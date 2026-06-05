@@ -695,11 +695,15 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-row {
   width: 100%;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   color: var(--text);
   text-align: left;
+}
+
+.menu-row.has-leading-action {
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 .menu-row-main {
   min-width: 0;
@@ -747,9 +751,11 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 .menu-row-actions {
   display: grid;
-  grid-template-columns: repeat(2, 32px);
+  grid-auto-flow: column;
+  grid-auto-columns: 32px;
   gap: 6px;
   justify-content: end;
+  justify-self: end;
 }
 
 .menu-row-action {
@@ -804,11 +810,14 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 
 @media (max-width: 520px) {
   .menu-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
   }
+  .menu-row.has-leading-action {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
   .menu-row-actions {
-    grid-template-columns: repeat(2, 30px);
+    grid-auto-columns: 30px;
     gap: 5px;
   }
   .menu-row-action {
