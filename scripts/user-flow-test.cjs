@@ -153,10 +153,13 @@ async function runPage(userName, session, page, language = 'ko') {
       window.document.querySelector('#save-create-message')?.click();
       await waitUntil(() => window.document.querySelectorAll('.department-message-card').length === 3);
       const messageText = window.document.querySelector('#department-message-panel')?.textContent || '';
+      const messageLines = messageText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
       result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
       result.kakaoLinks = window.document.querySelectorAll('a[href="kakaotalk://"]').length;
+      result.categoryMessageLines = messageLines.filter((line) => /^[^:]+: .+/.test(line)).length;
       result.messageTestPass = ['카페테리아', '야채', '그로서리'].every((target) => messageText.includes(target))
         && messageText.includes('[ 먹자 ]')
+        && result.categoryMessageLines >= 3
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
         && result.kakaoLinks === 3;

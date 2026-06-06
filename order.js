@@ -763,9 +763,21 @@
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
 
-  function messageForDepartment(_target, items) {
-    const names = items.map((item) => item.nameKo || item.name || I18n.itemName(item)).filter(Boolean);
-    return `[ 먹자 ]\n${names.join(", ")} 필요합니다`;
+  function messageForDepartment(target, items) {
+    const groups = items.reduce((acc, item) => {
+      const category = categoryFor(item);
+      acc[category] = acc[category] || [];
+      acc[category].push(item);
+      return acc;
+    }, {});
+    const categories = orderedKeys(groups, categoriesForTarget(target));
+    const lines = categories.map((category) => {
+      const names = groups[category]
+        .map((item) => item.nameKo || item.name || I18n.itemName(item))
+        .filter(Boolean);
+      return `${category}: ${names.join(", ")}`;
+    }).filter((line) => !line.endsWith(": "));
+    return ["[ 먹자 ]", ...lines, "필요합니다"].join("\n");
   }
 
   function departmentMessages() {
