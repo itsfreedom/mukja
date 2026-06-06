@@ -6,7 +6,9 @@
   "license": "UNLICENSED",
   "scripts": {
     "test:user-flows": "node scripts/user-flow-test.cjs",
-    "test:db-consistency": "node scripts/db-consistency-test.cjs"
+    "test:db-consistency": "node scripts/db-consistency-test.cjs",
+    "netlify:prune-deploys": "node scripts/prune-netlify-deploys.cjs",
+    "netlify:prune-deploys:execute": "node scripts/prune-netlify-deploys.cjs --execute"
   },
   "dependencies": {
     "pg": "^8.16.0"

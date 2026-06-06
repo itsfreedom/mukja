@@ -266,6 +266,15 @@ npx netlify deploy --prod --dir .
 
 GitHub `main` 브랜치에 push하면 Netlify 자동 배포가 실행됩니다.
 
+배포 정리:
+
+```bash
+npm run netlify:prune-deploys
+npm run netlify:prune-deploys:execute
+```
+
+Git/GitHub 백업과 Netlify 배포가 성공한 뒤에는 최신 2개 배포만 남기고 이전 Netlify 배포 내역을 정리합니다. 첫 번째 명령은 삭제 대상 확인, 두 번째 명령은 실제 삭제입니다.
+
 ## DB 상태 확인
 
 ```text
