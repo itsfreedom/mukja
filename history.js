@@ -145,7 +145,7 @@
 
   function bindDetailChecks(entry) {
     detailView.querySelectorAll("[data-detail-check]").forEach((input) => {
-      input.addEventListener("change", () => {
+      input.addEventListener("change", async () => {
         if (session?.role !== "admin") return;
         const [itemId, field] = input.dataset.detailCheck.split("|");
         const nextEntry = {
@@ -154,7 +154,12 @@
             item.id === itemId ? { ...item, [field]: input.checked } : item
           )
         };
-        Store.saveHistoryEntry(nextEntry);
+        const result = await Store.saveHistoryEntry(nextEntry);
+        if (result?.ok === false) {
+          input.checked = !input.checked;
+          alert(result.error || I18n.t("csvImportInvalid"));
+          return;
+        }
         entry.items = nextEntry.items;
         alert(I18n.t("updatedNotice"));
       });

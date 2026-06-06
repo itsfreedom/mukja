@@ -118,7 +118,7 @@
     I18n.applyI18n();
   }
 
-  function saveAccess(form) {
+  async function saveAccess(form) {
     const accounts = Store.getAccessAccounts();
     const mode = form.dataset.mode;
     const oldPassword = form.dataset.oldPassword || "";
@@ -139,13 +139,17 @@
       userName: accounts[oldPassword]?.userName || accounts[oldPassword]?.user_name || password,
       name: accounts[oldPassword]?.name || selected.label
     };
-    Store.setAccessAccounts(next);
+    const result = await Store.setAccessAccounts(next);
+    if (result?.ok === false) {
+      setStatus(result.error || I18n.t("csvImportInvalid"));
+      return;
+    }
     activeForm = null;
     setStatus(mode === "edit" ? I18n.t("updatedNotice") : I18n.t("saveDone"));
     renderAll();
   }
 
-  function deleteAccess(password) {
+  async function deleteAccess(password) {
     const accounts = Store.getAccessAccounts();
     const account = accounts[password];
     const adminCount = Object.values(accounts).filter((row) => row.role === "admin").length;
@@ -156,7 +160,11 @@
     if (!window.confirm(I18n.format("confirmDeleteItem", { name: I18n.roleLabel(account?.label || password) }))) return;
     const next = { ...accounts };
     delete next[password];
-    Store.setAccessAccounts(next);
+    const result = await Store.setAccessAccounts(next);
+    if (result?.ok === false) {
+      setStatus(result.error || I18n.t("csvImportInvalid"));
+      return;
+    }
     if (activeForm?.password === password) activeForm = null;
     setStatus(I18n.t("delete"));
     renderAll();
@@ -184,27 +192,29 @@
     if (!file) return;
     try {
       const text = await file.text();
+      let result = null;
       if (kind === "history") {
         const history = Store.historyFromCsv(text);
         if (!history.length) throw new Error("empty");
         if (!window.confirm(I18n.t("confirmCsvImport"))) return;
-        Store.replaceHistory(history);
+        result = await Store.replaceHistory(history);
       } else if (kind === "ingredients") {
         const ingredients = Store.ingredientsFromCsv(text);
         if (!ingredients.length) throw new Error("empty");
         if (!window.confirm(I18n.t("confirmCsvImport"))) return;
-        Store.setIngredients(ingredients);
+        result = await Store.setIngredients(ingredients);
       } else if (kind === "menus") {
         const menus = Store.menusFromCsv(text);
         if (!menus.length) throw new Error("empty");
         if (!window.confirm(I18n.t("confirmCsvImport"))) return;
-        Store.setMenus(menus);
+        result = await Store.setMenus(menus);
       } else if (kind === "recipes") {
         const recipes = Store.recipesFromCsv(text);
         if (!recipes.length) throw new Error("empty");
         if (!window.confirm(I18n.t("confirmCsvImport"))) return;
-        Store.setRecipes(recipes);
+        result = await Store.setRecipes(recipes);
       }
+      if (result?.ok === false) throw new Error(result.error || "sync failed");
       setStatus(I18n.t("csvImportDone"));
     } catch {
       setStatus(I18n.t("csvImportInvalid"));

@@ -304,10 +304,14 @@
     setStatus(I18n.t("saved"));
   }
 
-  function saveCurrent() {
+  async function saveCurrent() {
     const entry = buildEntry();
     if (!entry) return;
-    Store.saveHistoryEntry(entry);
+    const result = await Store.saveHistoryEntry(entry);
+    if (result?.ok === false) {
+      setStatus(result.error || I18n.t("csvImportInvalid"));
+      return;
+    }
     refreshFrom(entry);
   }
 

@@ -113,6 +113,7 @@ async function ensureSchema(client) {
       quantity text,
       unit text,
       received boolean not null default false,
+      restaurant_received boolean not null default false,
       received_by_identity_id text references access_identities(id) on delete set null,
       received_ip text,
       received_user_agent text,
@@ -223,6 +224,7 @@ async function ensureSchema(client) {
     alter table menus add column if not exists category_en text;
     alter table menus add column if not exists sort_order integer not null default 0;
     alter table order_items add column if not exists name_en text;
+    alter table order_items add column if not exists restaurant_received boolean not null default false;
     alter table ingredients add column if not exists name_en text;
     alter table ingredients add column if not exists sort_order integer not null default 0;
     alter table access_accounts add column if not exists user_name text;
@@ -465,9 +467,9 @@ async function upsertOrder(client, entry, info) {
     await client.query(`
       insert into order_items (
         id, order_id, item_index, name, name_en, section, target, quantity, unit,
-        received, received_by_identity_id, received_ip, received_user_agent, received_at
+        received, restaurant_received, received_by_identity_id, received_ip, received_user_agent, received_at
       )
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, case when $10 then now() else null end)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, case when $10 then now() else null end)
     `, [
       itemDbId(id, item, index),
       id,
@@ -479,6 +481,7 @@ async function upsertOrder(client, entry, info) {
       item.quantity || "",
       item.unit || "",
       Boolean(item.received),
+      Boolean(item.restaurantReceived),
       item.received ? info.memberId : null,
       item.received ? info.ip : null,
       item.received ? info.userAgent : null
@@ -759,7 +762,8 @@ async function listHistory(client) {
       target: item.target || "",
       quantity: item.quantity || "",
       unit: item.unit || "",
-      received: item.received
+      received: item.received,
+      restaurantReceived: item.restaurant_received
     });
     return acc;
   }, {});

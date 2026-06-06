@@ -754,7 +754,7 @@
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
 
-  function saveRequest() {
+  async function saveRequest() {
     if (!canCreateRequest) return;
     const items = selectedItems();
     const memo = memoEntry();
@@ -781,7 +781,11 @@
       message: ""
     };
     entry.memo = memoText(memos);
-    Store.saveHistoryEntry(entry);
+    const result = await Store.saveHistoryEntry(entry);
+    if (result?.ok === false) {
+      setStatus(result.error || I18n.t("csvImportInvalid"));
+      return;
+    }
     editingEntry = entry;
     setStatus(I18n.t("saved"));
   }

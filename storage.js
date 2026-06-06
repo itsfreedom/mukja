@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v155";
+  const appAssetVersion = "v156";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -542,7 +542,7 @@
   function setAccessAccounts(accounts) {
     const next = accounts || defaultAccessCodes;
     dataState.accessAccounts = next;
-    syncQuietly(() => apiRequest("/access-accounts", {
+    return syncQuietly(() => apiRequest("/access-accounts", {
       method: "PUT",
       body: JSON.stringify({ accessAccounts: next })
     }));
@@ -606,6 +606,7 @@
       apiState.checked = true;
       apiState.available = false;
       apiState.error = error?.message || "API unavailable";
+      return { ok: false, error: apiState.error };
     });
   }
 
@@ -1213,7 +1214,7 @@
   function saveHistoryEntry(entry) {
     const history = dataState.history;
     setHistory([entry, ...history.filter((row) => row.id !== entry.id)]);
-    syncQuietly(() => apiRequest("/history", {
+    return syncQuietly(() => apiRequest("/history", {
       method: "POST",
       body: JSON.stringify({ entry })
     }));
@@ -1221,7 +1222,7 @@
 
   function replaceHistory(history) {
     setHistory(history);
-    syncQuietly(() => apiRequest("/history", {
+    return syncQuietly(() => apiRequest("/history", {
       method: "PUT",
       body: JSON.stringify({ history })
     }));
@@ -1229,17 +1230,17 @@
 
   function deleteHistory(idValue) {
     setHistory(dataState.history.filter((entry) => entry.id !== idValue));
-    syncQuietly(() => apiRequest(`/history/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+    return syncQuietly(() => apiRequest(`/history/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
   }
 
   function clearHistory() {
     setHistory([]);
-    syncQuietly(() => apiRequest("/history", { method: "DELETE" }));
+    return syncQuietly(() => apiRequest("/history", { method: "DELETE" }));
   }
 
   function setRecipes(recipes) {
     dataState.recipes = Array.isArray(recipes) ? recipes.map(normalizeRecipe) : [];
-    syncQuietly(() => apiRequest("/recipes", {
+    return syncQuietly(() => apiRequest("/recipes", {
       method: "PUT",
       body: JSON.stringify({ recipes: dataState.recipes })
     }));
@@ -1252,7 +1253,7 @@
       ? recipes.map((row) => row.id === normalized.id ? normalized : row)
       : [...recipes, normalized];
     dataState.recipes = next;
-    syncQuietly(() => apiRequest("/recipes", {
+    return syncQuietly(() => apiRequest("/recipes", {
       method: "POST",
       body: JSON.stringify({ recipe: normalized })
     }));
@@ -1263,7 +1264,7 @@
     dataState.menus = dataState.menus.map((menu) =>
       menu.recipeId === idValue ? { ...menu, recipeId: "" } : menu
     );
-    syncQuietly(() => apiRequest(`/recipes/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+    return syncQuietly(() => apiRequest(`/recipes/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
   }
 
   function isEmptyRecipe(recipe) {
@@ -1281,7 +1282,7 @@
   function setMenus(menus) {
     const normalized = (menus || []).map(normalizeMenu);
     dataState.menus = normalized;
-    syncQuietly(() => apiRequest("/menus", {
+    return syncQuietly(() => apiRequest("/menus", {
       method: "PUT",
       body: JSON.stringify({ menus: normalized })
     }));
@@ -1306,7 +1307,7 @@
       ? menus.map((row) => row.id === normalizedMenu.id ? normalizedMenu : row)
       : [...menus, normalizedMenu];
     dataState.menus = next;
-    syncQuietly(() => apiRequest("/menus", {
+    return syncQuietly(() => apiRequest("/menus", {
       method: "POST",
       body: JSON.stringify({ menu: normalizedMenu })
     }));
@@ -1321,7 +1322,7 @@
     dataState.menus = dataState.menus.some((row) => row.id === normalizedMenu.id)
       ? dataState.menus.map((row) => row.id === normalizedMenu.id ? normalizedMenu : row)
       : [...dataState.menus, normalizedMenu];
-    syncQuietly(async () => {
+    return syncQuietly(async () => {
       await apiRequest("/recipes", {
         method: "POST",
         body: JSON.stringify({ recipe: normalizedRecipe })
@@ -1347,7 +1348,7 @@
       const recipe = dataState.recipes.find((row) => row.id === menu.recipeId);
       if (isEmptyRecipe(recipe)) dataState.recipes = dataState.recipes.filter((row) => row.id !== menu.recipeId);
     }
-    syncQuietly(() => apiRequest(`/menus/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
+    return syncQuietly(() => apiRequest(`/menus/${encodeURIComponent(idValue)}`, { method: "DELETE" }));
   }
 
   function menuCategories() {
