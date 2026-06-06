@@ -643,7 +643,6 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transform: translate(1px, -1px);
 }
 
 @media (max-width: 520px) {
@@ -875,7 +874,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   --sidebar-closed: 66px;
   --sidebar-x-pad: 12px;
   --sidebar-brand-height: 88px;
-  --sidebar-logo-size: 42px;
+  --sidebar-logo-size: 38px;
   --sidebar-nav-icon-size: 28px;
   --content-pad: clamp(14px, 3vw, 30px);
   --desktop-app-width: 500px;
@@ -965,7 +964,7 @@ body {
 
 .brand-main-row {
   width: 100%;
-  grid-template-columns: var(--sidebar-logo-size) minmax(0, 1fr);
+  grid-template-columns: 42px minmax(0, 1fr);
 }
 
 .brand-sub-row {
@@ -988,6 +987,11 @@ body {
   width: var(--sidebar-logo-size);
   height: var(--sidebar-logo-size);
   border-radius: 999px;
+}
+
+.brand-main-row .brand-mark {
+  justify-self: center;
+  align-self: center;
 }
 
 .brand-title,
@@ -1067,7 +1071,30 @@ body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transform: translate(1px, -1px);
+}
+
+.sidebar-role-badge {
+  display: none;
+  width: var(--sidebar-nav-icon-size);
+  height: var(--sidebar-nav-icon-size);
+  flex: 0 0 var(--sidebar-nav-icon-size);
+}
+
+.sidebar-role-badge circle {
+  fill: #ffd861;
+  stroke: rgba(255, 255, 255, 0.34);
+  stroke-width: 1;
+}
+
+.sidebar-role-badge.is-admin circle {
+  fill: #f26b7a;
+}
+
+.sidebar-role-badge text {
+  fill: #10131f;
+  font-size: 11px;
+  font-weight: 900;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Apple SD Gothic Neo", Pretendard, sans-serif;
 }
 
 .nav-link.is-active {
@@ -1130,6 +1157,8 @@ body {
 
 .sidebar-collapsed .sidebar {
   width: var(--sidebar-closed);
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
 .sidebar-collapsed .sidebar-toggle {
@@ -1146,12 +1175,28 @@ body {
 }
 
 .sidebar-collapsed .brand-title,
-.sidebar-collapsed .brand-sub-row,
 .sidebar-collapsed .brand-role,
 .sidebar-collapsed .lang-toggle,
 .sidebar-collapsed .header-logout,
 .sidebar-collapsed .nav-link span:not(.nav-icon) {
   display: none;
+}
+
+.sidebar-collapsed .brand-sub-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding-left: 0;
+}
+
+.sidebar-collapsed .brand-tools {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.sidebar-collapsed .sidebar-role-badge {
+  display: block;
 }
 
 .sidebar-collapsed .nav-link {

@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v172";
+  const appAssetVersion = "v173";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -1445,6 +1445,15 @@
       const sidebar = document.querySelector("[data-layout-sidebar]");
       if (!sidebar || !window.I18n) return;
       const session = auth();
+      const roleBadgeLabel = (() => {
+        if (!session) return "";
+        if (session.role === "admin") return "A";
+        if (session.role === "restaurant") return "R";
+        if (session.department === "야채") return "V";
+        if (session.department === "그로서리") return "G";
+        return "C";
+      })();
+      const roleBadgeClass = roleBadgeLabel === "A" ? " is-admin" : "";
       const isRestricted = (key) => {
         if (key === "order") return !["restaurant", "admin"].includes(session?.role);
         if (key === "menus") return !["restaurant", "admin"].includes(session?.role);
@@ -1478,6 +1487,12 @@
             <div class="brand-sub-row">
               <div class="brand-role">${session ? I18n.roleLabel(session.label) : ""}</div>
               <div class="brand-tools">
+                ${roleBadgeLabel ? `
+                  <svg class="sidebar-role-badge${roleBadgeClass}" viewBox="0 0 28 28" aria-hidden="true">
+                    <circle cx="14" cy="14" r="13" />
+                    <text x="14" y="14" dominant-baseline="central" text-anchor="middle">${roleBadgeLabel}</text>
+                  </svg>
+                ` : ""}
                 <button class="lang-toggle" data-lang-toggle type="button" aria-label="${I18n.t("language")}">${I18n.lang() === "ko" ? "🇺🇸" : "🇰🇷"}</button>
                 ${session ? `<button class="header-logout" type="button" data-auth-logout aria-label="${I18n.t("logout")}">⎋</button>` : ""}
               </div>
