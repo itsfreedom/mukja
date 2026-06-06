@@ -643,7 +643,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transform: translateY(-1px);
+  transform: translate(1px, -1px);
 }
 
 @media (max-width: 520px) {
@@ -1059,7 +1059,7 @@ body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-  transform: translateY(-1px);
+  transform: translate(1px, -1px);
 }
 
 .nav-link.is-active {
