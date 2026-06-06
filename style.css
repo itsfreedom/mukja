@@ -2061,15 +2061,6 @@ body.modal-open {
   margin-bottom: 0;
 }
 
-.order-page #order-message-row {
-  margin-top: 8px;
-  margin-bottom: 0;
-}
-
-.order-page #order-message-row .ghost-button {
-  width: 100%;
-}
-
 .department-message-panel {
   display: grid;
   gap: 10px;
@@ -2112,6 +2103,13 @@ body.modal-open {
   color: var(--text);
   font: inherit;
   line-height: 1.55;
+}
+
+.department-kakao-button {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+  text-decoration: none;
 }
 
 .order-bulk-panel {

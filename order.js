@@ -24,14 +24,12 @@
     memo: document.getElementById("memo"),
     status: document.getElementById("status"),
     save: document.getElementById("save-create-message"),
-    generateMessages: document.getElementById("generate-department-messages"),
     reset: document.getElementById("reset-order"),
     modeRow: document.getElementById("order-mode-row"),
     orderModeButton: document.getElementById("order-mode-order"),
     editModeButton: document.getElementById("order-mode-edit"),
     resetRow: document.getElementById("order-reset-row"),
     saveRow: document.getElementById("order-save-row"),
-    messageRow: document.getElementById("order-message-row"),
     messagePanel: document.getElementById("department-message-panel"),
     messageList: document.getElementById("department-message-list"),
     bulkPanel: document.getElementById("order-bulk-panel"),
@@ -78,7 +76,6 @@
     els.editModeButton?.classList.toggle("is-active", edit);
     els.resetRow?.classList.toggle("hidden", edit || !canCreateRequest);
     els.saveRow?.classList.toggle("hidden", edit || !canCreateRequest);
-    els.messageRow?.classList.toggle("hidden", edit || !canCreateRequest);
     els.messagePanel?.classList.toggle("hidden", edit || !canCreateRequest || !els.messageList?.children.length);
     els.memoPanel?.classList.toggle("hidden", edit || !canCreateRequest);
     els.memoDivider?.classList.toggle("hidden", edit || !canCreateRequest);
@@ -801,10 +798,10 @@
           <strong>${escapeHtml(row.label)}</strong>
           <div class="department-message-actions">
             <button class="ghost-button compact-button" data-copy-department-message="${escapeHtml(row.target)}" type="button">${I18n.t("copyMessage")}</button>
-            <a class="ghost-button compact-button" href="kakaotalk://" aria-label="${I18n.t("openKakao")}">${I18n.t("openKakao")}</a>
           </div>
         </div>
         <pre>${escapeHtml(row.message)}</pre>
+        <a class="button department-kakao-button" href="kakaotalk://" aria-label="${I18n.t("openKakao")}">${I18n.t("openKakao")}</a>
       </article>
     `).join("");
     els.messagePanel?.classList.remove("hidden");
@@ -946,7 +943,6 @@
   }
 
   els.save.addEventListener("click", () => saveRequest());
-  els.generateMessages?.addEventListener("click", renderDepartmentMessages);
   els.messageList?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-copy-department-message]");
     if (!button) return;

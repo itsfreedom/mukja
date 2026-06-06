@@ -150,7 +150,8 @@ async function runPage(userName, session, page, language = 'ko') {
         input.click();
       });
       window.document.querySelector('#memo').value = '테스트 메모';
-      window.document.querySelector('#generate-department-messages')?.click();
+      window.document.querySelector('#save-create-message')?.click();
+      await waitUntil(() => window.document.querySelectorAll('.department-message-card').length === 3);
       const messageText = window.document.querySelector('#department-message-panel')?.textContent || '';
       result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
       result.kakaoLinks = window.document.querySelectorAll('a[href="kakaotalk://"]').length;
