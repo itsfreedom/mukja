@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v185";
+  const appAssetVersion = "v186";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -22,7 +22,8 @@
     ingredients: [],
     recipes: [],
     menus: [],
-    history: []
+    history: [],
+    standaloneMemos: []
   };
 
   const defaultSections = ["반조리", "반찬", "소스", "고기", "해물", "기타"];
@@ -666,14 +667,16 @@
       dataState.requestCategories = settings.requestCategories && typeof settings.requestCategories === "object"
         ? { ...defaultRequestCategories, ...settings.requestCategories, "카페테리아": dataState.sections }
         : { ...defaultRequestCategories, "카페테리아": dataState.sections };
-      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees) || !settings.requestCategories) {
+      dataState.standaloneMemos = Array.isArray(settings.standaloneMemos) ? settings.standaloneMemos : [];
+      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees) || !settings.requestCategories || !Array.isArray(settings.standaloneMemos)) {
         await apiRequest("/settings", {
           method: "PUT",
           body: JSON.stringify({
             settings: {
               sections: dataState.sections,
               employees: dataState.employees,
-              requestCategories: dataState.requestCategories
+              requestCategories: dataState.requestCategories,
+              standaloneMemos: dataState.standaloneMemos
             }
           })
         });
@@ -691,7 +694,8 @@
         settings: {
           sections: dataState.sections,
           employees: dataState.employees,
-          requestCategories: dataState.requestCategories
+          requestCategories: dataState.requestCategories,
+          standaloneMemos: dataState.standaloneMemos
         }
       })
     }));
@@ -862,6 +866,7 @@
     dataState.recipes = defaultRecipes.map(normalizeRecipe);
     dataState.menus = buildDefaultMenus(dataState.recipes).map(normalizeMenu);
     dataState.history = [];
+    dataState.standaloneMemos = [];
     const pageDatasets = auth() ? requestedDatasets(options) : [];
     await Promise.all([
       ensureData(["access"]),
@@ -1166,7 +1171,8 @@
       ingredients: dataState.ingredients.map(normalizeIngredient),
       recipes: dataState.recipes.map(normalizeRecipe),
       menus: dataState.menus.map(normalizeMenu),
-      history: dataState.history.slice()
+      history: dataState.history.slice(),
+      standaloneMemos: dataState.standaloneMemos.slice()
     };
   }
 
@@ -1184,7 +1190,8 @@
       ingredients: data.ingredients || [],
       recipes: (data.recipes || []).map(normalizeRecipe),
       menus: data.menus || [],
-      history: data.history || []
+      history: data.history || [],
+      standaloneMemos: data.standaloneMemos || []
     });
   }
 
@@ -1197,6 +1204,7 @@
     dataState.recipes = (data.recipes || []).map(normalizeRecipe);
     dataState.menus = (data.menus || []).map(normalizeMenu);
     dataState.history = data.history || [];
+    dataState.standaloneMemos = Array.isArray(data.standaloneMemos) ? data.standaloneMemos : [];
     syncQuietly(() => apiRequest("/seed-data", {
       method: "PUT",
       body: JSON.stringify(data)
@@ -1226,6 +1234,38 @@
       method: "POST",
       body: JSON.stringify({ entry })
     }));
+  }
+
+  function standaloneMemoKey(memo) {
+    return [
+      memo?.role || "",
+      normalizeTargetName(memo?.department || ""),
+      normalizeTargetName(memo?.authorLabel || "")
+    ].join("|");
+  }
+
+  function saveStandaloneMemo(memo) {
+    const text = String(memo?.text || "").trim();
+    if (!text) return Promise.resolve({ ok: false, error: "empty memo" });
+    const key = standaloneMemoKey(memo);
+    const existing = dataState.standaloneMemos.find((row) => standaloneMemoKey(row) === key);
+    const nextMemo = {
+      ...memo,
+      id: existing?.id || memo.id || id("memo"),
+      text,
+      createdAt: existing?.createdAt || memo.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    dataState.standaloneMemos = [
+      nextMemo,
+      ...dataState.standaloneMemos.filter((row) => standaloneMemoKey(row) !== key)
+    ];
+    return syncSettings();
+  }
+
+  function setStandaloneMemos(memos) {
+    dataState.standaloneMemos = Array.isArray(memos) ? memos : [];
+    return syncSettings();
   }
 
   function replaceHistory(history) {
@@ -1412,6 +1452,9 @@
     deleteMenu,
     getMenuCategories: menuCategories,
     getHistory: () => dataState.history.slice(),
+    getStandaloneMemos: () => dataState.standaloneMemos.slice(),
+    saveStandaloneMemo,
+    setStandaloneMemos,
     refreshHistory: hydrateHistoryFromApi,
     setHistory,
     addHistory: saveHistoryEntry,

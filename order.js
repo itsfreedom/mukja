@@ -963,6 +963,28 @@
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
+    if (!items.length && memo) {
+      const result = await Store.saveStandaloneMemo(memo);
+      if (result?.ok === false) {
+        setStatus(result.error || I18n.t("csvImportInvalid"));
+        return;
+      }
+      els.messageList.innerHTML = "";
+      els.messagePanel?.classList.add("hidden");
+      templateEntry = {
+        id: "standalone-memos",
+        date: Store.today(),
+        time: Store.nowTime(),
+        mode: "memo",
+        items: [],
+        memos: Store.getStandaloneMemos(),
+        memo: memoText(Store.getStandaloneMemos()),
+        message: "",
+        memoOnly: true
+      };
+      setStatus(I18n.t("memoSaved"));
+      return;
+    }
     const memos = memo ? [memo] : [];
     const entry = {
       id: Store.id("history"),

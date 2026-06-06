@@ -143,6 +143,21 @@ async function runPage(userName, session, page, language = 'ko') {
     result.hasKoreanDriedVegetables = text.includes('건나물');
     result.sample = text.slice(0, 180);
     if (userName === 'admin' && language === 'ko') {
+      const historyCountBeforeEmptySave = window.Store.getHistory().length;
+      const standaloneMemosBeforeEmptySave = window.Store.getStandaloneMemos?.() || [];
+      const memoCountBeforeEmptySave = standaloneMemosBeforeEmptySave.length;
+      window.document.querySelector('#memo').value = '';
+      window.document.querySelector('#save-create-message')?.click();
+      result.emptyRequestBlocked = window.Store.getHistory().length === historyCountBeforeEmptySave
+        && (window.Store.getStandaloneMemos?.().length || 0) === memoCountBeforeEmptySave
+        && window.document.querySelectorAll('.department-message-card').length === 0;
+      window.document.querySelector('#memo').value = '메모만 저장 테스트';
+      window.document.querySelector('#save-create-message')?.click();
+      const standaloneMemos = window.Store.getStandaloneMemos?.() || [];
+      result.memoOnlyDoesNotCreateHistory = window.Store.getHistory().length === historyCountBeforeEmptySave
+        && standaloneMemos.some((memo) => memo.text === '메모만 저장 테스트');
+      await window.Store.setStandaloneMemos?.(standaloneMemosBeforeEmptySave);
+      window.document.querySelector('#memo').value = '';
       const chosenTargets = new Set();
       [...window.document.querySelectorAll('#items-list input[data-item]')].forEach((input) => {
         const target = input.closest('[data-request-item-row]')?.dataset.itemTarget;
@@ -229,6 +244,8 @@ async function runPage(userName, session, page, language = 'ko') {
       result.dragLockedWhileEditFormOpen = window.document.querySelectorAll('[data-request-item-row][draggable="true"], [data-request-category-row][draggable="true"]').length === 0;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
+    if (result.emptyRequestBlocked === false) result.pass = false;
+    if (result.memoOnlyDoesNotCreateHistory === false) result.pass = false;
     if (result.messageTestPass === false) result.pass = false;
     if (result.requestViewCollapseWorks === false) result.pass = false;
     if (result.categoryCollapseWorks === false) result.pass = false;

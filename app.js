@@ -13,6 +13,7 @@
 
   function visibleEntry(entry) {
     if (!entry) return null;
+    if (entry.memoOnly) return entry;
     if (session?.role === "department" && session.department) {
       const department = Store.normalizeTargetName(session.department);
       const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
@@ -21,11 +22,39 @@
     return entry;
   }
 
+  function latestStandaloneMemoEntry() {
+    const memos = orderedMemos(Store.getStandaloneMemos ? Store.getStandaloneMemos() : []);
+    if (!memos.length) return null;
+    const latest = memos.slice().sort((a, b) =>
+      String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || ""))
+    )[0];
+    const stamp = latest?.updatedAt || latest?.createdAt || new Date().toISOString();
+    return {
+      id: "standalone-memos",
+      date: stamp.slice(0, 10),
+      time: stamp.slice(11, 16),
+      mode: "memo",
+      employee: "",
+      target: "",
+      items: [],
+      memos,
+      memo: memoText(memos),
+      message: "",
+      memoOnly: true
+    };
+  }
+
   function latestEntry() {
-    return Store.getHistory()
+    const latestHistory = Store.getHistory()
       .map(visibleEntry)
       .filter(Boolean)
-      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0];
+      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0] || null;
+    const memoEntry = visibleEntry(latestStandaloneMemoEntry());
+    if (!latestHistory) return memoEntry;
+    if (!memoEntry) return latestHistory;
+    return `${memoEntry.date} ${memoEntry.time || ""}`.localeCompare(`${latestHistory.date} ${latestHistory.time || ""}`) >= 0
+      ? memoEntry
+      : latestHistory;
   }
 
   function categoryValue(item) {
@@ -223,6 +252,13 @@
       return;
     }
     draftItems = (entry.items || []).map((item) => ({ ...item }));
+    if (entry.memoOnly || !draftItems.length) {
+      list.innerHTML = renderMemoPanel(entry);
+      document.getElementById("home-save")?.addEventListener("click", saveCurrent);
+      document.getElementById("home-reset")?.addEventListener("click", resetDraft);
+      I18n.applyI18n();
+      return;
+    }
     const isDepartment = session?.role === "department";
     const targetOrder = ["카페테리아", "야채", "그로서리"];
     const categoryOrders = {
@@ -278,6 +314,13 @@
 
   function buildEntry() {
     if (!currentEntry) return null;
+    if (currentEntry.memoOnly) {
+      const baseMemos = orderedMemos(Store.getStandaloneMemos ? Store.getStandaloneMemos() : currentEntry.memos);
+      const existingMemo = baseMemos.find((memo) => memoSlot(memo) === sessionMemoSlot());
+      const memo = memoEntry(document.getElementById("home-memo")?.value || "", existingMemo);
+      if (!memo) return null;
+      return { ...currentEntry, memos: [memo], memo: memo.text, memoOnly: true };
+    }
     const baseEntry = Store.getHistory().find((entry) => entry.id === currentEntry.id) || currentEntry;
     const draftById = new Map(draftItems.map((item) => [item.id, item]));
     const currentSlot = sessionMemoSlot();
@@ -307,13 +350,16 @@
 
   async function saveCurrent() {
     const entry = buildEntry();
-    if (!entry) return;
-    const result = await Store.saveHistoryEntry(entry);
+    if (!entry) {
+      setStatus(I18n.t("chooseItemOrMemo"));
+      return;
+    }
+    const result = entry.memoOnly ? await Store.saveStandaloneMemo(entry.memos[0]) : await Store.saveHistoryEntry(entry);
     if (result?.ok === false) {
       setStatus(result.error || I18n.t("csvImportInvalid"));
       return;
     }
-    refreshFrom(entry);
+    refreshFrom(entry.memoOnly ? latestStandaloneMemoEntry() : entry);
   }
 
   function resetDraft() {
