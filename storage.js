@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v159";
+  const appAssetVersion = "v160";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -1452,7 +1452,7 @@
         return false;
       };
       const nav = [
-        ["home", "index.html", '<img class="nav-icon-image" src="assets/icons/home-circle.svg" alt="" />'],
+        ["home", "index.html", `<img class="nav-icon-image" src="assets/icons/home-circle.svg?v=${appAssetVersion}" alt="" />`],
         ["history", "history.html", "H"],
         ["order", "order.html", "R"],
         ["menus", "menu.html", "M"],
