@@ -873,6 +873,10 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 :root {
   --sidebar-open: 264px;
   --sidebar-closed: 66px;
+  --sidebar-x-pad: 12px;
+  --sidebar-brand-height: 88px;
+  --sidebar-logo-size: 42px;
+  --sidebar-nav-icon-size: 28px;
   --content-pad: clamp(14px, 3vw, 30px);
   --desktop-app-width: 500px;
 }
@@ -903,7 +907,7 @@ body {
   height: 100dvh;
   border-width: 0 1px 0 0;
   border-radius: 0 18px 18px 0;
-  padding: 14px 12px;
+  padding: 14px var(--sidebar-x-pad);
   gap: 14px;
   overflow: hidden;
   transition: width 180ms ease, box-shadow 180ms ease;
@@ -952,12 +956,16 @@ body {
 }
 
 .brand {
-  min-height: 44px;
-  padding: 0 0 12px;
+  width: 100%;
+  height: var(--sidebar-brand-height);
+  min-height: var(--sidebar-brand-height);
+  padding: 0;
+  align-items: flex-start;
 }
 
 .brand-main-row {
-  grid-template-columns: 42px minmax(0, 1fr);
+  width: 100%;
+  grid-template-columns: var(--sidebar-logo-size) minmax(0, 1fr);
 }
 
 .brand-sub-row {
@@ -977,8 +985,8 @@ body {
 
 .brand-mark,
 .home-page .brand-mark {
-  width: 42px;
-  height: 42px;
+  width: var(--sidebar-logo-size);
+  height: var(--sidebar-logo-size);
   border-radius: 999px;
 }
 
@@ -1029,14 +1037,14 @@ body {
 }
 
 .nav-icon {
-  width: 28px;
-  height: 28px;
+  width: var(--sidebar-nav-icon-size);
+  height: var(--sidebar-nav-icon-size);
   border: 1px solid rgba(184, 196, 240, 0.28);
   border-radius: 999px;
   display: grid;
   place-items: center;
   line-height: 0;
-  flex: 0 0 28px;
+  flex: 0 0 var(--sidebar-nav-icon-size);
   background: rgba(255, 255, 255, 0.045);
   color: currentColor;
   font-size: 0.84rem;
@@ -1045,8 +1053,8 @@ body {
 }
 
 .nav-icon-image {
-  width: 28px;
-  height: 28px;
+  width: var(--sidebar-nav-icon-size);
+  height: var(--sidebar-nav-icon-size);
   display: block;
 }
 
@@ -1133,7 +1141,8 @@ body {
 }
 
 .sidebar-collapsed .brand-main-row {
-  grid-template-columns: 42px;
+  grid-template-columns: 1fr;
+  justify-items: center;
 }
 
 .sidebar-collapsed .brand-title,
@@ -1146,14 +1155,14 @@ body {
 }
 
 .sidebar-collapsed .nav-link {
-  justify-content: center;
+  justify-content: flex-start;
   padding: 8px 7px;
 }
 
 .sidebar-collapsed .nav-icon {
-  width: 28px;
-  height: 28px;
-  flex-basis: 28px;
+  width: var(--sidebar-nav-icon-size);
+  height: var(--sidebar-nav-icon-size);
+  flex-basis: var(--sidebar-nav-icon-size);
 }
 
 .sidebar-collapsed .nav-link::after {
