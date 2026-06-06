@@ -262,6 +262,31 @@ async function ensureSchema(client) {
     alter table recipes add column if not exists step_items jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists step_items_en jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists notes_en text;
+    insert into app_users (
+      id, user_name, display_name, role, department, enabled, changed_by_identity_id, updated_at
+    )
+    select
+      'user-' || regexp_replace(coalesce(nullif(user_name, ''), password), '[^a-zA-Z0-9가-힣_.:-]', '-', 'g') as id,
+      coalesce(nullif(user_name, ''), password) as user_name,
+      coalesce(nullif(name, ''), nullif(label, ''), nullif(department, ''), role) as display_name,
+      role,
+      coalesce(department, '') as department,
+      enabled,
+      changed_by_identity_id,
+      now()
+    from access_accounts
+    where coalesce(user_id, '') = ''
+    on conflict (id) do update set
+      user_name = excluded.user_name,
+      display_name = excluded.display_name,
+      role = excluded.role,
+      department = excluded.department,
+      enabled = excluded.enabled,
+      changed_by_identity_id = excluded.changed_by_identity_id,
+      updated_at = now();
+    update access_accounts
+    set user_id = 'user-' || regexp_replace(coalesce(nullif(user_name, ''), password), '[^a-zA-Z0-9가-힣_.:-]', '-', 'g')
+    where coalesce(user_id, '') = '';
     do $$
     begin
       if exists (
