@@ -58,6 +58,7 @@
   let activeIngredientEdit = null;
   let activeStepEdit = null;
   let activeMenuEdit = null;
+  let openStepPhotos = new Set();
   let draggedIngredientIndex = null;
   let draggedStepIndex = null;
   let draggedMenuId = null;
@@ -66,6 +67,7 @@
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
+  const photoIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m14.31 8 5.74 9.94"/><path d="M9.69 8h11.48"/><path d="m7.38 12 5.74-9.94"/><path d="M9.69 16 3.95 6.06"/><path d="M14.31 16H2.83"/><path d="m16.62 12-5.74 9.94"/></svg>';
 
   function isMenuEditMode() {
     return canManageMenu && menuMode === "edit";
@@ -285,17 +287,34 @@
         <label><span>${I18n.t("steps")}</span><input data-step-text value="${escapeHtml(step.text)}" /></label>
         <label><span>${I18n.t("photo")}</span><input data-step-image-file type="file" accept="image/*" capture="environment" /></label>
         <input data-step-image-current type="hidden" value="${escapeHtml(step.imageUrl)}" />
-        ${step.imageUrl ? `
-          <div class="recipe-step-photo-preview">
-            <img src="${escapeHtml(step.imageUrl)}" alt="${I18n.t("photo")}" />
-            <label class="menu-check-option"><input data-step-remove-image type="checkbox" /><span>${I18n.t("removePhoto")}</span></label>
-          </div>
-        ` : ""}
+        <div class="recipe-step-photo-preview ${step.imageUrl ? "" : "is-empty"}" data-step-image-preview>
+          <img src="${escapeHtml(step.imageUrl)}" alt="${I18n.t("photo")}" />
+          <label class="menu-check-option ${step.imageUrl ? "" : "hidden"}" data-step-remove-image-row><input data-step-remove-image type="checkbox" /><span>${I18n.t("removePhoto")}</span></label>
+        </div>
         <div class="recipe-item-form-actions">
           <button class="button" data-step-action="save" data-index="${index}" type="button">${I18n.t("save")}</button>
           <button class="danger-button" data-step-action="delete" data-index="${index}" type="button">${I18n.t("delete")}</button>
           <button class="ghost-button" data-step-action="cancel" type="button">${I18n.t("close")}</button>
         </div>
+      </div>
+    `;
+  }
+
+  function stepPhotoButton(step, index) {
+    const hasPhoto = Boolean(step.imageUrl);
+    const isOpen = openStepPhotos.has(index);
+    return `
+      <button class="menu-row-action recipe-photo-toggle ${hasPhoto ? "has-photo" : "is-disabled"} ${isOpen ? "is-active" : ""}" data-step-photo-toggle data-index="${index}" type="button" aria-label="${I18n.t("photo")}" ${hasPhoto ? "" : "disabled"}>
+        ${photoIcon}
+      </button>
+    `;
+  }
+
+  function stepPhotoPanel(step, index) {
+    if (!step.imageUrl || !openStepPhotos.has(index)) return "";
+    return `
+      <div class="recipe-step-photo-panel" data-step-photo-panel="${index}">
+        <img src="${escapeHtml(step.imageUrl)}" alt="${I18n.t("photo")}" />
       </div>
     `;
   }
@@ -315,14 +334,15 @@
               ${isMenuEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
-                ${step.imageUrl ? `<small>${escapeHtml(step.imageUrl)}</small>` : ""}
               </div>
               ${isMenuEditMode() ? `
                 <div class="recipe-crud-actions">
+                  ${stepPhotoButton(step, index)}
                   <button class="menu-row-action is-edit" data-step-action="edit" data-index="${index}" type="button" aria-label="${index + 1} ${I18n.t("edit")}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg></button>
                 </div>
               ` : ""}
             </article>
+            ${stepPhotoPanel(step, index)}
             ${activeStepEdit?.index === index ? stepEditForm(step, index) : ""}
           `).join("") : `<p class="muted">-</p>`}
           ${activeStepEdit?.isNew ? stepEditForm({}, rows.length) : ""}
@@ -358,12 +378,13 @@
         <div class="recipe-step-list">
           ${rows.length ? rows.map((step, index) => `
             <article class="recipe-step-row">
-              ${step.imageUrl ? `<img src="${step.imageUrl}" alt="${recipe.name} ${index + 1}" />` : ""}
               <div>
                 <span>${index + 1}</span>
                 <p>${step.text || "-"}</p>
+                ${stepPhotoButton(step, index)}
               </div>
             </article>
+            ${stepPhotoPanel(step, index)}
           `).join("") : `<p class="muted">-</p>`}
         </div>
       </section>
@@ -396,6 +417,7 @@
     if (options.resetIngredientEdit !== false) {
       activeIngredientEdit = null;
       activeStepEdit = null;
+      openStepPhotos = new Set();
     }
     modalTitle.textContent = I18n.menuName(menu);
     modalContent.innerHTML = `
@@ -412,6 +434,7 @@
     modal.classList.add("hidden");
     activeIngredientEdit = null;
     activeStepEdit = null;
+    openStepPhotos = new Set();
     draggedStepIndex = null;
     document.body.classList.remove("modal-open");
     setRecipeUrl("");
@@ -640,6 +663,33 @@
       activeStepEdit = null;
       rerenderActiveRecipe();
     }
+  }
+
+  function handleStepPhotoToggle(event) {
+    const button = event.target.closest("[data-step-photo-toggle]");
+    if (!button || button.disabled) return false;
+    const index = Number(button.dataset.index);
+    if (openStepPhotos.has(index)) {
+      openStepPhotos.delete(index);
+    } else {
+      openStepPhotos.add(index);
+    }
+    rerenderActiveRecipe();
+    return true;
+  }
+
+  async function handleStepFilePreview(event) {
+    const input = event.target.closest("[data-step-image-file]");
+    if (!input) return;
+    const file = input.files?.[0] || null;
+    const form = input.closest("[data-step-form]");
+    const preview = form?.querySelector("[data-step-image-preview]");
+    const image = preview?.querySelector("img");
+    const removeRow = form?.querySelector("[data-step-remove-image-row]");
+    if (!preview || !image || !file) return;
+    image.src = await fileToDataUrl(file);
+    preview.classList.remove("is-empty");
+    removeRow?.classList.remove("hidden");
   }
 
   function reorderSteps(fromIndex, toIndex, position = "before") {
@@ -1041,6 +1091,7 @@
     draggedMenuId = null;
     draggedIngredientIndex = null;
     draggedStepIndex = null;
+    openStepPhotos = new Set();
     clearDropMarker();
     render();
     if (activeRecipeMenuId && !modal.classList.contains("hidden")) {
@@ -1066,8 +1117,12 @@
   deleteRecipeEdit.addEventListener("click", deleteRecipeFromEditor);
   cancelRecipeEdit.addEventListener("click", closeRecipeEditor);
   modalClose.addEventListener("click", closeRecipe);
+  modalContent.addEventListener("click", (event) => {
+    if (handleStepPhotoToggle(event)) event.stopPropagation();
+  });
   modalContent.addEventListener("click", handleIngredientAction);
   modalContent.addEventListener("click", handleStepAction);
+  modalContent.addEventListener("change", handleStepFilePreview);
   modalContent.addEventListener("dragstart", handleIngredientDragStart);
   modalContent.addEventListener("dragover", handleIngredientDragOver);
   modalContent.addEventListener("drop", handleIngredientDrop);

@@ -1758,7 +1758,7 @@ body.modal-open {
 
 .recipe-crud-actions {
   display: grid;
-  grid-template-columns: 30px;
+  grid-template-columns: repeat(2, 30px);
   gap: 6px;
   justify-content: end;
 }
@@ -1808,12 +1808,48 @@ body.modal-open {
   gap: 8px;
 }
 
+.recipe-step-photo-preview.is-empty {
+  display: none;
+}
+
 .recipe-step-photo-preview img {
   width: 100%;
   max-height: 180px;
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid rgba(184, 196, 240, 0.14);
+}
+
+.recipe-photo-toggle.is-disabled {
+  opacity: 0.28;
+  color: var(--muted);
+}
+
+.recipe-photo-toggle.has-photo {
+  color: #f7fbff;
+}
+
+.recipe-photo-toggle.is-active {
+  border-color: rgba(255, 216, 106, 0.72);
+  background: rgba(255, 216, 106, 0.18);
+  color: #ffd86a;
+}
+
+.recipe-step-photo-panel {
+  overflow: hidden;
+  border: 1px solid rgba(184, 196, 240, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 10px;
+}
+
+.recipe-step-photo-panel img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
 }
 
 .recipe-step-list {
@@ -1836,7 +1872,7 @@ body.modal-open {
 
 .recipe-step-row > div {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
   gap: 10px;
   align-items: center;
 }
