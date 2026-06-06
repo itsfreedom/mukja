@@ -2207,23 +2207,15 @@ body.modal-open {
 
 .request-target-section {
   display: grid;
-  gap: 12px;
+  gap: 0;
 }
 
-.request-category-add-text {
-  align-self: end;
-  justify-self: end;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.35;
-  padding: 2px;
-  cursor: pointer;
+.request-target-actions {
+  justify-content: end;
 }
 
-.request-category-add-text:hover {
+.request-target-toggle,
+.request-category-add-icon {
   color: #d9e3ff;
 }
 
@@ -2234,6 +2226,8 @@ body.modal-open {
 .request-category-section {
   display: grid;
   gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(184, 196, 240, 0.18);
 }
 
 .request-category-section.is-collapsed {
@@ -2265,9 +2259,9 @@ body.modal-open {
 .is-drop-after::after {
   content: "";
   position: absolute;
-  left: 10px;
-  right: 10px;
-  height: 2px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
   border-radius: 999px;
   background: rgba(255, 214, 87, 0.95);
   box-shadow: 0 0 0 1px rgba(255, 214, 87, 0.18), 0 0 12px rgba(255, 214, 87, 0.3);
@@ -2276,11 +2270,11 @@ body.modal-open {
 }
 
 .is-drop-before::before {
-  top: -5px;
+  top: -2px;
 }
 
 .is-drop-after::after {
-  bottom: -5px;
+  bottom: -2px;
 }
 
 .request-item-check {

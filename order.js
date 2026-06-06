@@ -205,6 +205,21 @@
     else collapsedCategories.delete(key);
   }
 
+  function targetCategories(target) {
+    return uniqueList([
+      ...Store.getRequestCategories(target),
+      ...Store.getIngredients().filter((item) => targetFor(item) === target).map(categoryFor)
+    ]);
+  }
+
+  function areTargetCategoriesCollapsed(target, categories = targetCategories(target)) {
+    return isEditMode() && categories.length > 0 && categories.every((category) => isCategoryCollapsed(target, category));
+  }
+
+  function setTargetCategoriesCollapsed(target, collapsed) {
+    targetCategories(target).forEach((category) => setCategoryCollapsed(target, category, collapsed));
+  }
+
   function categoryForm(target, category = "", mode = "edit") {
     const isNew = mode === "create";
     const fallback = target === "야채" ? "야채" : "기타";
@@ -543,11 +558,17 @@
     els.list.innerHTML = targets.map((target) => {
       const categoryGroups = groups[target];
       const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
+      const targetCollapsed = areTargetCategoriesCollapsed(target, categories);
       return `
         <section class="department-group request-target-group">
           <div class="section-title-row menu-category-title-row">
             <h2>${I18n.targetLabel(target)}</h2>
-            ${isEditMode() ? `<button class="request-category-add-text" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button">${I18n.t("categoryAdd")}</button>` : ""}
+            ${isEditMode() ? `
+              <div class="menu-row-actions request-target-actions">
+                <button class="menu-row-action request-target-toggle" data-request-target-action="toggle" data-category-target="${escapeHtml(target)}" type="button" aria-expanded="${targetCollapsed ? "false" : "true"}" aria-label="${I18n.targetLabel(target)} ${I18n.t(targetCollapsed ? "expandCategory" : "collapseCategory")}">${targetCollapsed ? expandIcon : collapseIcon}</button>
+                <button class="menu-row-action is-create request-category-add-icon" data-request-category-action="create" data-category-target="${escapeHtml(target)}" type="button" aria-label="${I18n.targetLabel(target)} ${I18n.t("categoryAdd")}">${addIcon}</button>
+              </div>
+            ` : ""}
           </div>
           <hr class="section-divider department-divider" />
           ${isEditMode() && activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
@@ -669,6 +690,18 @@
         }
       });
     });
+    els.list.querySelectorAll("[data-request-target-action]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const target = button.dataset.categoryTarget || "카페테리아";
+        const collapse = !areTargetCategoriesCollapsed(target);
+        setTargetCategoriesCollapsed(target, collapse);
+        activeCategoryEdit = null;
+        activeItemEdit = null;
+        renderItems();
+      });
+    });
     els.list.querySelectorAll("[data-request-category-action]").forEach((button) => {
       button.addEventListener("click", (event) => {
         event.preventDefault();
@@ -741,7 +774,6 @@
       row.addEventListener("dragover", (event) => {
         if (!isEditMode()) return;
         if (isRequestDragLocked()) return;
-        if (event.target.closest("[data-request-item-row]")) return;
         if (!draggedCategory || draggedCategory.target !== row.dataset.categoryTarget) return;
         event.preventDefault();
         markDropPosition(row, event);
@@ -749,7 +781,6 @@
       row.addEventListener("drop", (event) => {
         if (!isEditMode()) return;
         if (isRequestDragLocked()) return;
-        if (event.target.closest("[data-request-item-row]")) return;
         event.preventDefault();
         const position = markDropPosition(row, event);
         let source = draggedCategory;
@@ -785,17 +816,14 @@
       row.addEventListener("dragover", (event) => {
         if (!isEditMode()) return;
         if (isRequestDragLocked()) return;
-        event.stopPropagation();
         if (!draggedItem || draggedItem.target !== row.dataset.itemTarget || draggedItem.category !== row.dataset.itemCategory) return;
+        event.stopPropagation();
         event.preventDefault();
         markDropPosition(row, event);
       });
       row.addEventListener("drop", (event) => {
         if (!isEditMode()) return;
         if (isRequestDragLocked()) return;
-        event.stopPropagation();
-        event.preventDefault();
-        const position = markDropPosition(row, event);
         let source = draggedItem;
         try {
           source = source || JSON.parse(event.dataTransfer?.getData("text/plain") || "null");
@@ -803,6 +831,9 @@
           source = draggedItem;
         }
         if (!source || source.target !== row.dataset.itemTarget || source.category !== row.dataset.itemCategory) return;
+        event.stopPropagation();
+        event.preventDefault();
+        const position = markDropPosition(row, event);
         moveItem(row.dataset.itemTarget, row.dataset.itemCategory, source.id, row.dataset.itemId, position);
       });
       row.addEventListener("dragend", () => {

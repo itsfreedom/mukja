@@ -183,6 +183,22 @@ async function runPage(userName, session, page, language = 'ko') {
       result.categoryTitleFocusWorks = collapsedRow?.classList.contains('is-jump-focused') || false;
       collapsedRow?.querySelector('[data-request-category-action="toggle"]')?.click();
       await waitUntil(() => !window.document.querySelector('[data-request-category-row]')?.classList.contains('is-collapsed'));
+      const targetToggle = window.document.querySelector('[data-request-target-action="toggle"]');
+      const targetName = targetToggle?.dataset.categoryTarget || '';
+      const currentTargetSection = () => [...window.document.querySelectorAll('[data-request-target-action="toggle"]')]
+        .find((button) => button.dataset.categoryTarget === targetName)
+        ?.closest('.request-target-group');
+      const currentTargetToggle = () => currentTargetSection()?.querySelector('[data-request-target-action="toggle"]');
+      const targetRows = () => [...(currentTargetSection()?.querySelectorAll('[data-request-category-row]') || [])];
+      result.categoryAddIconButton = Boolean(currentTargetSection()?.querySelector('.request-category-add-icon[data-request-category-action="create"]'))
+        && !currentTargetSection()?.querySelector('.request-category-add-text');
+      currentTargetToggle()?.click();
+      await waitUntil(() => targetRows().length > 0 && targetRows().every((row) => row.classList.contains('is-collapsed')));
+      result.targetCollapseWorks = targetRows().length > 0
+        && targetRows().every((row) => row.classList.contains('is-collapsed'))
+        && targetRows().every((row) => !row.querySelector('[data-order-item-action="create"]') && !row.querySelector('[data-request-category-action="edit"]'));
+      currentTargetToggle()?.click();
+      await waitUntil(() => targetRows().some((row) => !row.classList.contains('is-collapsed')));
       const createButton = window.document.querySelector('[data-order-item-action="create"]');
       const duplicateTarget = createButton?.dataset.orderItemTarget || '';
       const duplicateCategory = createButton?.dataset.orderItemCategory || '';
@@ -202,6 +218,8 @@ async function runPage(userName, session, page, language = 'ko') {
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.messageTestPass === false) result.pass = false;
     if (result.categoryCollapseWorks === false) result.pass = false;
+    if (result.categoryAddIconButton === false) result.pass = false;
+    if (result.targetCollapseWorks === false) result.pass = false;
     if (result.categoryTitleFocusWorks === false) result.pass = false;
     if (result.duplicateIngredientBlocked === false) result.pass = false;
     if (result.dragLockedWhileEditFormOpen === false) result.pass = false;
