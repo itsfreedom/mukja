@@ -91,7 +91,7 @@ async function waitUntil(fn, timeout = 8000) {
   return false;
 }
 
-async function runPage(userName, session, page) {
+async function runPage(userName, session, page, language = 'ko') {
   const html = await local(page.file);
   const dom = new JSDOM(html, { url: `${site}/${page.file}`, runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
@@ -104,7 +104,7 @@ async function runPage(userName, session, page) {
   window.matchMedia = () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
   window.fetch = async (url, options = {}) => fetch(String(url).startsWith('/api') ? `${site}${url}` : String(url), options);
   Object.defineProperty(window.navigator, 'serviceWorker', { configurable: true, value: { getRegistrations: async () => [], register: async () => ({ update: async () => {} }) } });
-  window.localStorage.setItem('restaurant_lang', 'ko');
+  window.localStorage.setItem('restaurant_lang', language);
   window.localStorage.setItem('restaurant_auth', JSON.stringify({ ...session, signedInAt: new Date().toISOString() }));
   for (const script of [...sharedScripts, page.script]) window.eval(`${await local(script)}\n//# sourceURL=${script}`);
   await waitUntil(() => {
@@ -116,7 +116,7 @@ async function runPage(userName, session, page) {
     if (page.file === 'admin.html') return window.document.querySelector('[data-layout-sidebar]')?.textContent?.trim() || window.document.querySelector('#access-list')?.textContent?.trim();
     return true;
   });
-  const result = { user: userName, page: page.file, errors };
+  const result = { user: userName, page: page.file, language, errors };
   if (page.file === 'index.html') {
     const homeText = window.document.querySelector('#home-request-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.memoLabels = [...window.document.querySelectorAll('.memo-entry strong')].map((node) => node.textContent.trim());
@@ -132,6 +132,8 @@ async function runPage(userName, session, page) {
   } else if (page.file === 'order.html') {
     const text = window.document.querySelector('#items-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.checked = window.document.querySelectorAll('#items-list input[type="checkbox"]:checked').length;
+    result.hasDriedVegetables = text.includes('Dried Vegetables');
+    result.hasKoreanDriedVegetables = text.includes('건나물');
     result.sample = text.slice(0, 180);
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
   } else if (page.file === 'menu.html') {
@@ -160,6 +162,10 @@ async function runPage(userName, session, page) {
         catch (error) { results.push({ user: userName, page: page.file, pass: false, fatal: error.message }); }
       }
     }
+    const englishOrder = await runPage('admin', users.admin, pages.find((page) => page.file === 'order.html'), 'en');
+    englishOrder.check = 'English grocery category translation';
+    englishOrder.pass = englishOrder.pass && englishOrder.hasDriedVegetables && !englishOrder.hasKoreanDriedVegetables;
+    results.push(englishOrder);
   } finally {
     try { await req(`/history/${encodeURIComponent(seedId)}`, { method: 'DELETE' }); } catch (error) {
       results.push({ user: 'cleanup', page: 'api/history', pass: false, fatal: error.message });

@@ -54,6 +54,7 @@
     "소스류": "Sauces",
     "곡류": "Grains",
     "면류": "Noodles",
+    "건나물": "Dried Vegetables",
     "포장 박스": "Packaging",
     "식사": "Meals",
     "찌개": "Stews",
