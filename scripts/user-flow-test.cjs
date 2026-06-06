@@ -96,8 +96,9 @@ async function runPage(userName, session, page, language = 'ko') {
   const dom = new JSDOM(html, { url: `${site}/${page.file}`, runScripts: 'outside-only', pretendToBeVisual: true });
   const { window } = dom;
   const errors = [];
+  const alerts = [];
   window.console = { ...console, error: (...args) => errors.push(args.join(' ')) };
-  window.alert = () => {};
+  window.alert = (message) => alerts.push(String(message || ''));
   window.confirm = () => true;
   window.URL.createObjectURL = () => 'blob:test';
   window.URL.revokeObjectURL = () => {};
@@ -163,13 +164,44 @@ async function runPage(userName, session, page, language = 'ko') {
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
         && result.kakaoLinks === 3;
+      window.document.querySelector('#order-mode-edit')?.click();
+      await waitUntil(() => window.document.querySelector('[data-order-item-action="create"]'));
+      const createButton = window.document.querySelector('[data-order-item-action="create"]');
+      const duplicateTarget = createButton?.dataset.orderItemTarget || '';
+      const duplicateCategory = createButton?.dataset.orderItemCategory || '';
+      const duplicateRow = [...window.document.querySelectorAll('[data-request-item-row]')]
+        .find((row) => row.dataset.itemTarget === duplicateTarget && row.dataset.itemCategory === duplicateCategory);
+      const duplicateName = duplicateRow?.querySelector('strong')?.textContent?.trim() || '';
+      const ingredientCountBefore = window.Store.getIngredients().length;
+      createButton?.click();
+      await waitUntil(() => window.document.querySelector('[data-order-item-form="__new__"]'));
+      const ingredientForm = window.document.querySelector('[data-order-item-form="__new__"]');
+      ingredientForm.querySelector('[data-order-item-name-ko]').value = duplicateName;
+      ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
+      result.duplicateIngredientBlocked = alerts.some((message) => message.includes('이미 같은 품목명'))
+        && window.Store.getIngredients().length === ingredientCountBefore;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.messageTestPass === false) result.pass = false;
+    if (result.duplicateIngredientBlocked === false) result.pass = false;
   } else if (page.file === 'menu.html') {
     const text = window.document.querySelector('#menu-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
+    if (userName === 'admin' && language === 'ko') {
+      window.document.querySelector('#menu-mode-edit')?.click();
+      await waitUntil(() => window.document.querySelector('[data-menu-action="create"]'));
+      const duplicateName = window.document.querySelector('[data-menu] strong')?.textContent?.trim() || '';
+      const menuCountBefore = window.Store.getMenus().length;
+      window.document.querySelector('[data-menu-action="create"]')?.click();
+      await waitUntil(() => window.document.querySelector('[data-menu-form="__new__"]'));
+      const menuForm = window.document.querySelector('[data-menu-form="__new__"]');
+      menuForm.querySelector('[data-menu-name-ko]').value = duplicateName;
+      menuForm.querySelector('[data-menu-action="save"]')?.click();
+      result.duplicateMenuBlocked = alerts.some((message) => message.includes('이미 같은 메뉴명'))
+        && window.Store.getMenus().length === menuCountBefore;
+    }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
+    if (result.duplicateMenuBlocked === false) result.pass = false;
   } else if (page.file === 'recipes.html') {
     const text = window.document.querySelector('#recipe-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);

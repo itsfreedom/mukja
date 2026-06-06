@@ -73,6 +73,25 @@
     return canManageMenu && menuMode === "edit";
   }
 
+  function normalizeDuplicateName(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  function findDuplicateMenuName({ id = "", nameKo = "" }) {
+    const normalizedName = normalizeDuplicateName(nameKo);
+    if (!normalizedName) return null;
+    return Store.getMenus().find((row) =>
+      row.id !== id &&
+      normalizeDuplicateName(row.nameKo || row.recipeName) === normalizedName
+    ) || null;
+  }
+
+  function blockDuplicateMenuName(id, nameKo) {
+    if (!findDuplicateMenuName({ id, nameKo })) return false;
+    window.alert(I18n.format("duplicateMenuName", { name: nameKo }));
+    return true;
+  }
+
   function updateMenuModeUI() {
     const edit = isMenuEditMode();
     modeRow?.classList.toggle("hidden", !canManageMenu);
@@ -770,6 +789,7 @@
   function saveMenuFromEditor() {
     const nameKo = editFields.nameKo.value.trim();
     if (!nameKo) return;
+    if (blockDuplicateMenuName(editingMenuId, nameKo)) return;
     const isActive = editFields.active.checked;
     const confirmMessage = isActive ? I18n.t("confirmSaveMenu") : I18n.t("confirmDiscontinueMenu");
     if (!confirm(confirmMessage)) return;
@@ -867,6 +887,7 @@
   function saveMenuFromInline(form, menu = null) {
     const nameKo = form?.querySelector("[data-menu-name-ko]")?.value.trim() || "";
     if (!nameKo) return;
+    if (blockDuplicateMenuName(menu?.id || "", nameKo)) return;
     const isActive = form.querySelector("[data-menu-active]")?.checked;
     const confirmMessage = isActive ? I18n.t("confirmSaveMenu") : I18n.t("confirmDiscontinueMenu");
     if (!confirm(confirmMessage)) return;

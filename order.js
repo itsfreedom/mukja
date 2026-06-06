@@ -139,6 +139,20 @@
     return [...new Set((items || []).filter(Boolean))];
   }
 
+  function normalizeDuplicateName(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  function findDuplicateIngredientName({ id = "", target = "", nameKo = "" }) {
+    const normalizedName = normalizeDuplicateName(nameKo);
+    if (!normalizedName) return null;
+    return Store.getIngredients().find((row) =>
+      row.id !== id &&
+      targetFor(row) === target &&
+      normalizeDuplicateName(row.nameKo || row.name) === normalizedName
+    ) || null;
+  }
+
   function escapeHtml(value) {
     return String(value || "")
       .replaceAll("&", "&amp;")
@@ -356,6 +370,16 @@
     }
     const target = form.querySelector("[data-order-item-target]")?.value || "카페테리아";
     const category = form.querySelector("[data-order-item-category]")?.value.trim() || "기타";
+    const duplicate = findDuplicateIngredientName({ id: item?.id || "", target, nameKo });
+    if (duplicate) {
+      const message = I18n.format("duplicateIngredientName", {
+        department: I18n.targetLabel(target),
+        name: nameKo
+      });
+      window.alert(message);
+      setStatus(message);
+      return;
+    }
     const nextItem = {
       ...(item || {}),
       id: item?.id || Store.id("item"),
