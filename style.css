@@ -652,7 +652,15 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 .menu-row-action .toggle-triangle-icon {
+  fill: currentColor;
+  stroke: none;
   transition: transform 0.16s ease;
+}
+
+.menu-row-action .toggle-icon-line,
+.menu-row-action .toggle-icon-triangle {
+  fill: currentColor;
+  stroke: none;
 }
 
 .menu-row-action.is-expanded .toggle-triangle-icon {

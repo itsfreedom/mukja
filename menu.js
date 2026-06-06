@@ -68,7 +68,7 @@
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
-  const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12" /><path d="M12 16 7 10h10z" fill="currentColor" stroke="none" /></svg>';
+  const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M7 6.5h10v3H7z" /><path class="toggle-icon-triangle" d="M7 11.5h10L12 18z" /></svg>';
   const photoIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h2l1.5-2h3L15 7h2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3z"/><circle cx="12" cy="13" r="3"/></svg>';
 
   function isMenuEditMode() {

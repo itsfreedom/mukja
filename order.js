@@ -20,7 +20,7 @@
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
   const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
-  const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12" /><path d="M12 16 7 10h10z" fill="currentColor" stroke="none" /></svg>';
+  const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M7 6.5h10v3H7z" /><path class="toggle-icon-triangle" d="M7 11.5h10L12 18z" /></svg>';
   const els = {
     list: document.getElementById("items-list"),
     memo: document.getElementById("memo"),
