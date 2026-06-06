@@ -79,7 +79,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 - 부서/카테고리 일괄 변경
 - 카테고리 CRUD
 - 순서 이동
-- 입력 폼이 열린 행의 드래그 비활성화
+- 입력 폼이 열린 동안 품목/카테고리 드래그 이동 비활성화
 
 ### 메뉴
 

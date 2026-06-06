@@ -139,6 +139,10 @@
     return [...new Set((items || []).filter(Boolean))];
   }
 
+  function isRequestDragLocked() {
+    return Boolean(activeItemEdit || activeCategoryEdit);
+  }
+
   function normalizeDuplicateName(value) {
     return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
   }
@@ -273,6 +277,7 @@
   }
 
   function moveCategory(target, fromCategory, toCategory, position = "before") {
+    if (isRequestDragLocked()) return;
     if (!target || !fromCategory || !toCategory || fromCategory === toCategory) return;
     const rows = [...els.list.querySelectorAll("[data-request-category-row]")]
       .filter((row) => row.dataset.categoryTarget === target);
@@ -290,6 +295,7 @@
   }
 
   function moveItem(target, category, fromId, toId, position = "before") {
+    if (isRequestDragLocked()) return;
     if (!target || !category || !fromId || !toId || fromId === toId) return;
     const rows = [...els.list.querySelectorAll("[data-request-item-row]")]
       .filter((row) => row.dataset.itemTarget === target && row.dataset.itemCategory === category);
@@ -455,11 +461,12 @@
 
   function renderItemRows(items) {
     const selectionAnchorId = isEditMode() ? bulkSelectionAnchorId() : null;
+    const dragLocked = isRequestDragLocked();
     return `
       <div class="item-section-list">
         ${items.map((item) => {
           const checked = isEditMode() ? editSelected.has(item.id) : selected.has(itemKey(item));
-          const rowDraggable = isEditMode() && activeItemEdit?.id !== item.id;
+          const rowDraggable = isEditMode() && !dragLocked && activeItemEdit?.id !== item.id;
           return `
           <article class="list-card request-item-row" data-request-item-row data-item-id="${escapeHtml(item.id)}" data-item-target="${escapeHtml(targetFor(item))}" data-item-category="${escapeHtml(categoryFor(item))}" draggable="${rowDraggable ? "true" : "false"}">
             <label class="request-item-check">
@@ -534,8 +541,9 @@
             ${categories.map((category) => {
               const categoryEditing = categoryKey(activeCategoryEdit?.target, activeCategoryEdit?.category) === categoryKey(target, category) ||
                 (activeItemEdit?.isNew && activeItemEdit.target === target && activeItemEdit.category === category);
+              const categoryDraggable = isEditMode() && !isRequestDragLocked() && !categoryEditing;
               return `
-              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="${isEditMode() && !categoryEditing ? "true" : "false"}">
+              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="${categoryDraggable ? "true" : "false"}">
                 <div class="section-title-row request-category-title-row">
                   <h3>${I18n.sectionLabel(category)}</h3>
                   ${categoryActions(target, category)}
@@ -686,7 +694,11 @@
     els.list.querySelectorAll("[data-request-category-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
         if (!isEditMode()) return;
-        if (event.target.closest("[data-request-category-form], [data-order-item-form], [data-order-selection-form]")) return;
+        if (isRequestDragLocked() || event.target.closest("[data-request-category-form], [data-order-item-form], [data-order-selection-form]")) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         if (event.target.closest("[data-request-item-row]")) return;
         draggedCategory = {
           target: row.dataset.categoryTarget,
@@ -696,6 +708,7 @@
       });
       row.addEventListener("dragover", (event) => {
         if (!isEditMode()) return;
+        if (isRequestDragLocked()) return;
         if (event.target.closest("[data-request-item-row]")) return;
         if (!draggedCategory || draggedCategory.target !== row.dataset.categoryTarget) return;
         event.preventDefault();
@@ -703,6 +716,7 @@
       });
       row.addEventListener("drop", (event) => {
         if (!isEditMode()) return;
+        if (isRequestDragLocked()) return;
         if (event.target.closest("[data-request-item-row]")) return;
         event.preventDefault();
         const position = markDropPosition(row, event);
@@ -723,7 +737,11 @@
     els.list.querySelectorAll("[data-request-item-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
         if (!isEditMode()) return;
-        if (event.target.closest("[data-request-category-form], [data-order-item-form], [data-order-selection-form]")) return;
+        if (isRequestDragLocked() || event.target.closest("[data-request-category-form], [data-order-item-form], [data-order-selection-form]")) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
         event.stopPropagation();
         draggedItem = {
           id: row.dataset.itemId,
@@ -734,6 +752,7 @@
       });
       row.addEventListener("dragover", (event) => {
         if (!isEditMode()) return;
+        if (isRequestDragLocked()) return;
         event.stopPropagation();
         if (!draggedItem || draggedItem.target !== row.dataset.itemTarget || draggedItem.category !== row.dataset.itemCategory) return;
         event.preventDefault();
@@ -741,6 +760,7 @@
       });
       row.addEventListener("drop", (event) => {
         if (!isEditMode()) return;
+        if (isRequestDragLocked()) return;
         event.stopPropagation();
         event.preventDefault();
         const position = markDropPosition(row, event);

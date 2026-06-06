@@ -180,10 +180,12 @@ async function runPage(userName, session, page, language = 'ko') {
       ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
       result.duplicateIngredientBlocked = alerts.some((message) => message.includes('이미 같은 품목명'))
         && window.Store.getIngredients().length === ingredientCountBefore;
+      result.dragLockedWhileEditFormOpen = window.document.querySelectorAll('[data-request-item-row][draggable="true"], [data-request-category-row][draggable="true"]').length === 0;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.messageTestPass === false) result.pass = false;
     if (result.duplicateIngredientBlocked === false) result.pass = false;
+    if (result.dragLockedWhileEditFormOpen === false) result.pass = false;
   } else if (page.file === 'menu.html') {
     const text = window.document.querySelector('#menu-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
