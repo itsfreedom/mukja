@@ -19,7 +19,7 @@
   const fromMenu = params.get("from") === "menu";
   const closeButton = document.getElementById("close-recipe");
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
-  const photoIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-4.2-4.2a2 2 0 0 0-2.8 0L5 19"/></svg>';
+  const photoIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h2l1.5-2h3L15 7h2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3z"/><circle cx="12" cy="13" r="3"/></svg>';
   let activeIngredientEdit = null;
   let activeStepEdit = null;
   let openStepPhotos = new Set();
