@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v189";
+  const appAssetVersion = "v190";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -32,16 +32,18 @@
     { id: "emp-1", name: "직원1", enabled: true },
     { id: "emp-2", name: "직원2", enabled: true }
   ];
-  const defaultTargets = ["카페테리아", "야채", "그로서리"];
+  const defaultTargets = ["카페테리아", "야채", "매장", "먹자"];
   const defaultDepartments = [
     { id: "department-cafeteria", name: "카페테리아", nameEn: "Cafeteria", enabled: true, sortOrder: 1 },
     { id: "department-vegetable", name: "야채", nameEn: "Vegetables", enabled: true, sortOrder: 2 },
-    { id: "department-grocery", name: "그로서리", nameEn: "Grocery", enabled: true, sortOrder: 3 }
+    { id: "department-store", name: "매장", nameEn: "Store", enabled: true, sortOrder: 3 },
+    { id: "department-mukja", name: "먹자", nameEn: "Mukja", enabled: true, sortOrder: 4 }
   ];
   const defaultRequestCategories = {
     "카페테리아": defaultSections,
     "야채": ["신선", "두부"],
-    "그로서리": ["분말", "냉장", "냉동", "소스류", "곡류", "면류", "반찬", "포장 박스"]
+    "매장": ["분말", "냉장", "냉동", "소스류", "곡류", "면류", "반찬", "포장 박스"],
+    "먹자": ["기타"]
   };
   const categoryEnglishLabels = {
     "반조리": "Semi-prepared",
@@ -74,7 +76,7 @@
   const defaultAccessCodes = {
     c1234: { role: "department", department: "카페테리아", label: "카페테리아", userName: "c1234", name: "카페테리아" },
     v1234: { role: "department", department: "야채", label: "야채", userName: "v1234", name: "야채" },
-    g1234: { role: "department", department: "그로서리", label: "그로서리", userName: "g1234", name: "그로서리" },
+    g1234: { role: "department", department: "매장", label: "매장", userName: "g1234", name: "매장" },
     m1234: { role: "restaurant", department: "", label: "레스토랑", userName: "m1234", name: "레스토랑" },
     madmin: { role: "admin", department: "", label: "관리자", userName: "madmin", name: "관리자" }
   };
@@ -89,12 +91,12 @@
     { id: "item-oil", name: "식용유", nameKo: "식용유", nameEn: "Cooking Oil", section: "소스", unit: "통", target: "카페테리아", enabled: true },
     { id: "item-soy-sauce", name: "간장", nameKo: "간장", nameEn: "Soy Sauce", section: "소스", unit: "병", target: "카페테리아", enabled: true },
     { id: "item-eggs", name: "계란", nameKo: "계란", nameEn: "Eggs", section: "냉장", unit: "판", target: "카페테리아", enabled: true },
-    { id: "item-flour", name: "밀가루", nameKo: "밀가루", nameEn: "Flour", section: "식재료", unit: "kg", target: "그로서리", enabled: true },
+    { id: "item-flour", name: "밀가루", nameKo: "밀가루", nameEn: "Flour", section: "식재료", unit: "kg", target: "매장", enabled: true },
     { id: "item-milk", name: "우유", nameKo: "우유", nameEn: "Milk", section: "냉장", unit: "L", target: "카페테리아", enabled: true },
     { id: "item-cheese", name: "치즈", nameKo: "치즈", nameEn: "Cheese", section: "냉장", unit: "팩", target: "카페테리아", enabled: true },
     { id: "item-frozen-mandu", name: "냉동만두", nameKo: "냉동만두", nameEn: "Frozen Dumplings", section: "냉동", unit: "봉", target: "카페테리아", enabled: true },
-    { id: "item-frozen-potato", name: "냉동감자", nameKo: "냉동감자", nameEn: "Frozen Potatoes", section: "냉동", unit: "봉", target: "그로서리", enabled: true },
-    { id: "item-other", name: "기타요청", nameKo: "기타요청", nameEn: "Other Request", section: "기타", unit: "개", target: "그로서리", enabled: true }
+    { id: "item-frozen-potato", name: "냉동감자", nameKo: "냉동감자", nameEn: "Frozen Potatoes", section: "냉동", unit: "봉", target: "매장", enabled: true },
+    { id: "item-other", name: "기타요청", nameKo: "기타요청", nameEn: "Other Request", section: "기타", unit: "개", target: "매장", enabled: true }
   ];
   const defaultRecipes = [
     recipe("김치볶음밥", "식재료", "남은 밥과 김치를 빠르게 볶는 점심 메뉴", "밥, 김치, 계란, 대파, 간장", "1. 대파를 볶아 향을 냅니다.\n2. 김치와 밥을 넣고 볶습니다.\n3. 간장으로 간을 맞추고 계란을 올립니다.", "김치 물기를 살짝 짜면 볶음이 깔끔합니다."),
@@ -135,14 +137,14 @@
     ["item-test-mushroom", "버섯", "Mushroom", "야채", "팩", "야채"],
     ["item-test-spinach", "시금치", "Spinach", "야채", "단", "야채"],
     ["item-test-pepper", "고추", "Chili Pepper", "야채", "팩", "야채"],
-    ["item-test-rice", "쌀", "Rice", "식재료", "포", "그로서리"],
-    ["item-test-sugar", "설탕", "Sugar", "식재료", "kg", "그로서리"],
-    ["item-test-salt", "소금", "Salt", "식재료", "kg", "그로서리"],
-    ["item-test-breadcrumbs", "빵가루", "Breadcrumbs", "식재료", "봉", "그로서리"],
-    ["item-test-noodles", "라면사리", "Ramen Noodles", "식재료", "박스", "그로서리"],
-    ["item-test-curry", "카레가루", "Curry Powder", "식재료", "봉", "그로서리"],
-    ["item-test-plastic-cup", "일회용컵", "Disposable Cups", "기타", "박스", "그로서리"],
-    ["item-test-napkin", "냅킨", "Napkins", "기타", "박스", "그로서리"]
+    ["item-test-rice", "쌀", "Rice", "식재료", "포", "매장"],
+    ["item-test-sugar", "설탕", "Sugar", "식재료", "kg", "매장"],
+    ["item-test-salt", "소금", "Salt", "식재료", "kg", "매장"],
+    ["item-test-breadcrumbs", "빵가루", "Breadcrumbs", "식재료", "봉", "매장"],
+    ["item-test-noodles", "라면사리", "Ramen Noodles", "식재료", "박스", "매장"],
+    ["item-test-curry", "카레가루", "Curry Powder", "식재료", "봉", "매장"],
+    ["item-test-plastic-cup", "일회용컵", "Disposable Cups", "기타", "박스", "매장"],
+    ["item-test-napkin", "냅킨", "Napkins", "기타", "박스", "매장"]
   ];
   const testRecipeSeeds = [
     ["recipe-test-tteokbokki", "떡볶이", "반조리", "매콤달콤한 분식 메뉴", "떡볶이떡, 어묵, 고추장, 설탕, 대파", "1. 양념장을 끓입니다.\n2. 떡과 어묵을 넣습니다.\n3. 농도가 잡히면 대파를 넣습니다.", "소스는 너무 졸이지 않습니다."],
@@ -400,7 +402,7 @@
               text: `레스토랑 테스트 메모 ${week + 1}-${day + 1}`,
               createdAt: `${dateForHistory(week, day)}T09:40:00.000Z`
             },
-            ...["카페테리아", "야채", "그로서리"].map((target, index) => ({
+            ...["카페테리아", "야채", "매장", "먹자"].map((target, index) => ({
               id: `memo-test-dept-${week}-${day}-${index}`,
               role: "department",
               department: target,
@@ -521,8 +523,36 @@
     if (!text) return "";
     if (["카페테리아", "cafeteria", "cafe", "café"].includes(text)) return "카페테리아";
     if (["야채", "vegetable", "vegetables", "veggie", "veggies"].includes(text)) return "야채";
-    if (["그로서리", "grocery", "groceries"].includes(text)) return "그로서리";
+    if (["그로서리", "매장", "grocery", "groceries", "store"].includes(text)) return "매장";
+    if (["먹자", "mukja", "mokja"].includes(text)) return "먹자";
     return String(value || "").trim();
+  }
+
+  function roleBadgeLabel(value, role = "") {
+    const target = normalizeTargetName(value);
+    if (role === "admin" || target === "관리자") return "A";
+    if (role === "restaurant" || target === "레스토랑") return "R";
+    if (target === "카페테리아") return "C";
+    if (target === "야채") return "V";
+    if (target === "매장") return "G";
+    if (target === "먹자") return "M";
+    return String(value || "D").trim().charAt(0).toUpperCase() || "D";
+  }
+
+  function roleBadgeColor(value, role = "") {
+    const target = normalizeTargetName(value);
+    if (role === "admin" || target === "관리자") return "#f26b7a";
+    if (role === "restaurant" || target === "레스토랑") return "#ffd861";
+    if (target === "카페테리아") return "#8a5a35";
+    if (target === "야채") return "#2f8f4e";
+    if (target === "매장") return "#e87a22";
+    if (target === "먹자") return "#f4d9c6";
+    return "#ffd861";
+  }
+
+  function roleBadgeTextColor(value, role = "") {
+    const target = normalizeTargetName(value);
+    return target === "먹자" || role === "restaurant" || target === "레스토랑" ? "#10131f" : "#ffffff";
   }
 
   function normalizeDepartment(row, index = 0) {
@@ -891,10 +921,12 @@
     if (!item) return item;
     const category = item.category || item.section || "";
     const targets = activeTargetNames();
-    if (item.target === "마트") return { ...item, target: category === "야채" ? "야채" : "그로서리" };
-    if (item.enabled === false && item.target && !targets.includes(item.target)) return item;
-    if (!targets.includes(item.target)) return { ...item, target: category === "야채" ? "야채" : (targets[0] || "그로서리") };
-    return item;
+    const normalizedTarget = normalizeTargetName(item.target);
+    const nextItem = normalizedTarget && normalizedTarget !== item.target ? { ...item, target: normalizedTarget } : item;
+    if (item.target === "마트") return { ...nextItem, target: category === "야채" ? "야채" : "매장" };
+    if (nextItem.enabled === false && nextItem.target && !targets.includes(nextItem.target)) return nextItem;
+    if (!targets.includes(nextItem.target)) return { ...nextItem, target: category === "야채" ? "야채" : (targets[0] || "매장") };
+    return nextItem;
   }
 
   function normalizeSection(item) {
@@ -1695,6 +1727,9 @@
     },
     getTargets: () => activeTargetNames(),
     normalizeTargetName,
+    roleBadgeLabel,
+    roleBadgeColor,
+    roleBadgeTextColor,
     getAllowedTargets: allowedTargets,
     getIngredients: () => dataState.ingredients.slice(),
     setIngredients,
@@ -1759,13 +1794,10 @@
       const sidebar = document.querySelector("[data-layout-sidebar]");
       if (!sidebar || !window.I18n) return;
       const session = auth();
-      const roleBadgeLabel = (() => {
-        if (!session) return "";
-        if (session.role === "admin") return "A";
-        if (session.role === "restaurant") return "R";
-        return String(window.I18n?.targetLabel(session.department || session.label) || "D").charAt(0).toUpperCase();
-      })();
-      const roleBadgeClass = roleBadgeLabel === "A" ? " is-admin" : "";
+      const badgeSource = session?.department || session?.label || "";
+      const badgeLabel = session ? roleBadgeLabel(badgeSource, session.role) : "";
+      const badgeColor = session ? roleBadgeColor(badgeSource, session.role) : "";
+      const badgeTextColor = session ? roleBadgeTextColor(badgeSource, session.role) : "";
       const isRestricted = (key) => {
         if (key === "order") return !["restaurant", "admin"].includes(session?.role);
         if (key === "menus") return !["restaurant", "admin"].includes(session?.role);
@@ -1799,10 +1831,10 @@
             <div class="brand-sub-row">
               <div class="brand-role">${session ? I18n.roleLabel(session.label) : ""}</div>
               <div class="brand-tools">
-                ${roleBadgeLabel ? `
-                  <svg class="sidebar-role-badge${roleBadgeClass}" viewBox="0 0 28 28" aria-hidden="true">
+                ${badgeLabel ? `
+                  <svg class="sidebar-role-badge" style="--badge-color: ${badgeColor}; --badge-text-color: ${badgeTextColor};" viewBox="0 0 28 28" aria-hidden="true">
                     <circle cx="14" cy="14" r="13" />
-                    <text x="14" y="14" dominant-baseline="central" text-anchor="middle">${roleBadgeLabel}</text>
+                    <text x="14" y="14" dominant-baseline="central" text-anchor="middle">${badgeLabel}</text>
                   </svg>
                 ` : ""}
                 <button class="lang-toggle" data-lang-toggle type="button" aria-label="${I18n.t("language")}">${I18n.lang() === "ko" ? "🇺🇸" : "🇰🇷"}</button>

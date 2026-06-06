@@ -9,7 +9,7 @@ const users = {
   restaurant: { role: 'restaurant', department: '', label: '레스토랑' },
   cafeteria: { role: 'department', department: '카페테리아', label: '카페테리아' },
   vegetable: { role: 'department', department: '야채', label: '야채' },
-  grocery: { role: 'department', department: '그로서리', label: '그로서리' }
+  grocery: { role: 'department', department: '매장', label: '매장' }
 };
 const pages = [
   { file: 'index.html', script: 'app.js' },
@@ -20,11 +20,11 @@ const pages = [
   { file: 'admin.html', script: 'admin.js' }
 ];
 const expectedHomeMemos = {
-  admin: ['레스토랑', '카페테리아', '야채', '그로서리'],
-  restaurant: ['관리자', '카페테리아', '야채', '그로서리'],
-  cafeteria: ['관리자', '레스토랑', '야채', '그로서리'],
-  vegetable: ['관리자', '레스토랑', '카페테리아', '그로서리'],
-  grocery: ['관리자', '레스토랑', '카페테리아', '야채']
+  admin: ['레스토랑', '카페테리아', '야채', '매장', '먹자'],
+  restaurant: ['관리자', '카페테리아', '야채', '매장', '먹자'],
+  cafeteria: ['관리자', '레스토랑', '야채', '매장', '먹자'],
+  vegetable: ['관리자', '레스토랑', '카페테리아', '매장', '먹자'],
+  grocery: ['관리자', '레스토랑', '카페테리아', '야채', '먹자']
 };
 const sharedScripts = ['storage.js', 'i18n.js'];
 const apiHeaders = {
@@ -68,14 +68,14 @@ function seededEntry(id) {
     items: [
       { id: `${id}-cafe`, name: '테스트 닭강정', nameKo: '테스트 닭강정', nameEn: 'Test Gangjeong', category: '반조리', target: '카페테리아', quantity: '', unit: '', received: false, restaurantReceived: false },
       { id: `${id}-veg`, name: '테스트 두부', nameKo: '테스트 두부', nameEn: 'Test Tofu', category: '두부', target: '야채', quantity: '', unit: '', received: false, restaurantReceived: false },
-      { id: `${id}-grocery`, name: '테스트 다시다', nameKo: '테스트 다시다', nameEn: 'Test Powder', category: '분말', target: '그로서리', quantity: '', unit: '', received: true, restaurantReceived: true }
+      { id: `${id}-grocery`, name: '테스트 다시다', nameKo: '테스트 다시다', nameEn: 'Test Powder', category: '분말', target: '매장', quantity: '', unit: '', received: true, restaurantReceived: true }
     ],
     memos: [
       { id: `${id}-memo-admin`, role: 'admin', department: '', authorLabel: '관리자', text: '기능 테스트 관리자 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-restaurant`, role: 'restaurant', department: '', authorLabel: '레스토랑', text: '기능 테스트 레스토랑 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-cafe`, role: 'department', department: '카페테리아', authorLabel: '카페테리아', text: '기능 테스트 카페테리아 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-veg`, role: 'department', department: '야채', authorLabel: '야채', text: '기능 테스트 야채 메모', createdAt: new Date().toISOString() },
-      { id: `${id}-memo-grocery`, role: 'department', department: '그로서리', authorLabel: '그로서리', text: '기능 테스트 그로서리 메모', createdAt: new Date().toISOString() }
+      { id: `${id}-memo-grocery`, role: 'department', department: '매장', authorLabel: '매장', text: '기능 테스트 매장 메모', createdAt: new Date().toISOString() }
     ],
     memo: '[관리자] 기능 테스트 관리자 메모',
     message: ''
@@ -173,7 +173,7 @@ async function runPage(userName, session, page, language = 'ko') {
       result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
       result.kakaoLinks = window.document.querySelectorAll('a[href="kakaotalk://"]').length;
       result.categoryMessageLines = messageLines.filter((line) => /^[^:]+: .+/.test(line)).length;
-      result.messageTestPass = ['카페테리아', '야채', '그로서리'].every((target) => messageText.includes(target))
+      result.messageTestPass = ['카페테리아', '야채', '매장'].every((target) => messageText.includes(target))
         && messageText.includes('[ 먹자 ]')
         && result.categoryMessageLines >= 3
         && messageText.includes('필요합니다')
@@ -360,7 +360,7 @@ async function runPage(userName, session, page, language = 'ko') {
       }
     }
     const englishOrder = await runPage('admin', users.admin, pages.find((page) => page.file === 'order.html'), 'en');
-    englishOrder.check = 'English grocery category translation';
+    englishOrder.check = 'English store category translation';
     englishOrder.pass = englishOrder.pass && englishOrder.hasDriedVegetables && !englishOrder.hasKoreanDriedVegetables;
     results.push(englishOrder);
   } finally {

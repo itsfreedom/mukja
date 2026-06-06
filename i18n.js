@@ -58,8 +58,8 @@
       mart: "마트",
       cafeteria: "카페테리아",
       vegetableTeam: "야채",
-      grocery: "그로서리",
-      vegetableGrocery: "야채 / 그로서리",
+      grocery: "매장",
+      vegetableGrocery: "야채 / 매장",
       memo: "메모",
       addMemo: "메모 추가",
       noMemo: "표시할 메모가 없습니다.",
@@ -72,7 +72,7 @@
       copyMessage: "문구 복사",
       openKakao: "카톡 열기",
       copyCafeteriaMessage: "메시지 복사 (카페테리아)",
-      copyGroceryMessage: "메시지 복사 (야채 / 그로서리)",
+      copyGroceryMessage: "메시지 복사 (야채 / 매장)",
       saveHistory: "주문내역 저장",
       downloadTodayCsv: "오늘 CSV 다운로드",
       reset: "초기화",
@@ -274,8 +274,8 @@
       mart: "Mart",
       cafeteria: "Cafeteria",
       vegetableTeam: "Vegetables",
-      grocery: "Grocery",
-      vegetableGrocery: "Vegetables / Grocery",
+      grocery: "Store",
+      vegetableGrocery: "Vegetables / Store",
       memo: "Memo",
       addMemo: "Add Memo",
       noMemo: "No memos to show.",
@@ -288,7 +288,7 @@
       copyMessage: "Copy Message",
       openKakao: "Open KakaoTalk",
       copyCafeteriaMessage: "Copy Message (Cafeteria)",
-      copyGroceryMessage: "Copy Message (Vegetables / Grocery)",
+      copyGroceryMessage: "Copy Message (Vegetables / Store)",
       saveHistory: "Save Request History",
       downloadTodayCsv: "Download Today's CSV",
       reset: "Reset",
@@ -452,15 +452,17 @@
   }
 
   function targetLabel(target) {
+    const normalized = window.Store?.normalizeTargetName?.(target) || target;
     if (lang() === "en") {
-      const department = window.Store?.getDepartments?.().find((row) => row.name === target);
+      const department = window.Store?.getDepartments?.().find((row) => row.name === normalized || row.name === target);
       if (department?.nameEn) return department.nameEn;
-      if (target === "마트" || target === "그로서리") return "Grocery";
-      if (target === "카페테리아") return "Cafeteria";
-      if (target === "야채") return "Vegetables";
-      return target;
+      if (target === "마트" || normalized === "매장") return "Store";
+      if (normalized === "먹자") return "Mukja";
+      if (normalized === "카페테리아") return "Cafeteria";
+      if (normalized === "야채") return "Vegetables";
+      return normalized;
     }
-    return target;
+    return normalized;
   }
 
   function sectionLabel(section) {
@@ -473,27 +475,30 @@
   }
 
   function roleLabel(role) {
+    const normalized = window.Store?.normalizeTargetName?.(role) || role;
     if (lang() === "en") {
-      const department = window.Store?.getDepartments?.().find((row) => row.name === role);
+      const department = window.Store?.getDepartments?.().find((row) => row.name === normalized || row.name === role);
       if (department?.nameEn) return department.nameEn;
     }
     const labels = {
       ko: {
         "카페테리아": "카페테리아",
         "야채": "야채",
-        "그로서리": "그로서리",
+        "매장": "매장",
+        "먹자": "먹자",
         "레스토랑": "레스토랑",
         "관리자": "관리자"
       },
       en: {
         "카페테리아": "Cafeteria",
         "야채": "Vegetables",
-        "그로서리": "Grocery",
+        "매장": "Store",
+        "먹자": "Mukja",
         "레스토랑": "Restaurant",
         "관리자": "Admin"
       }
     };
-    return labels[lang()]?.[role] || role;
+    return labels[lang()]?.[normalized] || normalized;
   }
 
   function itemName(item) {

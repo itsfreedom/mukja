@@ -51,19 +51,25 @@
   }
 
   function accountBadge(account = {}) {
-    if (account.role === "admin") return "A";
-    if (account.role === "restaurant") return "R";
-    return String(I18n.targetLabel(account.department || account.label || "D")).trim().charAt(0).toUpperCase() || "D";
+    return Store.roleBadgeLabel(account.department || account.label || "", account.role);
   }
 
-  function badgeIcon(label) {
-    const adminClass = label === "A" ? " is-admin" : "";
+  function badgeIcon(label, color = "#ffd861", textColor = "#10131f") {
     return `
-      <svg class="admin-role-badge${adminClass}" viewBox="0 0 28 28" aria-hidden="true">
+      <svg class="admin-role-badge" style="--badge-color: ${escapeHtml(color)}; --badge-text-color: ${escapeHtml(textColor)};" viewBox="0 0 28 28" aria-hidden="true">
         <circle cx="14" cy="14" r="13" />
         <text x="14" y="14" dominant-baseline="central" text-anchor="middle">${escapeHtml(label)}</text>
       </svg>
     `;
+  }
+
+  function accountBadgeIcon(account = {}) {
+    const source = account.department || account.label || "";
+    return badgeIcon(
+      accountBadge(account),
+      Store.roleBadgeColor(source, account.role),
+      Store.roleBadgeTextColor(source, account.role)
+    );
   }
 
   function accessForm(mode, password = "", account = {}) {
@@ -120,7 +126,7 @@
         <div class="admin-access-main">
           <span class="admin-access-number">${index + 1}</span>
           <code>${escapeHtml(password)}</code>
-          ${badgeIcon(accountBadge(account))}
+          ${accountBadgeIcon(account)}
         </div>
         <div class="menu-row-actions admin-access-actions">
           <button class="menu-row-action is-edit" data-access-action="edit" data-password="${escapeHtml(password)}" type="button" aria-label="${I18n.t("edit")}">${editIcon}</button>
@@ -136,8 +142,8 @@
       <article class="list-card admin-access-row">
         <div class="admin-access-main">
           <span class="admin-access-number">${index + 1}</span>
-          ${badgeIcon(accountBadge({ role: "department", department: department.name }))}
           <strong>${escapeHtml(I18n.targetLabel(department.name))}</strong>
+          ${accountBadgeIcon({ role: "department", department: department.name, label: department.name })}
         </div>
         <div class="menu-row-actions admin-access-actions">
           <button class="menu-row-action is-edit" data-department-action="edit" data-department-id="${escapeHtml(department.id)}" type="button" aria-label="${I18n.t("edit")}">${editIcon}</button>

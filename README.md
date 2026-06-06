@@ -33,7 +33,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 | --- | --- | --- |
 | 카페테리아 | `c1234` | 카페테리아 요청 확인, 메모 작성 |
 | 야채 | `v1234` | 야채 요청 확인, 메모 작성 |
-| 그로서리 | `g1234` | 그로서리 요청 확인, 메모 작성 |
+| 매장 | `g1234` | 매장 요청 확인, 메모 작성 |
 | 레스토랑 | `m1234` | 전체 요청 작성, 입고 확인, 메뉴/레시피 조회 |
 | 관리자 | `madmin` | 전체 기능, 재료/메뉴/레시피/부서/비밀번호/데이터 백업 관리 |
 
@@ -167,7 +167,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `access_logs` | `id` UUID PK, `identity_id` FK, `role`, `department`, `path`, `method`, `ip_address`, `user_agent`, `created_at` |
 | `app_users` | `id` PK, `user_name` unique, `display_name`, `role`, `department`, `email`, `enabled`, 생성/변경자/접속 정보, `created_at`, `updated_at` |
 | `access_accounts` | `password` PK, `user_id` FK, `role`, `department`, `label`, `user_name`, `name`, `enabled`, 변경자/접속 정보, `updated_at` |
-| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `departments` 설정에는 부서 기준 데이터, `requestCategories` 설정에는 부서별 카테고리, `standaloneMemos` 설정에는 요청 품목 없이 저장한 메모 목록 저장 |
+| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `departments` 설정에는 카페테리아/야채/매장/먹자 기준 부서 데이터, `requestCategories` 설정에는 부서별 카테고리, `standaloneMemos` 설정에는 요청 품목 없이 저장한 메모 목록 저장 |
 
 ### 요청/입고 테이블
 

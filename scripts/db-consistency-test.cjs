@@ -15,7 +15,7 @@ const sessions = {
   restaurant: { role: "restaurant", department: "", label: "레스토랑" },
   cafeteria: { role: "department", department: "카페테리아", label: "카페테리아" },
   vegetable: { role: "department", department: "야채", label: "야채" },
-  grocery: { role: "department", department: "그로서리", label: "그로서리" }
+  grocery: { role: "department", department: "매장", label: "매장" }
 };
 const local = (file) => fs.readFile(path.join(cwd, file), "utf8");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -74,7 +74,7 @@ function testEntry(id, suffix = "", date = today(), time = "23:59") {
     items: [
       { id: `consistency-cafe-${suffix}`, name: "테스트 닭강정", nameKo: "테스트 닭강정", nameEn: "Test Gangjeong", category: "반조리", target: "카페테리아", quantity: "", unit: "", received: false, restaurantReceived: false },
       { id: `consistency-veg-${suffix}`, name: "테스트 두부", nameKo: "테스트 두부", nameEn: "Test Tofu", category: "두부", target: "야채", quantity: "", unit: "", received: false, restaurantReceived: false },
-      { id: `consistency-grocery-${suffix}`, name: "테스트 다시다", nameKo: "테스트 다시다", nameEn: "Test Powder", category: "분말", target: "그로서리", quantity: "", unit: "", received: false, restaurantReceived: false }
+      { id: `consistency-grocery-${suffix}`, name: "테스트 다시다", nameKo: "테스트 다시다", nameEn: "Test Powder", category: "분말", target: "매장", quantity: "", unit: "", received: false, restaurantReceived: false }
     ],
     memos: [
       { id: `consistency-memo-${suffix}`, role: "admin", department: "", authorLabel: "관리자", text: `DB 일관성 테스트 ${suffix}`, createdAt: new Date().toISOString() }
@@ -128,7 +128,7 @@ function assertCheck(report, check, ok, detail = "") {
     const settings = (await req("/settings")).settings || {};
     assertCheck(report, "settings include cafeteria category", (settings.requestCategories?.["카페테리아"] || []).includes("반조리"));
     assertCheck(report, "settings include vegetable category", (settings.requestCategories?.["야채"] || []).includes("두부"));
-    assertCheck(report, "settings include grocery category", (settings.requestCategories?.["그로서리"] || []).includes("분말"));
+    assertCheck(report, "settings include store category", (settings.requestCategories?.["매장"] || settings.requestCategories?.["그로서리"] || []).includes("분말"));
     assertCheck(report, "settings include department DB", (settings.departments || []).some((row) => row.name === "카페테리아" && row.nameEn));
 
     const beforeHistory = (await req("/history")).history || [];
@@ -142,13 +142,13 @@ function assertCheck(report, check, ok, detail = "") {
     assertCheck(report, "R categories persisted", ["반조리", "두부", "분말"].every((category) => afterCreate?.items?.some((item) => item.category === category)));
 
     const updated = testEntry(id, "update", requestDate, requestTime);
-    updated.items = updated.items.map((item) => item.target === "그로서리" ? { ...item, received: true, restaurantReceived: true } : item);
+    updated.items = updated.items.map((item) => item.target === "매장" ? { ...item, received: true, restaurantReceived: true } : item);
     updated.memos.push({ id: "consistency-memo-restaurant", role: "restaurant", department: "", authorLabel: "레스토랑", text: "레스토랑 업데이트 확인", createdAt: new Date().toISOString() });
     await req("/history", { method: "POST", body: JSON.stringify({ entry: updated }) });
     const afterUpdateRows = ((await req("/history")).history || []).filter((entry) => entry.id === id);
     const afterUpdate = afterUpdateRows[0];
     assertCheck(report, "U updates same row once", afterUpdateRows.length === 1, `rows=${afterUpdateRows.length}`);
-    assertCheck(report, "U received flags persisted", afterUpdate?.items?.some((item) => item.target === "그로서리" && item.received && item.restaurantReceived));
+    assertCheck(report, "U received flags persisted", afterUpdate?.items?.some((item) => item.target === "매장" && item.received && item.restaurantReceived));
     assertCheck(report, "U multiple memos persisted without key collision", afterUpdate?.memos?.length === 2, `memos=${afterUpdate?.memos?.length || 0}`);
 
     const homeAdmin = await runPage("admin", "index.html");
