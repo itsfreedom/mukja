@@ -27,6 +27,7 @@
     status: document.getElementById("status"),
     save: document.getElementById("save-create-message"),
     reset: document.getElementById("reset-order"),
+    cancel: document.getElementById("cancel-order"),
     modeRow: document.getElementById("order-mode-row"),
     orderModeButton: document.getElementById("order-mode-order"),
     editModeButton: document.getElementById("order-mode-edit"),
@@ -463,9 +464,14 @@
   }
 
   function latestRequestEntry() {
+    const entryStamp = (entry) => {
+      const remoteStamp = entry?.updatedAt || entry?.createdAt || "";
+      if (remoteStamp) return remoteStamp;
+      return `${entry?.date || ""}T${entry?.time || "00:00"}`;
+    };
     return Store.getHistory()
       .slice()
-      .sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`))[0] || null;
+      .sort((a, b) => entryStamp(b).localeCompare(entryStamp(a)))[0] || null;
   }
 
   function loadLatestRequest() {
@@ -877,6 +883,29 @@
     };
   }
 
+  function memoSlot(memo) {
+    if (memo?.role === "admin" || Store.normalizeTargetName(memo?.authorLabel) === "관리자") return "admin";
+    if (memo?.role === "restaurant" || Store.normalizeTargetName(memo?.authorLabel) === "레스토랑") return "restaurant";
+    const department = Store.normalizeTargetName(memo?.department || memo?.authorLabel);
+    return department ? `department:${department}` : "other";
+  }
+
+  function sessionMemoSlot() {
+    if (session?.role === "admin") return "admin";
+    if (session?.role === "restaurant") return "restaurant";
+    const department = Store.normalizeTargetName(session?.department || session?.label);
+    return department ? `department:${department}` : "other";
+  }
+
+  function mergeMemos(baseEntry, memo) {
+    const slot = sessionMemoSlot();
+    const baseMemos = Array.isArray(baseEntry?.memos) ? baseEntry.memos : [];
+    return [
+      ...baseMemos.filter((row) => memoSlot(row) !== slot),
+      ...(memo ? [memo] : [])
+    ];
+  }
+
   function memoText(memos) {
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
@@ -975,31 +1004,11 @@
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
-    if (!items.length && memo) {
-      const result = await Store.saveStandaloneMemo(memo);
-      if (result?.ok === false) {
-        setStatus(result.error || I18n.t("csvImportInvalid"));
-        return;
-      }
-      els.messageList.innerHTML = "";
-      els.messagePanel?.classList.add("hidden");
-      templateEntry = {
-        id: "standalone-memos",
-        date: Store.today(),
-        time: Store.nowTime(),
-        mode: "memo",
-        items: [],
-        memos: Store.getStandaloneMemos(),
-        memo: memoText(Store.getStandaloneMemos()),
-        message: "",
-        memoOnly: true
-      };
-      setStatus(I18n.t("memoSaved"));
-      return;
-    }
-    const memos = memo ? [memo] : [];
+    const baseEntry = templateEntry && templateEntry.id !== "standalone-memos" ? templateEntry : null;
+    const memos = mergeMemos(baseEntry, memo);
     const entry = {
-      id: Store.id("history"),
+      ...(baseEntry || {}),
+      id: baseEntry?.id || Store.id("history"),
       date: Store.today(),
       time: Store.nowTime(),
       mode: "simple",
@@ -1017,7 +1026,12 @@
       return;
     }
     templateEntry = entry;
-    if (items.length) renderDepartmentMessages();
+    if (items.length) {
+      renderDepartmentMessages();
+    } else {
+      els.messageList.innerHTML = "";
+      els.messagePanel?.classList.add("hidden");
+    }
     setStatus(I18n.t("saved"));
   }
 
@@ -1026,6 +1040,14 @@
     selected.clear();
     els.memo.value = "";
     renderItems();
+  }
+
+  function cancelForm() {
+    loadLatestRequest();
+    els.messageList.innerHTML = "";
+    els.messagePanel?.classList.add("hidden");
+    renderItems();
+    setStatus(I18n.t("resetDone"));
   }
 
   function setRequestMode(mode) {
@@ -1105,6 +1127,7 @@
     copyDepartmentMessage(button.dataset.copyDepartmentMessage);
   });
   els.reset.addEventListener("click", resetForm);
+  els.cancel?.addEventListener("click", cancelForm);
   els.orderModeButton?.addEventListener("click", () => setRequestMode("order"));
   els.editModeButton?.addEventListener("click", () => setRequestMode("edit"));
   els.bulkTarget?.addEventListener("change", fillBulkCategories);

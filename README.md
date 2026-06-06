@@ -70,7 +70,8 @@ https://mukjamtl.netlify.app/reset-cache.html
 - 레스토랑/관리자 주문 모드
 - 품목 체크와 메모 저장
 - 품목과 메모가 모두 비어 있으면 저장 차단
-- 메모만 입력한 경우 요청 내역 대신 독립 메모만 저장
+- 메모만 입력한 경우에도 요청 내역에 메모 요청으로 저장
+- 요청하기 취소 버튼으로 마지막 저장 상태 복구
 - 요청 저장 후 부서별 요청 메시지 자동 생성
 - 화면 카테고리/품목 순서 기준 메시지 생성
 - 카테고리별 품목 묶음과 마지막 줄 `필요합니다` 문구
@@ -147,7 +148,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `access_logs` | API 접속 IP, 기기, 역할 로그 |
 | `app_users` | 추후 회원 관리 확장을 위한 사용자 기준 DB |
 | `access_accounts` | 입장 비밀번호, 연결 사용자, 역할, 부서, 표시 이름 |
-| `app_settings` | 부서 DB 설정, 부서별 요청 카테고리, 요청 내역 없이 저장한 독립 메모 등 설정 |
+| `app_settings` | 부서 DB 설정, 부서별 요청 카테고리, 보조 메모 등 설정 |
 | `orders` | 요청 날짜, 시간, 메모, 요청 메시지 |
 | `order_items` | 요청별 품목, 카테고리, 부서, 입고 상태 |
 | `order_memos` | 역할/부서별 요청 메모 |
@@ -169,7 +170,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `access_logs` | `id` UUID PK, `identity_id` FK, `role`, `department`, `path`, `method`, `ip_address`, `user_agent`, `created_at` |
 | `app_users` | `id` PK, `user_name` unique, `display_name`, `role`, `department`, `email`, `enabled`, 생성/변경자/접속 정보, `created_at`, `updated_at` |
 | `access_accounts` | `password` PK, `user_id` FK, `role`, `department`, `label`, `user_name`, `name`, `enabled`, 변경자/접속 정보, `updated_at` |
-| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `departments` 설정에는 카페테리아/야채/매장/먹자 기준 부서 데이터, `requestCategories` 설정에는 부서별 카테고리, `standaloneMemos` 설정에는 요청 품목 없이 저장한 메모 목록 저장 |
+| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `departments` 설정에는 카페테리아/야채/매장/먹자 기준 부서 데이터, `requestCategories` 설정에는 부서별 카테고리, `standaloneMemos` 설정에는 구버전/보조 메모 목록 저장 |
 
 ### 요청/입고 테이블
 

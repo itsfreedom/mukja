@@ -2101,14 +2101,19 @@ body.modal-open {
 .order-page .order-reset-row {
   margin-top: 0;
   margin-bottom: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.order-page .order-reset-row .danger-button,
+.order-page .order-reset-row .ghost-button {
+  width: 100%;
+  font-weight: 800;
 }
 
 .order-page .order-reset-row .danger-button {
-  width: 100%;
   border-color: rgba(242, 107, 122, 0.56);
   background: #d83f52;
   color: #fff;
-  font-weight: 800;
 }
 
 .order-page .order-action-row {

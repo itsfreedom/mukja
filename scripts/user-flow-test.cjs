@@ -145,20 +145,28 @@ async function runPage(userName, session, page, language = 'ko') {
     result.hasKoreanDriedVegetables = text.includes('건나물');
     result.sample = text.slice(0, 180);
     if (userName === 'admin' && language === 'ko') {
+      const checkedBeforeClear = window.document.querySelectorAll('#items-list input[data-item]:checked').length;
       [...window.document.querySelectorAll('#items-list input[data-item]:checked')].forEach((input) => input.click());
       const historyCountBeforeEmptySave = window.Store.getHistory().length;
       const standaloneMemosBeforeEmptySave = window.Store.getStandaloneMemos?.() || [];
       const memoCountBeforeEmptySave = standaloneMemosBeforeEmptySave.length;
+      const historyIdsBeforeEmptySave = new Set(window.Store.getHistory().map((entry) => entry.id));
       window.document.querySelector('#memo').value = '';
       window.document.querySelector('#save-create-message')?.click();
       result.emptyRequestBlocked = window.Store.getHistory().length === historyCountBeforeEmptySave
         && (window.Store.getStandaloneMemos?.().length || 0) === memoCountBeforeEmptySave
         && window.document.querySelectorAll('.department-message-card').length === 0;
+      window.document.querySelector('#cancel-order')?.click();
+      await waitUntil(() => window.document.querySelectorAll('#items-list input[data-item]:checked').length === checkedBeforeClear);
+      result.cancelRestoresLatestRequest = window.document.querySelectorAll('#items-list input[data-item]:checked').length === checkedBeforeClear;
+      [...window.document.querySelectorAll('#items-list input[data-item]:checked')].forEach((input) => input.click());
       window.document.querySelector('#memo').value = '메모만 저장 테스트';
       window.document.querySelector('#save-create-message')?.click();
-      const standaloneMemos = window.Store.getStandaloneMemos?.() || [];
-      result.memoOnlyDoesNotCreateHistory = window.Store.getHistory().length === historyCountBeforeEmptySave
-        && standaloneMemos.some((memo) => memo.text === '메모만 저장 테스트');
+      const memoOnlyEntry = window.Store.getHistory().find((entry) => (entry.memo || '').includes('메모만 저장 테스트'));
+      result.memoOnlyCreatesHistory = window.Store.getHistory().length === historyCountBeforeEmptySave
+        && Boolean(memoOnlyEntry)
+        && (memoOnlyEntry.items || []).length === 0
+        && (window.Store.getStandaloneMemos?.().length || 0) === memoCountBeforeEmptySave;
       await window.Store.setStandaloneMemos?.(standaloneMemosBeforeEmptySave);
       window.document.querySelector('#memo').value = '';
       const historyIdsBeforeMessage = new Set(window.Store.getHistory().map((entry) => entry.id));
@@ -270,7 +278,8 @@ async function runPage(userName, session, page, language = 'ko') {
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.emptyRequestBlocked === false) result.pass = false;
-    if (result.memoOnlyDoesNotCreateHistory === false) result.pass = false;
+    if (result.memoOnlyCreatesHistory === false) result.pass = false;
+    if (result.cancelRestoresLatestRequest === false) result.pass = false;
     if (result.messageTestPass === false) result.pass = false;
     if (result.requestViewCollapseWorks === false) result.pass = false;
     if (result.categoryCollapseWorks === false) result.pass = false;

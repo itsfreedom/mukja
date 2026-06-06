@@ -14,6 +14,9 @@
   function visibleEntry(entry) {
     if (!entry) return null;
     if (entry.memoOnly) return entry;
+    const hasItems = Array.isArray(entry.items) && entry.items.length > 0;
+    const hasMemo = String(entry.memo || "").trim() || (Array.isArray(entry.memos) && entry.memos.some((memo) => String(memo?.text || "").trim()));
+    if (!hasItems && hasMemo) return { ...entry, items: [] };
     if (session?.role === "department" && session.department) {
       const department = Store.normalizeTargetName(session.department);
       const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
