@@ -1155,7 +1155,7 @@ body {
 }
 
 .sidebar-collapsed .nav-link {
-  justify-content: flex-start;
+  justify-content: center;
   padding: 8px 7px;
 }
 
