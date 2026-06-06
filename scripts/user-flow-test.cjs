@@ -161,6 +161,7 @@ async function runPage(userName, session, page, language = 'ko') {
         && standaloneMemos.some((memo) => memo.text === '메모만 저장 테스트');
       await window.Store.setStandaloneMemos?.(standaloneMemosBeforeEmptySave);
       window.document.querySelector('#memo').value = '';
+      const historyIdsBeforeMessage = new Set(window.Store.getHistory().map((entry) => entry.id));
       const chosenTargets = new Set();
       [...window.document.querySelectorAll('#items-list input[data-item]')].forEach((input) => {
         const target = input.closest('[data-request-item-row]')?.dataset.itemTarget;
@@ -182,6 +183,15 @@ async function runPage(userName, session, page, language = 'ko') {
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
         && result.kakaoLinks === 3;
+      const createdRequestIds = window.Store.getHistory()
+        .filter((entry) => !historyIdsBeforeMessage.has(entry.id))
+        .map((entry) => entry.id);
+      for (const id of createdRequestIds) {
+        try { await req(`/history/${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch {}
+      }
+      if (createdRequestIds.length) {
+        window.Store.setHistory(window.Store.getHistory().filter((entry) => !createdRequestIds.includes(entry.id)));
+      }
       const viewCategoryRow = window.document.querySelector('[data-request-category-row]');
       const viewToggle = viewCategoryRow?.querySelector('[data-request-category-action="toggle"]');
       const viewItemCount = viewCategoryRow?.querySelectorAll('[data-request-item-row]').length || 0;
