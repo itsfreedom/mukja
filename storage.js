@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v164";
+  const appAssetVersion = "v165";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -1452,7 +1452,7 @@
         return false;
       };
       const nav = [
-        ["home", "index.html", `<img class="nav-icon-image" src="assets/icons/home-circle.svg?v=${appAssetVersion}" alt="" />`],
+        ["home", "index.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'],
         ["history", "history.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>'],
         ["order", "order.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="3"/><path d="M5 9v12"/><path d="m15 9-3-3 3-3"/><path d="M12 6h5a2 2 0 0 1 2 2v3"/><path d="M19 15v6"/><path d="M22 18h-6"/></svg>'],
         ["menus", "menu.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h10"/></svg>'],
