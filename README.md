@@ -117,6 +117,10 @@ https://mukjamtl.netlify.app/reset-cache.html
 
 - 입장 비밀번호 CRUD
 - 권한/부서/표시명 관리
+- 부서 DB 관리
+- 부서 한글명/영문명/사용 여부 관리
+- 부서명 변경 시 재료/요청 내역/메모/접근 계정의 부서 참조 이관
+- 사용 중인 부서 삭제/비활성화 방지
 - 마지막 관리자 삭제 방지
 - 요청 내역 CSV Export/Import
 - 재료 목록 CSV Export/Import
@@ -132,7 +136,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `access_identities` | 브라우저별 익명 사용자, 역할, 부서 기록 |
 | `access_logs` | API 접속 IP, 기기, 역할 로그 |
 | `access_accounts` | 입장 비밀번호, 역할, 부서, 표시 이름 |
-| `app_settings` | 부서별 요청 카테고리, 요청 내역 없이 저장한 독립 메모 등 설정 |
+| `app_settings` | 부서 DB 설정, 부서별 요청 카테고리, 요청 내역 없이 저장한 독립 메모 등 설정 |
 | `orders` | 요청 날짜, 시간, 메모, 요청 메시지 |
 | `order_items` | 요청별 품목, 카테고리, 부서, 입고 상태 |
 | `order_memos` | 역할/부서별 요청 메모 |
@@ -153,7 +157,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `access_identities` | `id` PK, `role`, `department`, `display_name`, `first_seen_at`, `last_seen_at`, `last_ip`, `last_user_agent` |
 | `access_logs` | `id` UUID PK, `identity_id` FK, `role`, `department`, `path`, `method`, `ip_address`, `user_agent`, `created_at` |
 | `access_accounts` | `password` PK, `role`, `department`, `label`, `user_name`, `name`, `enabled`, 변경자/접속 정보, `updated_at` |
-| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `standaloneMemos` 설정에는 요청 품목 없이 저장한 메모 목록 저장 |
+| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `departments` 설정에는 부서 기준 데이터, `requestCategories` 설정에는 부서별 카테고리, `standaloneMemos` 설정에는 요청 품목 없이 저장한 메모 목록 저장 |
 
 ### 요청/입고 테이블
 
@@ -177,6 +181,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 
 | 관계 | 삭제 정책 |
 | --- | --- |
+| `app_settings.departments.name -> access_accounts.department / ingredients.target / orders.target / order_items.target / order_memos.department / department_confirmations.department` | 앱 레벨 참조. 부서명 변경 시 관련 데이터 이관, 사용 중인 부서 삭제 방지 |
 | `order_items.order_id -> orders.id` | 요청 삭제 시 품목도 삭제 |
 | `order_memos.order_id -> orders.id` | 요청 삭제 시 메모도 삭제 |
 | `receipt_confirmations.order_item_id -> order_items.id` | 품목 삭제 시 입고 확인 기록도 삭제 |
@@ -233,10 +238,10 @@ npm run test:user-flows
 npm run test:db-consistency
 ```
 
-- `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
+- `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 관리자 페이지에서는 부서 관리 영역 표시도 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
 - 요청하기 테스트는 요청 버튼 클릭 후 부서별 메시지 3개와 카카오톡 열기 링크 3개가 생성되는지, 메시지에 카테고리 라인이 포함되는지, 재료 한글명/영문명 필수 입력과 중복 저장 차단이 동작하는지, 부서/카테고리 접기와 카테고리 추가 아이콘이 동작하는지도 확인합니다.
 - 메뉴 테스트는 카테고리 접기/펼치기, 메뉴 한글명/영문명 필수 입력, 중복 메뉴명 저장 차단도 확인합니다.
-- `test:db-consistency`: 실제 DB에 임시 요청을 생성, 조회, 수정, 삭제하고 홈/요청 내역/상세 화면의 데이터 일관성을 확인합니다.
+- `test:db-consistency`: 실제 DB에 임시 요청을 생성, 조회, 수정, 삭제하고 홈/요청 내역/상세 화면의 데이터 일관성을 확인합니다. `app_settings.departments` 부서 DB 설정도 확인합니다.
 
 두 테스트를 동시에 실행하면 서로의 임시 요청을 잠깐 볼 수 있으므로 최종 검증은 항상 순서대로 실행합니다.
 

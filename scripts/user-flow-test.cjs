@@ -320,7 +320,10 @@ async function runPage(userName, session, page, language = 'ko') {
     result.pass = text.length > 0 && !/레시피가 없습니다/.test(text);
   } else if (page.file === 'admin.html') {
     result.adminHidden = window.document.querySelector('#admin-panel')?.classList.contains('hidden');
+    result.departmentManagementVisible = Boolean(window.document.querySelector('#department-list')) &&
+      (window.document.querySelector('#department-list')?.textContent || '').includes('카페테리아');
     result.pass = userName === 'admin' ? result.adminHidden === false : result.adminHidden === true;
+    if (userName === 'admin' && result.departmentManagementVisible === false) result.pass = false;
   }
   return result;
 }

@@ -412,6 +412,9 @@ async function replaceSeedData(client, data, info) {
   const accessAccounts = data.accessAccounts || {};
   const sections = Array.isArray(data.sections) ? data.sections : [];
   const employees = Array.isArray(data.employees) ? data.employees : [];
+  const departments = Array.isArray(data.departments) ? data.departments : [];
+  const requestCategories = data.requestCategories && typeof data.requestCategories === "object" ? data.requestCategories : {};
+  const standaloneMemos = Array.isArray(data.standaloneMemos) ? data.standaloneMemos : [];
   const ingredients = Array.isArray(data.ingredients) ? data.ingredients : [];
   const recipes = Array.isArray(data.recipes) ? data.recipes : [];
   const menus = Array.isArray(data.menus) ? data.menus : [];
@@ -427,6 +430,9 @@ async function replaceSeedData(client, data, info) {
   }
   await upsertSetting(client, "sections", sections, info);
   await upsertSetting(client, "employees", employees, info);
+  await upsertSetting(client, "departments", departments, info);
+  await upsertSetting(client, "requestCategories", requestCategories, info);
+  await upsertSetting(client, "standaloneMemos", standaloneMemos, info);
   for (const recipe of recipes) await upsertRecipe(client, recipe, info);
   for (const ingredient of ingredients) await upsertIngredient(client, ingredient, info);
   for (const menu of menus) await upsertMenu(client, menu, info);

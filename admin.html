@@ -7,10 +7,10 @@
     <meta name="format-detection" content="telephone=no" />
     <script>document.documentElement.dataset.preferredLang=localStorage.getItem("restaurant_lang")||"ko";document.documentElement.lang=document.documentElement.dataset.preferredLang;</script>
     <title>관리자</title>
-    <link rel="manifest" href="manifest.json?v=v187" />
-    <link rel="icon" href="assets/favicon.ico?v=v187" sizes="any" />
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=v187" />
-    <link rel="stylesheet" href="style.css?v=v187" />
+    <link rel="manifest" href="manifest.json?v=v188" />
+    <link rel="icon" href="assets/favicon.ico?v=v188" sizes="any" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=v188" />
+    <link rel="stylesheet" href="style.css?v=v188" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -35,6 +35,18 @@
               <div id="access-form-slot"></div>
               <div id="access-list" class="admin-access-list"></div>
               <p id="admin-status" class="status"></p>
+            </section>
+
+            <section class="panel admin-section">
+              <div class="section-title-row menu-category-title-row">
+                <h2 data-i18n="departmentManagement">부서 관리</h2>
+                <button class="menu-row-action is-create" id="add-department-toggle" type="button" aria-label="Add department">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                </button>
+              </div>
+              <hr class="section-divider department-divider" />
+              <div id="department-form-slot"></div>
+              <div id="department-list" class="admin-access-list"></div>
             </section>
 
             <section class="panel admin-section">
@@ -97,8 +109,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=v187"></script>
-    <script src="i18n.js?v=v187"></script>
-    <script src="admin.js?v=v187"></script>
+    <script src="storage.js?v=v188"></script>
+    <script src="i18n.js?v=v188"></script>
+    <script src="admin.js?v=v188"></script>
   </body>
 </html>

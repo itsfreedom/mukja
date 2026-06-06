@@ -83,9 +83,8 @@
     const department = normalizedLabel(memo.department);
     if (memo.role === "admin" || author === "관리자") return "admin";
     if (memo.role === "restaurant" || author === "레스토랑") return "restaurant";
-    if (department === "카페테리아" || author === "카페테리아") return "cafeteria";
-    if (department === "야채" || author === "야채") return "vegetable";
-    if (department === "그로서리" || author === "그로서리") return "grocery";
+    const target = department || author;
+    if (target) return `department:${target}`;
     return "other";
   }
 
@@ -93,28 +92,28 @@
     if (session?.role === "admin") return "admin";
     if (session?.role === "restaurant") return "restaurant";
     const department = normalizedLabel(session?.department || session?.label);
-    if (department === "카페테리아") return "cafeteria";
-    if (department === "야채") return "vegetable";
-    if (department === "그로서리") return "grocery";
+    if (department) return `department:${department}`;
     return "other";
   }
 
   function memoSlotInfo(slot) {
+    if (slot.startsWith("department:")) {
+      const department = slot.replace(/^department:/, "");
+      return { role: "department", department, label: department };
+    }
     return {
       admin: { role: "admin", department: "", label: "관리자" },
-      restaurant: { role: "restaurant", department: "", label: "레스토랑" },
-      cafeteria: { role: "department", department: "카페테리아", label: "카페테리아" },
-      vegetable: { role: "department", department: "야채", label: "야채" },
-      grocery: { role: "department", department: "그로서리", label: "그로서리" }
+      restaurant: { role: "restaurant", department: "", label: "레스토랑" }
     }[slot] || { role: session?.role || "", department: session?.department || "", label: session?.label || "" };
   }
 
   function memoSlots() {
-    return ["admin", "restaurant", "cafeteria", "vegetable", "grocery"];
+    return ["admin", "restaurant", ...Store.getTargets().map((target) => `department:${target}`)];
   }
 
   function orderedMemos(memos) {
-    const slotOrder = { admin: 0, restaurant: 1, cafeteria: 2, vegetable: 3, grocery: 4, other: 5 };
+    const slotOrder = Object.fromEntries(memoSlots().map((slot, index) => [slot, index]));
+    slotOrder.other = 99;
     return (Array.isArray(memos) ? memos : [])
       .filter((memo) => memo && String(memo.text || "").trim())
       .slice()
@@ -154,12 +153,16 @@
   }
 
   function targetFor(item) {
-    return item.target || "그로서리";
+    return item.target || Store.getTargets()[0] || "그로서리";
   }
 
   function categoryFor(item) {
     const target = targetFor(item);
     const category = categoryValue(item);
+    const targetCategories = Store.getRequestCategories(target);
+    if (!["그로서리", "야채", "카페테리아"].includes(target)) {
+      return targetCategories.includes(category) ? category : (category || "기타");
+    }
     if (target === "그로서리" && category === "식재료") return "상온";
     if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(category)) return category;
     if (target === "그로서리") return "기타";
@@ -260,12 +263,11 @@
       return;
     }
     const isDepartment = session?.role === "department";
-    const targetOrder = ["카페테리아", "야채", "그로서리"];
-    const categoryOrders = {
-      "카페테리아": [...Store.getRequestCategories("카페테리아"), "기타"],
-      "야채": Store.getRequestCategories("야채"),
-      "그로서리": Store.getRequestCategories("그로서리")
-    };
+    const targetOrder = Store.getTargets();
+    const categoryOrders = Object.fromEntries(targetOrder.map((target) => [
+      target,
+      [...Store.getRequestCategories(target), "기타"]
+    ]));
     const targetGroups = draftItems.reduce((acc, item) => {
       const target = isDepartment ? (session.department || targetFor(item)) : targetFor(item);
       const category = categoryFor(item);
@@ -278,7 +280,7 @@
     list.innerHTML = `
       ${targets.map((target) => {
         const categoryGroups = targetGroups[target];
-        const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
+        const categories = orderedKeys(categoryGroups, categoryOrders[target] || ["기타"]);
         return `
           <section class="department-group home-target-group">
             <h2>${I18n.targetLabel(target)}</h2>

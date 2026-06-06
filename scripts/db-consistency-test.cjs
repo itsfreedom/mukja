@@ -129,6 +129,7 @@ function assertCheck(report, check, ok, detail = "") {
     assertCheck(report, "settings include cafeteria category", (settings.requestCategories?.["카페테리아"] || []).includes("반조리"));
     assertCheck(report, "settings include vegetable category", (settings.requestCategories?.["야채"] || []).includes("두부"));
     assertCheck(report, "settings include grocery category", (settings.requestCategories?.["그로서리"] || []).includes("분말"));
+    assertCheck(report, "settings include department DB", (settings.departments || []).some((row) => row.name === "카페테리아" && row.nameEn));
 
     const beforeHistory = (await req("/history")).history || [];
     const latestBefore = beforeHistory.slice().sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`))[0];

@@ -57,18 +57,20 @@
 
   function fillBulkTargets() {
     if (!els.bulkTarget) return;
-    const current = els.bulkTarget.value || "카페테리아";
+    const targets = Store.getTargets();
+    const fallback = targets[0] || "카페테리아";
+    const current = els.bulkTarget.value || fallback;
     els.bulkTarget.innerHTML = Store.getTargets().map((name) =>
       `<option value="${escapeHtml(name)}" ${name === current ? "selected" : ""}>${I18n.targetLabel(name)}</option>`
     ).join("");
     if (![...els.bulkTarget.options].some((option) => option.value === current)) {
-      els.bulkTarget.value = "카페테리아";
+      els.bulkTarget.value = fallback;
     }
   }
 
   function fillBulkCategories() {
     if (!els.bulkTarget || !els.bulkCategory) return;
-    els.bulkCategory.innerHTML = categoryOptions(els.bulkTarget.value || "카페테리아", els.bulkCategory.value);
+    els.bulkCategory.innerHTML = categoryOptions(els.bulkTarget.value || Store.getTargets()[0] || "카페테리아", els.bulkCategory.value);
   }
 
   function updateModeUI() {
@@ -114,12 +116,16 @@
   }
 
   function targetFor(item) {
-    return item.target || "그로서리";
+    return item.target || Store.getTargets()[0] || "그로서리";
   }
 
   function categoryFor(item) {
     const target = targetFor(item);
     const category = item.category || item.section || "기타";
+    const targetCategories = Store.getRequestCategories(target);
+    if (!["그로서리", "야채", "카페테리아"].includes(target)) {
+      return targetCategories.includes(category) ? category : (category || "기타");
+    }
     if (target === "그로서리" && category === "식재료") return "상온";
     if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(category)) return category;
     if (target === "그로서리") return "기타";
@@ -221,7 +227,7 @@
 
   function categoryForm(target, category = "", mode = "edit") {
     const isNew = mode === "create";
-    const fallback = target === "야채" ? "야채" : "기타";
+    const fallback = categoriesForTarget(target)[0] || "기타";
     const canDelete = !isNew && category !== fallback;
     return `
       <div class="recipe-item-form request-category-form" data-request-category-form data-category-target="${escapeHtml(target)}" data-category-old-name="${escapeHtml(category)}" data-category-mode="${mode}">
@@ -236,7 +242,7 @@
   }
 
   function saveCategoryFromForm(form) {
-    const target = form?.dataset.categoryTarget || "카페테리아";
+    const target = form?.dataset.categoryTarget || Store.getTargets()[0] || "카페테리아";
     const oldName = form?.dataset.categoryOldName || "";
     const mode = form?.dataset.categoryMode || "edit";
     const nextName = form?.querySelector("[data-request-category-name]")?.value.trim() || "";
@@ -264,10 +270,10 @@
   }
 
   function deleteCategoryFromForm(form) {
-    const target = form?.dataset.categoryTarget || "카페테리아";
+    const target = form?.dataset.categoryTarget || Store.getTargets()[0] || "카페테리아";
     const oldName = form?.dataset.categoryOldName || "";
     if (!oldName) return;
-    const fallback = target === "야채" ? "야채" : "기타";
+    const fallback = categoriesForTarget(target).find((category) => category !== oldName) || "기타";
     if (!window.confirm(I18n.format("confirmDeleteCategory", { name: I18n.sectionLabel(oldName), fallback: I18n.sectionLabel(fallback) }))) return;
     Store.setRequestCategories(target, Store.getRequestCategories(target).filter((category) => category !== oldName));
     Store.setIngredients(Store.getIngredients().map((item) =>
@@ -351,7 +357,7 @@
   }
 
   function itemForm(item = null, defaults = {}) {
-    const target = item?.target || defaults.target || "카페테리아";
+    const target = item?.target || defaults.target || Store.getTargets()[0] || "카페테리아";
     const category = item?.category || item?.section || sectionForTargetCategory(target, defaults.category || "기타");
     return `
       <div class="recipe-item-form order-item-form" data-order-item-form="${item?.id || "__new__"}">
@@ -408,7 +414,7 @@
       setStatus(I18n.t("ingredientEnglishNameRequired"));
       return;
     }
-    const target = form.querySelector("[data-order-item-target]")?.value || "카페테리아";
+    const target = form.querySelector("[data-order-item-target]")?.value || Store.getTargets()[0] || "카페테리아";
     const category = form.querySelector("[data-order-item-category]")?.value.trim() || "기타";
     const duplicate = findDuplicateIngredientName({ id: item?.id || "", target, nameKo });
     if (duplicate) {
@@ -444,7 +450,7 @@
   async function saveBulkSelectionFromForm(form) {
     const ids = [...editSelected];
     if (!ids.length) return;
-    const target = form?.querySelector("[data-bulk-selection-target]")?.value || "카페테리아";
+    const target = form?.querySelector("[data-bulk-selection-target]")?.value || Store.getTargets()[0] || "카페테리아";
     const category = form?.querySelector("[data-bulk-selection-section]")?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
     await Store.setIngredients(Store.getIngredients().map((item) =>
       ids.includes(item.id) ? { ...item, target, category } : item
@@ -530,12 +536,11 @@
       return;
     }
 
-    const targetOrder = ["카페테리아", "야채", "그로서리"];
-    const categoryOrders = {
-      "카페테리아": uniqueList([...Store.getRequestCategories("카페테리아"), "기타"]),
-      "야채": uniqueList(Store.getRequestCategories("야채")),
-      "그로서리": uniqueList(Store.getRequestCategories("그로서리"))
-    };
+    const targetOrder = Store.getTargets();
+    const categoryOrders = Object.fromEntries(targetOrder.map((target) => [
+      target,
+      uniqueList([...Store.getRequestCategories(target), "기타"])
+    ]));
     const groups = Store.getIngredients()
       .filter((item) => item.enabled !== false)
       .reduce((acc, item) => {
@@ -563,7 +568,7 @@
 
     els.list.innerHTML = targets.map((target) => {
       const categoryGroups = groups[target];
-      const categories = orderedKeys(categoryGroups, categoryOrders[target] || categoryOrders["카페테리아"]);
+        const categories = orderedKeys(categoryGroups, categoryOrders[target] || ["기타"]);
       const targetCollapsed = areTargetCategoriesCollapsed(target, categories);
       return `
         <section class="department-group request-target-group">
@@ -700,7 +705,7 @@
       button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const target = button.dataset.categoryTarget || "카페테리아";
+        const target = button.dataset.categoryTarget || Store.getTargets()[0] || "카페테리아";
         const collapse = !areTargetCategoriesCollapsed(target);
         setTargetCategoriesCollapsed(target, collapse);
         activeCategoryEdit = null;
@@ -718,7 +723,7 @@
           return;
         }
         if (action === "toggle") {
-          const target = button.dataset.categoryTarget || "카페테리아";
+          const target = button.dataset.categoryTarget || Store.getTargets()[0] || "카페테리아";
           const category = button.dataset.categoryName || "";
           setCategoryCollapsed(target, category, !isCategoryCollapsed(target, category));
           activeCategoryEdit = null;
@@ -900,7 +905,7 @@
       acc[target].push(item);
       return acc;
     }, {});
-    return ["카페테리아", "야채", "그로서리"]
+    return Store.getTargets()
       .filter((target) => groups[target]?.length)
       .map((target) => ({
         target,
@@ -1041,14 +1046,14 @@
   }
 
   function currentCategoryRow() {
-    const target = els.bulkTarget?.value || "카페테리아";
+    const target = els.bulkTarget?.value || Store.getTargets()[0] || "카페테리아";
     const category = els.bulkCategory?.value || "";
     return categoryRows().find((node) => node.dataset.categoryTarget === target && node.dataset.categoryName === category);
   }
 
   function syncJumpSelects(row) {
     if (!row) return;
-    els.bulkTarget.value = row.dataset.categoryTarget || "카페테리아";
+    els.bulkTarget.value = row.dataset.categoryTarget || Store.getTargets()[0] || "카페테리아";
     fillBulkCategories();
     els.bulkCategory.value = row.dataset.categoryName || "";
   }

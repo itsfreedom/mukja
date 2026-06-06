@@ -1,14 +1,18 @@
 (async function () {
-  await Store.init({ datasets: [] });
+  await Store.init({ datasets: ["settings"] });
   AppUI.renderSidebar("admin");
   AppUI.registerServiceWorker();
 
   const adminPanel = document.getElementById("admin-panel");
   const accessList = document.getElementById("access-list");
   const formSlot = document.getElementById("access-form-slot");
+  const departmentList = document.getElementById("department-list");
+  const departmentFormSlot = document.getElementById("department-form-slot");
   const status = document.getElementById("admin-status");
   const addToggle = document.getElementById("add-access-toggle");
+  const addDepartmentToggle = document.getElementById("add-department-toggle");
   let activeForm = null;
+  let activeDepartmentForm = null;
 
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
 
@@ -28,24 +32,19 @@
   function roleValue(account = {}) {
     if (account.role === "admin") return "admin";
     if (account.role === "restaurant") return "restaurant";
-    if (account.department === "야채") return "vegetable";
-    if (account.department === "그로서리") return "grocery";
-    return "cafeteria";
+    return `department:${Store.normalizeTargetName(account.department || account.label || Store.getTargets()[0] || "카페테리아")}`;
   }
 
   function roleFromValue(value) {
     if (value === "admin") return { role: "admin", department: "", label: "관리자" };
     if (value === "restaurant") return { role: "restaurant", department: "", label: "레스토랑" };
-    if (value === "vegetable") return { role: "department", department: "야채", label: "야채" };
-    if (value === "grocery") return { role: "department", department: "그로서리", label: "그로서리" };
-    return { role: "department", department: "카페테리아", label: "카페테리아" };
+    const department = Store.normalizeTargetName(String(value || "").replace(/^department:/, "")) || Store.getTargets()[0] || "카페테리아";
+    return { role: "department", department, label: department };
   }
 
-  function roleOptions(selected = "cafeteria") {
+  function roleOptions(selected = `department:${Store.getTargets()[0] || "카페테리아"}`) {
     return [
-      ["cafeteria", "카페테리아"],
-      ["vegetable", "야채"],
-      ["grocery", "그로서리"],
+      ...Store.getTargets().map((name) => [`department:${name}`, name]),
       ["restaurant", "레스토랑"],
       ["admin", "관리자"]
     ].map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${I18n.roleLabel(label)}</option>`).join("");
@@ -54,9 +53,7 @@
   function accountBadge(account = {}) {
     if (account.role === "admin") return "A";
     if (account.role === "restaurant") return "R";
-    if (account.department === "야채") return "V";
-    if (account.department === "그로서리") return "G";
-    return "C";
+    return String(I18n.targetLabel(account.department || account.label || "D")).trim().charAt(0).toUpperCase() || "D";
   }
 
   function badgeIcon(label) {
@@ -84,12 +81,36 @@
     `;
   }
 
+  function departmentForm(mode, department = {}) {
+    const isEdit = mode === "edit";
+    return `
+      <div class="recipe-item-form admin-access-form" data-department-form data-mode="${mode}" data-department-id="${escapeHtml(department.id || "")}" data-old-name="${escapeHtml(department.name || "")}">
+        <label><span>${I18n.t("departmentName")}</span><input data-department-name value="${escapeHtml(department.name || "")}" autocomplete="off" /></label>
+        <label><span>${I18n.t("englishName")}</span><input data-department-name-en value="${escapeHtml(department.nameEn || "")}" autocomplete="off" /></label>
+        <label class="inline-check"><input data-department-enabled type="checkbox" ${department.enabled === false ? "" : "checked"} /> <span>${I18n.t("enabled")}</span></label>
+        <div class="recipe-item-form-actions admin-access-form-actions">
+          <button class="button" data-department-action="save" type="button">${isEdit ? I18n.t("save") : I18n.t("add")}</button>
+          ${isEdit ? `<button class="danger-button" data-department-action="delete" data-department-name="${escapeHtml(department.name || "")}" type="button">${I18n.t("delete")}</button>` : ""}
+          <button class="ghost-button" data-department-action="cancel" type="button">${I18n.t("close")}</button>
+        </div>
+      </div>
+    `;
+  }
+
   function renderFormSlot() {
     if (activeForm?.mode === "create") {
-      formSlot.innerHTML = accessForm("create", "", { role: "department", department: "카페테리아" });
+      formSlot.innerHTML = accessForm("create", "", { role: "department", department: Store.getTargets()[0] || "카페테리아" });
       return;
     }
     formSlot.innerHTML = "";
+  }
+
+  function renderDepartmentFormSlot() {
+    if (activeDepartmentForm?.mode === "create") {
+      departmentFormSlot.innerHTML = departmentForm("create", { enabled: true });
+      return;
+    }
+    departmentFormSlot.innerHTML = "";
   }
 
   function renderAccessAccounts() {
@@ -109,11 +130,32 @@
     `).join("");
   }
 
+  function renderDepartments() {
+    const departments = Store.getDepartments();
+    departmentList.innerHTML = departments.map((department, index) => `
+      <article class="list-card admin-access-row">
+        <div class="admin-access-main">
+          <span class="admin-access-number">${index + 1}</span>
+          ${badgeIcon(accountBadge({ role: "department", department: department.name }))}
+          <strong>${escapeHtml(department.name)}</strong>
+          <span class="muted">${escapeHtml(department.nameEn || "")}</span>
+          <span class="muted">${department.enabled === false ? I18n.t("disabled") : I18n.t("enabled")}</span>
+        </div>
+        <div class="menu-row-actions admin-access-actions">
+          <button class="menu-row-action is-edit" data-department-action="edit" data-department-id="${escapeHtml(department.id)}" type="button" aria-label="${I18n.t("edit")}">${editIcon}</button>
+        </div>
+      </article>
+      ${activeDepartmentForm?.mode === "edit" && activeDepartmentForm.id === department.id ? departmentForm("edit", department) : ""}
+    `).join("");
+  }
+
   function renderAll() {
     adminPanel.classList.toggle("hidden", !Store.canAdmin());
     if (!Store.canAdmin()) return;
     renderFormSlot();
     renderAccessAccounts();
+    renderDepartmentFormSlot();
+    renderDepartments();
     attachEvents();
     I18n.applyI18n();
   }
@@ -166,6 +208,54 @@
       return;
     }
     if (activeForm?.password === password) activeForm = null;
+    setStatus(I18n.t("delete"));
+    renderAll();
+  }
+
+  async function saveDepartment(form) {
+    const mode = form.dataset.mode;
+    const oldName = form.dataset.oldName || "";
+    const id = form.dataset.departmentId || Store.id("department");
+    const name = form.querySelector("[data-department-name]")?.value.trim() || "";
+    const nameEn = form.querySelector("[data-department-name-en]")?.value.trim() || "";
+    const enabled = !!form.querySelector("[data-department-enabled]")?.checked;
+    if (!name) {
+      setStatus(I18n.t("departmentNameRequired"));
+      return;
+    }
+    const departments = Store.getDepartments();
+    if (departments.some((row) => row.id !== id && Store.normalizeTargetName(row.name) === Store.normalizeTargetName(name))) {
+      setStatus(I18n.t("duplicateDepartmentName"));
+      return;
+    }
+    const nextRow = {
+      id,
+      name,
+      nameEn,
+      enabled,
+      sortOrder: mode === "create" ? departments.length + 1 : (departments.find((row) => row.id === id)?.sortOrder || departments.length + 1)
+    };
+    const next = mode === "create"
+      ? [...departments, nextRow]
+      : departments.map((row) => row.id === id ? nextRow : row);
+    const result = await Store.setDepartments(next, { oldName, newName: name, id });
+    if (result?.ok === false) {
+      setStatus(result.error === "department in use" ? I18n.t("departmentInUse") : (result.error === "department required" ? I18n.t("departmentRequired") : (result.error || I18n.t("csvImportInvalid"))));
+      return;
+    }
+    activeDepartmentForm = null;
+    setStatus(mode === "edit" ? I18n.t("updatedNotice") : I18n.t("saveDone"));
+    renderAll();
+  }
+
+  async function deleteDepartment(name) {
+    if (!window.confirm(I18n.format("confirmDeleteDepartment", { name }))) return;
+    const result = await Store.deleteDepartment(name);
+    if (result?.ok === false) {
+      setStatus(result.error === "department in use" ? I18n.t("departmentInUse") : I18n.t("departmentRequired"));
+      return;
+    }
+    activeDepartmentForm = null;
     setStatus(I18n.t("delete"));
     renderAll();
   }
@@ -228,6 +318,10 @@
       activeForm = activeForm?.mode === "create" ? null : { mode: "create" };
       renderAll();
     };
+    addDepartmentToggle.onclick = () => {
+      activeDepartmentForm = activeDepartmentForm?.mode === "create" ? null : { mode: "create" };
+      renderAll();
+    };
     document.querySelectorAll("[data-access-action]").forEach((button) => {
       button.onclick = () => {
         const action = button.dataset.accessAction;
@@ -247,6 +341,29 @@
         }
         if (action === "cancel") {
           activeForm = null;
+          renderAll();
+        }
+      };
+    });
+    document.querySelectorAll("[data-department-action]").forEach((button) => {
+      button.onclick = () => {
+        const action = button.dataset.departmentAction;
+        if (action === "edit") {
+          const id = button.dataset.departmentId;
+          activeDepartmentForm = activeDepartmentForm?.mode === "edit" && activeDepartmentForm.id === id ? null : { mode: "edit", id };
+          renderAll();
+          return;
+        }
+        if (action === "delete") {
+          deleteDepartment(button.dataset.departmentName);
+          return;
+        }
+        if (action === "save") {
+          saveDepartment(button.closest("[data-department-form]"));
+          return;
+        }
+        if (action === "cancel") {
+          activeDepartmentForm = null;
           renderAll();
         }
       };

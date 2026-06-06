@@ -116,7 +116,7 @@
   }
 
   function groupItemsByTarget(items) {
-    const order = ["카페테리아", "야채", "그로서리"];
+    const order = Store.getTargets();
     const groups = items.reduce((acc, item) => {
       const target = item.target || "기타";
       acc[target] = acc[target] || [];
@@ -130,12 +130,16 @@
   }
 
   function targetFor(item) {
-    return item.target || "그로서리";
+    return item.target || Store.getTargets()[0] || "그로서리";
   }
 
   function categoryFor(item) {
     const target = targetFor(item);
     const category = item.category || item.section || "기타";
+    const targetCategories = Store.getRequestCategories(target);
+    if (!["그로서리", "야채", "카페테리아"].includes(target)) {
+      return targetCategories.includes(category) ? category : (category || "기타");
+    }
     if (target === "그로서리" && category === "식재료") return "분말";
     if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(category)) return category;
     if (target === "그로서리") return "기타";
@@ -159,11 +163,10 @@
       acc[category].push(item);
       return acc;
     }, {});
-    const categoryOrders = {
-      "카페테리아": [...Store.getRequestCategories("카페테리아"), "기타"],
-      "야채": Store.getRequestCategories("야채"),
-      "그로서리": Store.getRequestCategories("그로서리")
-    };
+    const categoryOrders = Object.fromEntries(Store.getTargets().map((department) => [
+      department,
+      [...Store.getRequestCategories(department), "기타"]
+    ]));
     return orderedKeys(groups, categoryOrders[target] || []).map((category) => [category, groups[category]]);
   }
 

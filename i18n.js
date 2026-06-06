@@ -120,9 +120,16 @@
       unlockAdmin: "관리자 열기",
       wrongPassword: "비밀번호가 올바르지 않습니다.",
       duplicatePassword: "이미 사용 중인 비밀번호입니다.",
+      duplicateDepartmentName: "이미 있는 부서명입니다.",
+      departmentName: "부서명",
+      departmentNameRequired: "부서명을 입력하세요.",
+      departmentRequired: "사용 중인 부서가 하나 이상 필요합니다.",
+      departmentInUse: "이 부서를 사용하는 데이터가 있어 삭제할 수 없습니다.",
+      confirmDeleteDepartment: "{name} 부서를 삭제할까요?",
       adminNote: "이 비밀번호는 실수 방지용이며 실제 보안 기능이 아닙니다.",
       employeeManagement: "직원 관리",
       passwordManagement: "비밀번호 관리",
+      departmentManagement: "부서 관리",
       dataManagement: "CSV 데이터 관리",
       csvManagement: "CSV 관리",
       refresh: "새로고침",
@@ -328,9 +335,16 @@
       unlockAdmin: "Open Admin",
       wrongPassword: "Password is incorrect.",
       duplicatePassword: "This password is already in use.",
+      duplicateDepartmentName: "This department already exists.",
+      departmentName: "Department Name",
+      departmentNameRequired: "Enter a department name.",
+      departmentRequired: "At least one enabled department is required.",
+      departmentInUse: "This department is used by existing data and cannot be deleted.",
+      confirmDeleteDepartment: "Delete {name}?",
       adminNote: "This password only prevents accidental edits. It is not real security.",
       employeeManagement: "Employee Management",
       passwordManagement: "Password Management",
+      departmentManagement: "Department Management",
       dataManagement: "CSV Data Management",
       csvManagement: "CSV Management",
       refresh: "Refresh",
@@ -437,6 +451,8 @@
 
   function targetLabel(target) {
     if (lang() === "en") {
+      const department = window.Store?.getDepartments?.().find((row) => row.name === target);
+      if (department?.nameEn) return department.nameEn;
       if (target === "마트" || target === "그로서리") return "Grocery";
       if (target === "카페테리아") return "Cafeteria";
       if (target === "야채") return "Vegetables";
@@ -455,6 +471,10 @@
   }
 
   function roleLabel(role) {
+    if (lang() === "en") {
+      const department = window.Store?.getDepartments?.().find((row) => row.name === role);
+      if (department?.nameEn) return department.nameEn;
+    }
     const labels = {
       ko: {
         "카페테리아": "카페테리아",

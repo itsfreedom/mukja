@@ -93,6 +93,12 @@ mindmap
         사용자 수정
         사용자 삭제
         권한/부서 설정
+      부서 관리
+        부서 추가
+        부서 수정
+        부서 삭제/비활성화 제한
+        부서 영문명 관리
+        부서 참조 이관
       CSV 관리
         요청 내역 Export/Import
         재료 목록 Export/Import
@@ -101,6 +107,7 @@ mindmap
     데이터
       Netlify Functions API
       PostgreSQL DB
+      부서 DB 설정
       localStorage 보조 저장
       CSV 변환
       DB 백업
@@ -294,8 +301,20 @@ mindmap
 - 비밀번호 변경
 - 역할 변경
 - 부서 변경
+- 부서 DB 기준 역할 선택
 - 표시 이름 변경
 - 마지막 관리자 삭제 방지
+
+#### 부서 관리
+
+- 부서 목록 조회
+- 부서 한글명 관리
+- 부서 영문명 관리
+- 부서 사용 여부 관리
+- 새 부서 추가
+- 부서명 변경 시 재료/요청 내역/메모/접근 계정 참조 이관
+- 사용 중인 부서 삭제/비활성화 방지
+- 사용 중 부서 최소 1개 유지
 
 #### CSV 관리
 
@@ -314,6 +333,7 @@ mindmap
 
 - `/api/health` DB 연결 확인
 - `/api/settings` 앱 설정 조회/저장
+- `app_settings.departments` 부서 DB 설정 조회/저장
 - `/api/access-accounts` 입장 계정 조회/저장
 - `/api/history` 요청 내역 CRUD
 - `/api/history/:id` 요청 삭제
@@ -339,7 +359,7 @@ mindmap
 | 7 | 메뉴 보기 모드 | 카테고리/검색, 메뉴명+가격, 레시피 팝업 |
 | 8 | 메뉴 수정 모드 | 메뉴 CRUD, 가격/상태/순서 이동 |
 | 9 | 레시피 보기/수정 | 재료/순서 CRUD, 사진, 삭제 |
-| 10 | 관리자 | 비밀번호 CRUD, CSV Export/Import |
+| 10 | 관리자 | 비밀번호 CRUD, 부서 CRUD, CSV Export/Import |
 | 11 | 캐시 초기화 | reset-cache 페이지 |
 
 ## 테스트 체크리스트 초안
@@ -431,6 +451,10 @@ mindmap
 - [ ] 사용자 수정이 된다.
 - [ ] 사용자 삭제가 된다.
 - [ ] 마지막 관리자 삭제가 막힌다.
+- [ ] 부서 목록이 관리자 페이지에 표시된다.
+- [ ] 부서 추가/수정이 된다.
+- [ ] 부서 역할 선택지가 부서 DB 기준으로 표시된다.
+- [ ] 사용 중인 부서 삭제/비활성화가 막힌다.
 - [ ] 요청 내역 CSV Export/Import가 동작한다.
 - [ ] 재료 목록 CSV Export/Import가 동작한다.
 - [ ] 메뉴 CSV Export/Import가 동작한다.

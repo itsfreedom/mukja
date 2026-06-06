@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v187";
+  const appAssetVersion = "v188";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -18,6 +18,7 @@
     employees: [],
     sections: [],
     requestCategories: {},
+    departments: [],
     accessAccounts: {},
     ingredients: [],
     recipes: [],
@@ -32,6 +33,11 @@
     { id: "emp-2", name: "직원2", enabled: true }
   ];
   const defaultTargets = ["카페테리아", "야채", "그로서리"];
+  const defaultDepartments = [
+    { id: "department-cafeteria", name: "카페테리아", nameEn: "Cafeteria", enabled: true, sortOrder: 1 },
+    { id: "department-vegetable", name: "야채", nameEn: "Vegetables", enabled: true, sortOrder: 2 },
+    { id: "department-grocery", name: "그로서리", nameEn: "Grocery", enabled: true, sortOrder: 3 }
+  ];
   const defaultRequestCategories = {
     "카페테리아": defaultSections,
     "야채": ["신선", "두부"],
@@ -417,6 +423,8 @@
       accessAccounts: defaultAccessCodes,
       sections: defaultSections,
       employees: defaultEmployees,
+      departments: defaultDepartments,
+      requestCategories: { ...defaultRequestCategories },
       ingredients,
       recipes,
       menus: testMenus(recipes),
@@ -430,6 +438,8 @@
       accessAccounts: defaultAccessCodes,
       sections: defaultSections,
       employees: defaultEmployees,
+      departments: defaultDepartments,
+      requestCategories: { ...defaultRequestCategories },
       ingredients: defaultIngredients.map(normalizeIngredient),
       recipes,
       menus: buildDefaultMenus(recipes),
@@ -515,6 +525,65 @@
     return String(value || "").trim();
   }
 
+  function normalizeDepartment(row, index = 0) {
+    const name = normalizeTargetName(row?.name || row?.label || row?.department || "");
+    if (!name) return null;
+    const seed = defaultDepartments.find((item) => item.name === name);
+    return {
+      id: String(row?.id || seed?.id || `department-${name.toLowerCase().replace(/[^a-z0-9가-힣]+/g, "-") || Date.now()}`),
+      name,
+      nameEn: String(row?.nameEn || row?.name_en || seed?.nameEn || ""),
+      enabled: row?.enabled !== false,
+      sortOrder: Number.isFinite(Number(row?.sortOrder ?? row?.sort_order))
+        ? Number(row?.sortOrder ?? row?.sort_order)
+        : index + 1
+    };
+  }
+
+  function normalizeDepartments(rows) {
+    const source = Array.isArray(rows) && rows.length ? rows : defaultDepartments;
+    const seen = new Set();
+    const normalized = source
+      .map(normalizeDepartment)
+      .filter((row) => {
+        if (!row || seen.has(row.name)) return false;
+        seen.add(row.name);
+        return true;
+      })
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    return normalized.length ? normalized : defaultDepartments.slice();
+  }
+
+  function activeDepartments() {
+    const rows = dataState.departments.length ? dataState.departments : defaultDepartments;
+    const active = rows
+      .filter((row) => row.enabled !== false)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    return active.length ? active : defaultDepartments;
+  }
+
+  function activeTargetNames() {
+    return activeDepartments().map((row) => row.name);
+  }
+
+  function defaultCategoriesForTarget(target) {
+    return defaultRequestCategories[target] || ["기타"];
+  }
+
+  function normalizeRequestCategories(value = {}) {
+    const source = value && typeof value === "object" ? value : {};
+    const next = { ...defaultRequestCategories, ...source };
+    activeTargetNames().forEach((target) => {
+      next[target] = Array.isArray(next[target]) && next[target].length
+        ? next[target]
+        : defaultCategoriesForTarget(target);
+    });
+    next["카페테리아"] = Array.isArray(next["카페테리아"]) && next["카페테리아"].length
+      ? next["카페테리아"]
+      : dataState.sections;
+    return next;
+  }
+
   function normalizeSession(session) {
     if (!session || typeof session !== "object") return null;
     const department = normalizeTargetName(session.department || session.label);
@@ -572,7 +641,7 @@
   function allowedTargets() {
     const session = auth();
     if (session?.role === "department" && session.department) return [session.department];
-    return defaultTargets.slice();
+    return activeTargetNames();
   }
 
   function startPath(session = auth()) {
@@ -664,17 +733,17 @@
       const settings = data.settings && typeof data.settings === "object" ? data.settings : {};
       dataState.sections = Array.isArray(settings.sections) && settings.sections.length ? settings.sections : defaultSections.slice();
       dataState.employees = Array.isArray(settings.employees) && settings.employees.length ? settings.employees : defaultEmployees.slice();
-      dataState.requestCategories = settings.requestCategories && typeof settings.requestCategories === "object"
-        ? { ...defaultRequestCategories, ...settings.requestCategories, "카페테리아": dataState.sections }
-        : { ...defaultRequestCategories, "카페테리아": dataState.sections };
+      dataState.departments = normalizeDepartments(settings.departments);
+      dataState.requestCategories = normalizeRequestCategories(settings.requestCategories);
       dataState.standaloneMemos = Array.isArray(settings.standaloneMemos) ? settings.standaloneMemos : [];
-      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees) || !settings.requestCategories || !Array.isArray(settings.standaloneMemos)) {
+      if (!Array.isArray(settings.sections) || !Array.isArray(settings.employees) || !Array.isArray(settings.departments) || !settings.requestCategories || !Array.isArray(settings.standaloneMemos)) {
         await apiRequest("/settings", {
           method: "PUT",
           body: JSON.stringify({
             settings: {
               sections: dataState.sections,
               employees: dataState.employees,
+              departments: dataState.departments,
               requestCategories: dataState.requestCategories,
               standaloneMemos: dataState.standaloneMemos
             }
@@ -694,6 +763,7 @@
         settings: {
           sections: dataState.sections,
           employees: dataState.employees,
+          departments: dataState.departments,
           requestCategories: dataState.requestCategories,
           standaloneMemos: dataState.standaloneMemos
         }
@@ -819,9 +889,10 @@
   function normalizeTarget(item) {
     if (!item) return item;
     const category = item.category || item.section || "";
+    const targets = activeTargetNames();
     if (item.target === "마트") return { ...item, target: category === "야채" ? "야채" : "그로서리" };
-    if (item.enabled === false && item.target && !defaultTargets.includes(item.target)) return item;
-    if (!defaultTargets.includes(item.target)) return { ...item, target: category === "야채" ? "야채" : "그로서리" };
+    if (item.enabled === false && item.target && !targets.includes(item.target)) return item;
+    if (!targets.includes(item.target)) return { ...item, target: category === "야채" ? "야채" : (targets[0] || "그로서리") };
     return item;
   }
 
@@ -834,6 +905,106 @@
     const cafeteriaSections = [...(dataState.sections.length ? dataState.sections : defaultSections), "기타"];
     if (!cafeteriaSections.includes(category)) return { ...item, category: "냉장" };
     return item;
+  }
+
+  function renameDepartmentReferences(oldName, newName) {
+    const previous = normalizeTargetName(oldName);
+    const next = normalizeTargetName(newName);
+    if (!previous || !next || previous === next) return;
+    if (dataState.requestCategories[previous] && !dataState.requestCategories[next]) {
+      dataState.requestCategories[next] = dataState.requestCategories[previous];
+    }
+    if (previous !== next) delete dataState.requestCategories[previous];
+    dataState.ingredients = dataState.ingredients.map((item) =>
+      normalizeTargetName(item.target) === previous ? { ...item, target: next } : item
+    );
+    dataState.history = dataState.history.map((entry) => ({
+      ...entry,
+      target: normalizeTargetName(entry.target) === previous ? next : entry.target,
+      items: (entry.items || []).map((item) =>
+        normalizeTargetName(item.target) === previous ? { ...item, target: next } : item
+      ),
+      memos: (entry.memos || []).map((memo) => ({
+        ...memo,
+        department: normalizeTargetName(memo.department) === previous ? next : memo.department,
+        authorLabel: normalizeTargetName(memo.authorLabel) === previous ? next : memo.authorLabel
+      }))
+    }));
+    dataState.standaloneMemos = dataState.standaloneMemos.map((memo) => ({
+      ...memo,
+      department: normalizeTargetName(memo.department) === previous ? next : memo.department,
+      authorLabel: normalizeTargetName(memo.authorLabel) === previous ? next : memo.authorLabel
+    }));
+    dataState.accessAccounts = Object.fromEntries(Object.entries(accessAccounts()).map(([password, account]) => [
+      password,
+      {
+        ...account,
+        department: normalizeTargetName(account.department) === previous ? next : account.department,
+        label: normalizeTargetName(account.label) === previous ? next : account.label,
+        name: normalizeTargetName(account.name) === previous ? next : account.name
+      }
+    ]));
+  }
+
+  function departmentUsage(name) {
+    const target = normalizeTargetName(name);
+    if (!target) return 0;
+    const ingredientCount = dataState.ingredients.filter((item) => normalizeTargetName(item.target) === target).length;
+    const historyCount = dataState.history.reduce((count, entry) =>
+      count +
+      (normalizeTargetName(entry.target) === target ? 1 : 0) +
+      (entry.items || []).filter((item) => normalizeTargetName(item.target) === target).length +
+      (entry.memos || []).filter((memo) => normalizeTargetName(memo.department || memo.authorLabel) === target).length, 0);
+    const memoCount = dataState.standaloneMemos.filter((memo) =>
+      normalizeTargetName(memo.department || memo.authorLabel) === target
+    ).length;
+    const accountCount = Object.values(accessAccounts()).filter((account) =>
+      normalizeTargetName(account.department || account.label) === target
+    ).length;
+    return ingredientCount + historyCount + memoCount + accountCount;
+  }
+
+  async function setDepartments(rows, options = {}) {
+    const previousName = normalizeTargetName(options.oldName || "");
+    const normalized = normalizeDepartments(rows);
+    if (!normalized.some((row) => row.enabled !== false)) {
+      return { ok: false, error: "department required" };
+    }
+    const currentNames = new Set((dataState.departments.length ? dataState.departments : defaultDepartments).map((row) => normalizeTargetName(row.name)));
+    const disabledUsed = normalized.find((row) =>
+      row.enabled === false &&
+      currentNames.has(normalizeTargetName(row.name)) &&
+      departmentUsage(row.name) > 0
+    );
+    if (disabledUsed) return { ok: false, error: "department in use" };
+    const nextName = previousName
+      ? normalized.find((row) => row.id === options.id || normalizeTargetName(row.name) === normalizeTargetName(options.newName))?.name
+      : "";
+    const renamedRow = previousName ? normalized.find((row) => row.id === options.id || normalizeTargetName(row.name) === normalizeTargetName(nextName)) : null;
+    if (previousName && renamedRow?.enabled === false && departmentUsage(previousName) > 0) {
+      return { ok: false, error: "department in use" };
+    }
+    if (previousName && nextName && previousName !== nextName) renameDepartmentReferences(previousName, nextName);
+    dataState.departments = normalized;
+    dataState.requestCategories = normalizeRequestCategories(dataState.requestCategories);
+    const settingsResult = await syncSettings();
+    if (previousName && nextName && previousName !== nextName) {
+      await setIngredients(dataState.ingredients);
+      await replaceHistory(dataState.history);
+      await setAccessAccounts(dataState.accessAccounts);
+    }
+    return settingsResult;
+  }
+
+  async function deleteDepartment(name) {
+    const target = normalizeTargetName(name);
+    if (!target) return { ok: false, error: "department required" };
+    if (departmentUsage(target) > 0) return { ok: false, error: "department in use" };
+    const next = dataState.departments.filter((row) => normalizeTargetName(row.name) !== target);
+    if (!next.some((row) => row.enabled !== false)) return { ok: false, error: "department required" };
+    delete dataState.requestCategories[target];
+    dataState.departments = normalizeDepartments(next);
+    return syncSettings();
   }
 
   function normalizeIngredient(item) {
@@ -860,6 +1031,7 @@
     loadingDatasets.clear();
     dataState.employees = defaultEmployees.slice();
     dataState.sections = defaultSections.slice();
+    dataState.departments = defaultDepartments.slice();
     dataState.requestCategories = { ...defaultRequestCategories, "카페테리아": dataState.sections };
     dataState.accessAccounts = defaultAccessCodes;
     dataState.ingredients = defaultIngredients.map(normalizeIngredient);
@@ -1167,6 +1339,8 @@
       lang: localStorage.getItem(keys.lang) || "ko",
       employees: dataState.employees.slice(),
       sections: dataState.sections.slice(),
+      departments: dataState.departments.slice(),
+      requestCategories: { ...dataState.requestCategories },
       accessAccounts: accessAccounts(),
       ingredients: dataState.ingredients.map(normalizeIngredient),
       recipes: dataState.recipes.map(normalizeRecipe),
@@ -1184,9 +1358,12 @@
     localStorage.setItem(keys.lang, data.lang || "ko");
     dataState.employees = data.employees || [];
     dataState.sections = data.sections || defaultSections.slice();
+    dataState.departments = normalizeDepartments(data.departments);
     applyDataBundle({
       accessAccounts: data.accessAccounts || defaultAccessCodes,
       sections: dataState.sections,
+      departments: dataState.departments,
+      requestCategories: data.requestCategories || dataState.requestCategories,
       ingredients: data.ingredients || [],
       recipes: (data.recipes || []).map(normalizeRecipe),
       menus: data.menus || [],
@@ -1199,6 +1376,8 @@
     localStorage.setItem(keys.mode, "simple");
     dataState.sections = data.sections || defaultSections.slice();
     dataState.employees = data.employees || defaultEmployees.slice();
+    dataState.departments = normalizeDepartments(data.departments);
+    dataState.requestCategories = normalizeRequestCategories(data.requestCategories);
     dataState.accessAccounts = data.accessAccounts || defaultAccessCodes;
     dataState.ingredients = (data.ingredients || []).map(normalizeIngredient);
     dataState.recipes = (data.recipes || []).map(normalizeRecipe);
@@ -1417,6 +1596,9 @@
       dataState.employees = Array.isArray(v) ? v : [];
       syncSettings();
     },
+    getDepartments: () => normalizeDepartments(dataState.departments).map((row) => ({ ...row })),
+    setDepartments,
+    deleteDepartment,
     getSections: () => dataState.sections.length ? dataState.sections.slice() : defaultSections.slice(),
     setSections: (v) => {
       dataState.sections = Array.isArray(v) ? v : defaultSections.slice();
@@ -1435,7 +1617,7 @@
       if (target === "카페테리아") dataState.sections = dataState.requestCategories[target].filter((category) => category !== "기타");
       return syncSettings();
     },
-    getTargets: () => defaultTargets.slice(),
+    getTargets: () => activeTargetNames(),
     normalizeTargetName,
     getAllowedTargets: allowedTargets,
     getIngredients: () => dataState.ingredients.slice(),
@@ -1500,9 +1682,7 @@
         if (!session) return "";
         if (session.role === "admin") return "A";
         if (session.role === "restaurant") return "R";
-        if (session.department === "야채") return "V";
-        if (session.department === "그로서리") return "G";
-        return "C";
+        return String(window.I18n?.targetLabel(session.department || session.label) || "D").charAt(0).toUpperCase();
       })();
       const roleBadgeClass = roleBadgeLabel === "A" ? " is-admin" : "";
       const isRestricted = (key) => {
