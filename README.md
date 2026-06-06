@@ -22,7 +22,8 @@ https://mukjamtl.netlify.app/reset-cache.html
 | --- | --- |
 | `Manual.md` | 실제 사용자용 한글 매뉴얼 |
 | `Error.md` | 예상 예외, 오류 처리, 테스트/수정 이력 |
-| `/Users/itsfree/Downloads/mukja-function-tree-ko.md` | 매뉴얼 작성과 기능 테스트 기준 기능 트리 |
+| `docs/mukja-function-tree-ko.md` | 매뉴얼 작성과 기능 테스트 기준 기능 트리 |
+| `/Users/itsfree/Downloads/mukja-function-tree-ko.md` | 다운로드용 기능 트리 사본 |
 
 ## 입장 비밀번호와 권한
 
@@ -67,6 +68,9 @@ https://mukjamtl.netlify.app/reset-cache.html
 
 - 레스토랑/관리자 주문 모드
 - 품목 체크와 메모 저장
+- 요청 저장 후 부서별 요청 메시지 자동 생성
+- 부서별 메시지 복사
+- 메시지 아래 카카오톡 앱 열기 버튼
 - 관리자 수정 모드
 - 재료 CRUD
 - 부서/카테고리 일괄 변경
@@ -209,7 +213,7 @@ id,name,nameEn,section,description,descriptionEn,ingredients,ingredientsEn,seaso
 
 ## 테스트 방식
 
-기능 테스트는 방금 작성한 기능 트리(`mukja-function-tree-ko.md`)를 기준으로 진행합니다. 자동 테스트는 실제 배포 API와 DB를 사용하므로 **순차 실행**합니다.
+기능 테스트는 `docs/mukja-function-tree-ko.md`를 기준으로 진행합니다. 자동 테스트는 실제 배포 API와 DB를 사용하므로 **순차 실행**합니다.
 
 ```bash
 npm run test:user-flows
@@ -217,6 +221,7 @@ npm run test:db-consistency
 ```
 
 - `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
+- 요청하기 테스트는 요청 버튼 클릭 후 부서별 메시지 3개와 카카오톡 열기 링크 3개가 생성되는지도 확인합니다.
 - `test:db-consistency`: 실제 DB에 임시 요청을 생성, 조회, 수정, 삭제하고 홈/요청 내역/상세 화면의 데이터 일관성을 확인합니다.
 
 두 테스트를 동시에 실행하면 서로의 임시 요청을 잠깐 볼 수 있으므로 최종 검증은 항상 순서대로 실행합니다.
@@ -270,6 +275,7 @@ https://mukjamtl.netlify.app/api/health
 ## V1.0 전 점검 기준
 
 - 기능 트리 기준으로 모든 페이지를 테스트한다.
+- 기능을 수정하면 `docs/mukja-function-tree-ko.md`, 테스트 체크리스트, `Manual.md`를 함께 업데이트한다.
 - 테스트 중 오류가 나오면 즉시 수정하고 `Error.md`에 기록한다.
 - README와 Manual을 최신 화면 기준으로 맞춘다.
 - DB 초기화/CSV Import 전에는 `/Users/itsfree/Downloads/mukja-db-backups`에 백업을 남긴다.
