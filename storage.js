@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v161";
+  const appAssetVersion = "v162";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -1453,10 +1453,10 @@
       };
       const nav = [
         ["home", "index.html", `<img class="nav-icon-image" src="assets/icons/home-circle.svg?v=${appAssetVersion}" alt="" />`],
-        ["history", "history.html", "H"],
-        ["order", "order.html", "R"],
-        ["menus", "menu.html", "M"],
-        ["admin", "admin.html", "A"]
+        ["history", "history.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>'],
+        ["order", "order.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="3"/><path d="M5 9v12"/><path d="m15 9-3-3 3-3"/><path d="M12 6h5a2 2 0 0 1 2 2v3"/><path d="M19 15v6"/><path d="M22 18h-6"/></svg>'],
+        ["menus", "menu.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h10"/></svg>'],
+        ["admin", "admin.html", '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.051 12.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.866l-1.156-1.153a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z"/><path d="M8 15H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/></svg>']
       ];
       const sidebarStateKey = "restaurant_sidebar_collapsed";
       localStorage.setItem(sidebarStateKey, "1");
