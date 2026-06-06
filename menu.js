@@ -857,8 +857,8 @@
     const discontinuedChecked = menu ? Boolean(menu.discontinued) : false;
     return `
       <div class="recipe-item-form menu-inline-form" data-menu-form="${menu?.id || "__new__"}">
-        <label><span>${I18n.t("koreanMenuName")}</span><input data-menu-name-ko value="${escapeHtml(menu?.nameKo || "")}" /></label>
-        <label><span>${I18n.t("englishMenuName")}</span><input data-menu-name-en value="${escapeHtml(menu?.nameEn || "")}" /></label>
+        <label><span>${I18n.t("koreanMenuName")}</span><input data-menu-name-ko required value="${escapeHtml(menu?.nameKo || "")}" /></label>
+        <label><span>${I18n.t("englishMenuName")}</span><input data-menu-name-en required value="${escapeHtml(menu?.nameEn || "")}" /></label>
         <label><span>${I18n.t("menuCategory")}</span><select data-menu-category>${menuCategoryOptions(selectedCategory)}</select></label>
         <label><span>${I18n.t("price")} (CAD)</span><input data-menu-price inputmode="decimal" value="${escapeHtml(menu?.price || "")}" /></label>
         <div class="menu-option-row">
@@ -888,7 +888,15 @@
 
   function saveMenuFromInline(form, menu = null) {
     const nameKo = form?.querySelector("[data-menu-name-ko]")?.value.trim() || "";
-    if (!nameKo) return;
+    const nameEn = form?.querySelector("[data-menu-name-en]")?.value.trim() || "";
+    if (!nameKo) {
+      window.alert(I18n.t("menuKoreanNameRequired"));
+      return;
+    }
+    if (!nameEn) {
+      window.alert(I18n.t("menuEnglishNameRequired"));
+      return;
+    }
     if (blockDuplicateMenuName(menu?.id || "", nameKo)) return;
     const isActive = form.querySelector("[data-menu-active]")?.checked;
     const confirmMessage = isActive ? I18n.t("confirmSaveMenu") : I18n.t("confirmDiscontinueMenu");
@@ -931,7 +939,7 @@
       recipeId: recipeToSave.id,
       recipeName: recipeToSave.name,
       nameKo,
-      nameEn: form.querySelector("[data-menu-name-en]")?.value.trim() || "",
+      nameEn,
       category: categoryValue,
       price: form.querySelector("[data-menu-price]")?.value.trim() || "",
       currency: menu?.currency || "CAD",

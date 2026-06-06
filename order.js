@@ -355,8 +355,8 @@
     const category = item?.category || item?.section || sectionForTargetCategory(target, defaults.category || "기타");
     return `
       <div class="recipe-item-form order-item-form" data-order-item-form="${item?.id || "__new__"}">
-        <label><span>${I18n.t("itemName")}</span><input data-order-item-name-ko value="${escapeHtml(item?.nameKo || item?.name || "")}" /></label>
-        <label><span>${I18n.t("englishName")}</span><input data-order-item-name-en value="${escapeHtml(item?.nameEn || "")}" /></label>
+        <label><span>${I18n.t("itemName")}</span><input data-order-item-name-ko required value="${escapeHtml(item?.nameKo || item?.name || "")}" /></label>
+        <label><span>${I18n.t("englishName")}</span><input data-order-item-name-en required value="${escapeHtml(item?.nameEn || "")}" /></label>
         <label><span>${I18n.t("department")}</span><select data-order-item-target>
           ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
         </select></label>
@@ -397,8 +397,15 @@
 
   function saveItemFromForm(form, item = null) {
     const nameKo = form?.querySelector("[data-order-item-name-ko]")?.value.trim() || "";
+    const nameEn = form?.querySelector("[data-order-item-name-en]")?.value.trim() || "";
     if (!nameKo) {
-      setStatus(I18n.t("chooseAtLeastOne"));
+      window.alert(I18n.t("ingredientKoreanNameRequired"));
+      setStatus(I18n.t("ingredientKoreanNameRequired"));
+      return;
+    }
+    if (!nameEn) {
+      window.alert(I18n.t("ingredientEnglishNameRequired"));
+      setStatus(I18n.t("ingredientEnglishNameRequired"));
       return;
     }
     const target = form.querySelector("[data-order-item-target]")?.value || "카페테리아";
@@ -418,7 +425,7 @@
       id: item?.id || Store.id("item"),
       name: nameKo,
       nameKo,
-      nameEn: form.querySelector("[data-order-item-name-en]")?.value.trim() || "",
+      nameEn,
       target,
       category,
       unit: form.querySelector("[data-order-item-unit]")?.value.trim() || item?.unit || "",

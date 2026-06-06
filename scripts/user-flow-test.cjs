@@ -237,7 +237,19 @@ async function runPage(userName, session, page, language = 'ko') {
       createButton?.click();
       await waitUntil(() => window.document.querySelector('[data-order-item-form="__new__"]'));
       const ingredientForm = window.document.querySelector('[data-order-item-form="__new__"]');
+      ingredientForm.querySelector('[data-order-item-name-ko]').value = '';
+      ingredientForm.querySelector('[data-order-item-name-en]').value = 'Required English';
+      ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
+      const ingredientKoreanRequiredBlocked = alerts.some((message) => message.includes('품목 한글명'))
+        && window.Store.getIngredients().length === ingredientCountBefore;
+      ingredientForm.querySelector('[data-order-item-name-ko]').value = '필수 입력 테스트';
+      ingredientForm.querySelector('[data-order-item-name-en]').value = '';
+      ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
+      const ingredientEnglishRequiredBlocked = alerts.some((message) => message.includes('품목 영문명'))
+        && window.Store.getIngredients().length === ingredientCountBefore;
+      result.requiredIngredientNamesBlocked = ingredientKoreanRequiredBlocked && ingredientEnglishRequiredBlocked;
       ingredientForm.querySelector('[data-order-item-name-ko]').value = duplicateName;
+      ingredientForm.querySelector('[data-order-item-name-en]').value = 'Duplicate Test';
       ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
       result.duplicateIngredientBlocked = alerts.some((message) => message.includes('이미 같은 품목명'))
         && window.Store.getIngredients().length === ingredientCountBefore;
@@ -252,6 +264,7 @@ async function runPage(userName, session, page, language = 'ko') {
     if (result.categoryAddIconButton === false) result.pass = false;
     if (result.targetCollapseWorks === false) result.pass = false;
     if (result.categoryTitleFocusWorks === false) result.pass = false;
+    if (result.requiredIngredientNamesBlocked === false) result.pass = false;
     if (result.duplicateIngredientBlocked === false) result.pass = false;
     if (result.dragLockedWhileEditFormOpen === false) result.pass = false;
   } else if (page.file === 'menu.html') {
@@ -280,13 +293,26 @@ async function runPage(userName, session, page, language = 'ko') {
       window.document.querySelector('[data-menu-action="create"]')?.click();
       await waitUntil(() => window.document.querySelector('[data-menu-form="__new__"]'));
       const menuForm = window.document.querySelector('[data-menu-form="__new__"]');
+      menuForm.querySelector('[data-menu-name-ko]').value = '';
+      menuForm.querySelector('[data-menu-name-en]').value = 'Required English';
+      menuForm.querySelector('[data-menu-action="save"]')?.click();
+      const menuKoreanRequiredBlocked = alerts.some((message) => message.includes('메뉴 한글명'))
+        && window.Store.getMenus().length === menuCountBefore;
+      menuForm.querySelector('[data-menu-name-ko]').value = '필수 메뉴 테스트';
+      menuForm.querySelector('[data-menu-name-en]').value = '';
+      menuForm.querySelector('[data-menu-action="save"]')?.click();
+      const menuEnglishRequiredBlocked = alerts.some((message) => message.includes('메뉴 영문명'))
+        && window.Store.getMenus().length === menuCountBefore;
+      result.requiredMenuNamesBlocked = menuKoreanRequiredBlocked && menuEnglishRequiredBlocked;
       menuForm.querySelector('[data-menu-name-ko]').value = duplicateName;
+      menuForm.querySelector('[data-menu-name-en]').value = 'Duplicate Menu';
       menuForm.querySelector('[data-menu-action="save"]')?.click();
       result.duplicateMenuBlocked = alerts.some((message) => message.includes('이미 같은 메뉴명'))
         && window.Store.getMenus().length === menuCountBefore;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.menuCategoryCollapseWorks === false) result.pass = false;
+    if (result.requiredMenuNamesBlocked === false) result.pass = false;
     if (result.duplicateMenuBlocked === false) result.pass = false;
   } else if (page.file === 'recipes.html') {
     const text = window.document.querySelector('#recipe-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
