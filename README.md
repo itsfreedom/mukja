@@ -125,6 +125,62 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `ingredients` | 요청하기 화면의 재료 품목 DB |
 | `menus` | 메뉴명, 카테고리, 가격, 상태, 연결 레시피 |
 
+## DB 스키마
+
+스키마는 `netlify/functions/api.cjs`의 `ensureSchema()`에서 보장합니다. 배포 API가 호출되면 누락된 테이블과 컬럼을 생성하고, 구형 `section` 데이터는 `category`로 보정합니다.
+
+### 접근/설정 테이블
+
+| 테이블 | 주요 컬럼 |
+| --- | --- |
+| `access_identities` | `id` PK, `role`, `department`, `display_name`, `first_seen_at`, `last_seen_at`, `last_ip`, `last_user_agent` |
+| `access_logs` | `id` UUID PK, `identity_id` FK, `role`, `department`, `path`, `method`, `ip_address`, `user_agent`, `created_at` |
+| `access_accounts` | `password` PK, `role`, `department`, `label`, `user_name`, `name`, `enabled`, 변경자/접속 정보, `updated_at` |
+| `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at` |
+
+### 요청/입고 테이블
+
+| 테이블 | 주요 컬럼 |
+| --- | --- |
+| `orders` | `id` PK, `order_date`, `order_time`, `mode`, `employee`, `target`, `memo`, `message`, 생성자/접속 정보, `created_at`, `updated_at` |
+| `order_items` | `id` PK, `order_id` FK, `item_index`, `name`, `name_en`, `category`, `target`, `quantity`, `unit`, `received`, `restaurant_received`, 입고 처리자/접속 정보, `received_at` |
+| `order_memos` | `id` PK, `order_id` FK, `memo_index`, `role`, `department`, `author_label`, `memo_text`, 작성자/접속 정보, `created_at` |
+| `receipt_confirmations` | `id` UUID PK, `order_item_id` FK, `received`, `confirmed_by_identity_id`, `confirmed_ip`, `confirmed_user_agent`, `confirmed_at`, `memo` |
+| `department_confirmations` | `id` UUID PK, `order_item_id` FK, `department`, `confirmed`, `confirmed_by_identity_id`, `confirmed_ip`, `confirmed_user_agent`, `confirmed_at`, `memo` |
+
+### 운영 데이터 테이블
+
+| 테이블 | 주요 컬럼 |
+| --- | --- |
+| `ingredients` | `id` PK, `name_ko`, `name_en`, `category`, `category_en`, `unit`, `target`, `enabled`, `sort_order`, 변경자/접속 정보, `synced_at` |
+| `menus` | `id` PK, `recipe_id` FK, `category`, `category_en`, `name_ko`, `name_en`, `seasonal`, `discontinued`, `price`, `currency`, `notes`, `sort_order`, 변경자/접속 정보, `created_at`, `updated_at` |
+| `recipes` | `id` PK, `name`, `name_en`, `section`, `description`, `description_en`, `ingredients`, `ingredients_en`, `ingredient_items` JSONB, `ingredient_items_en` JSONB, `seasonings`, `seasoning_items` JSONB, `steps`, `steps_en`, `step_items` JSONB, `step_items_en` JSONB, `notes`, `notes_en`, `image_url`, `enabled`, `updated_at`, 변경자/접속 정보, `synced_at` |
+
+### 주요 관계
+
+| 관계 | 삭제 정책 |
+| --- | --- |
+| `order_items.order_id -> orders.id` | 요청 삭제 시 품목도 삭제 |
+| `order_memos.order_id -> orders.id` | 요청 삭제 시 메모도 삭제 |
+| `receipt_confirmations.order_item_id -> order_items.id` | 품목 삭제 시 입고 확인 기록도 삭제 |
+| `department_confirmations.order_item_id -> order_items.id` | 품목 삭제 시 출고 확인 기록도 삭제 |
+| `menus.recipe_id -> recipes.id` | 레시피 삭제 시 메뉴의 연결만 해제 |
+| 변경자/생성자 identity FK | identity 삭제 시 기록은 남기고 FK만 null |
+
+### 주요 인덱스
+
+| 인덱스 | 목적 |
+| --- | --- |
+| `idx_orders_created_at` | 요청 내역 최신순 조회 |
+| `idx_access_accounts_role` | 권한/부서별 계정 조회 |
+| `idx_order_items_order_id` | 요청 상세 품목 조회 |
+| `idx_order_memos_order_id` | 요청별 메모 조회 |
+| `idx_receipt_confirmations_item` | 품목별 입고 확인 이력 조회 |
+| `idx_department_confirmations_item` | 품목별 출고 확인 이력 조회 |
+| `idx_recipes_section` | 레시피 섹션 필터 |
+| `idx_ingredients_target`, `idx_ingredients_category` | 요청하기 부서/카테고리 필터 |
+| `idx_menus_recipe_id`, `idx_menus_category`, `idx_menus_status` | 메뉴 레시피 연결, 카테고리, 판매 상태 조회 |
+
 ## CSV 컬럼
 
 재료 목록:
