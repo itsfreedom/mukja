@@ -35,6 +35,18 @@
     return date.toISOString().slice(0, 10);
   }
 
+  function formatSavedAt(entry) {
+    const source = entry.updatedAt || entry.createdAt || "";
+    const date = source ? new Date(source) : new Date(`${entry.date}T${entry.time || "00:00"}`);
+    if (Number.isNaN(date.getTime())) return `${entry.date} ${entry.time || ""}`.trim();
+    return date.toLocaleString(I18n.lang() === "en" ? "en-CA" : "ko-KR", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
   function weekRange(offset) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -92,7 +104,10 @@
         ${entries.map((entry, index) => `
           <a class="history-row" href="history.html?id=${encodeURIComponent(entry.id)}&week=${weekOffset}">
             <span>${index + 1}</span>
-            <strong>${entry.date}</strong>
+            <span class="history-row-main">
+              <strong>${entry.date} ${entry.time || ""}</strong>
+              <small>${formatSavedAt(entry)}</small>
+            </span>
             <span class="menu-row-action is-recipe history-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg></span>
           </a>
         `).join("")}

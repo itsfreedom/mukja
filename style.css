@@ -1274,6 +1274,18 @@ body {
   text-align: center;
 }
 
+.history-row-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.history-row-main small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
 .history-arrow {
   justify-self: end;
 }

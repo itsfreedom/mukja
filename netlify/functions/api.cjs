@@ -783,6 +783,8 @@ async function listHistory(client) {
     id: row.id,
     date: row.order_date,
     time: row.order_time,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
     mode: row.mode,
     employee: row.employee || "",
     target: row.target || "",
