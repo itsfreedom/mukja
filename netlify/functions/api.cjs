@@ -421,13 +421,13 @@ function parseBody(event) {
 }
 
 function itemDbId(orderId, item, index) {
-  const base = item.id || `${item.name || "item"}-${index}`;
-  return `${orderId}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
+  const base = item.id || item.name || "item";
+  return `${orderId}-item-${index}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
 }
 
 function memoDbId(orderId, memo, index) {
-  const base = memo.id || `${memo.department || memo.role || "memo"}-${index}`;
-  return `${orderId}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
+  const base = memo.department || memo.authorLabel || memo.role || "memo";
+  return `${orderId}-memo-${index}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
 }
 
 async function upsertOrder(client, entry, info) {

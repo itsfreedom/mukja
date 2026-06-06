@@ -10,7 +10,7 @@
   const editSelected = new Set();
   let requestMode = "order";
   let lastSelectedItemId = null;
-  let editingEntry = null;
+  let templateEntry = null;
   let activeItemEdit = null;
   let activeCategoryEdit = null;
   let draggedCategory = null;
@@ -397,12 +397,12 @@
 
   function loadLatestRequest() {
     if (!canCreateRequest) return;
-    editingEntry = latestRequestEntry();
+    templateEntry = latestRequestEntry();
     selected.clear();
-    (editingEntry?.items || []).forEach((item) => selected.add(itemKey(item)));
-    const memos = Array.isArray(editingEntry?.memos) ? editingEntry.memos : [];
+    (templateEntry?.items || []).forEach((item) => selected.add(itemKey(item)));
+    const memos = Array.isArray(templateEntry?.memos) ? templateEntry.memos : [];
     const editableMemo = memos.find(sameAuthor);
-    els.memo.value = editableMemo?.text || (!memos.length ? editingEntry?.memo || "" : "");
+    els.memo.value = editableMemo?.text || (!memos.length ? templateEntry?.memo || "" : "");
   }
 
   function itemActions(item) {
@@ -758,18 +758,13 @@
     if (!canCreateRequest) return;
     const items = selectedItems();
     const memo = memoEntry();
-    if (!items.length && !memo && !editingEntry) {
+    if (!items.length && !memo) {
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
-    const existingMemos = Array.isArray(editingEntry?.memos) ? editingEntry.memos : [];
-    const memos = [
-      ...existingMemos.filter((row) => !sameAuthor(row)),
-      ...(memo ? [memo] : [])
-    ];
+    const memos = memo ? [memo] : [];
     const entry = {
-      ...(editingEntry || {}),
-      id: editingEntry?.id || Store.id("history"),
+      id: Store.id("history"),
       date: Store.today(),
       time: Store.nowTime(),
       mode: "simple",
@@ -786,7 +781,7 @@
       setStatus(result.error || I18n.t("csvImportInvalid"));
       return;
     }
-    editingEntry = entry;
+    templateEntry = entry;
     setStatus(I18n.t("saved"));
   }
 
