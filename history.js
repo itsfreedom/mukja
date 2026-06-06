@@ -1,5 +1,5 @@
 (async function () {
-  await Store.init({ datasets: ["history"] });
+  await Store.init({ datasets: ["settings", "history"] });
   AppUI.renderSidebar("history");
   AppUI.registerServiceWorker();
 
@@ -129,6 +129,44 @@
     ];
   }
 
+  function targetFor(item) {
+    return item.target || "그로서리";
+  }
+
+  function categoryFor(item) {
+    const target = targetFor(item);
+    const section = item.section || "기타";
+    if (target === "그로서리" && section === "식재료") return "분말";
+    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(section)) return section;
+    if (target === "그로서리") return "기타";
+    if (target === "야채") return section || "야채";
+    const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
+    if (cafeteriaSections.includes(section)) return section;
+    return section || "기타";
+  }
+
+  function orderedKeys(groups, order) {
+    return [
+      ...order.filter((key) => groups[key]),
+      ...Object.keys(groups).filter((key) => !order.includes(key))
+    ];
+  }
+
+  function groupItemsByCategory(items, target) {
+    const groups = items.reduce((acc, item) => {
+      const category = categoryFor(item);
+      acc[category] = acc[category] || [];
+      acc[category].push(item);
+      return acc;
+    }, {});
+    const categoryOrders = {
+      "카페테리아": [...Store.getRequestCategories("카페테리아"), "기타"],
+      "야채": Store.getRequestCategories("야채"),
+      "그로서리": Store.getRequestCategories("그로서리")
+    };
+    return orderedKeys(groups, categoryOrders[target] || []).map((category) => [category, groups[category]]);
+  }
+
   function checkCell(item, field) {
     const checked = item[field] ? "checked" : "";
     const disabled = session?.role === "admin" ? "" : "disabled";
@@ -141,17 +179,23 @@
         <h2>${I18n.targetLabel(target)}</h2>
         <hr class="section-divider department-divider" />
         <div class="department-card history-detail-card">
-          <div class="history-detail-grid history-detail-head">
-            <span>${I18n.t("items")}</span>
-            <span>${I18n.t("outgoingConfirm")}</span>
-            <span>${I18n.t("incomingConfirm")}</span>
-          </div>
-          ${items.map((item) => `
-            <div class="history-detail-grid history-detail-row">
-              <strong>${I18n.itemName(item)}</strong>
-              <span>${checkCell(item, "received")}</span>
-              <span>${checkCell(item, "restaurantReceived")}</span>
-            </div>
+          ${groupItemsByCategory(items, target).map(([category, categoryItems]) => `
+            <section class="history-detail-category">
+              <h3>${I18n.sectionLabel(category)}</h3>
+              <hr class="section-divider" />
+              <div class="history-detail-grid history-detail-head">
+                <span>${I18n.t("items")}</span>
+                <span>${I18n.t("outgoingConfirm")}</span>
+                <span>${I18n.t("incomingConfirm")}</span>
+              </div>
+              ${categoryItems.map((item) => `
+                <div class="history-detail-grid history-detail-row">
+                  <strong>${I18n.itemName(item)}</strong>
+                  <span>${checkCell(item, "received")}</span>
+                  <span>${checkCell(item, "restaurantReceived")}</span>
+                </div>
+              `).join("")}
+            </section>
           `).join("")}
         </div>
       </section>
