@@ -777,10 +777,38 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 #admin-panel {
   display: grid;
-  gap: 14px;
+  gap: 24px;
 }
 
-.admin-section { margin-top: 0; }
+.admin-section {
+  margin: 0;
+  padding-block: 4px 10px;
+}
+
+.admin-section + .admin-section {
+  padding-top: 18px;
+  border-top: 1px solid rgba(184, 196, 240, 0.12);
+}
+
+.admin-section-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-section-toggle {
+  color: #d9e3ff;
+}
+
+.admin-section.is-collapsed {
+  padding-bottom: 4px;
+}
+
+.admin-section.is-collapsed > :not(.section-title-row) {
+  display: none;
+}
+
 .admin-status { margin: 0; }
 .admin-status:empty { display: none; }
 .hidden { display: none !important; }

@@ -7,10 +7,10 @@
     <meta name="format-detection" content="telephone=no" />
     <script>document.documentElement.dataset.preferredLang=localStorage.getItem("restaurant_lang")||"ko";document.documentElement.lang=document.documentElement.dataset.preferredLang;</script>
     <title>관리자</title>
-    <link rel="manifest" href="manifest.json?v=v190" />
-    <link rel="icon" href="assets/favicon.ico?v=v190" sizes="any" />
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=v190" />
-    <link rel="stylesheet" href="style.css?v=v190" />
+    <link rel="manifest" href="manifest.json?v=v191" />
+    <link rel="icon" href="assets/favicon.ico?v=v191" sizes="any" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=v191" />
+    <link rel="stylesheet" href="style.css?v=v191" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -28,9 +28,14 @@
             <section class="panel admin-section">
               <div class="section-title-row menu-category-title-row">
                 <h2 data-i18n="departmentManagement">부서 관리</h2>
-                <button class="menu-row-action is-create" id="add-department-toggle" type="button" aria-label="Add department">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
-                </button>
+                <div class="admin-section-actions">
+                  <button class="menu-row-action admin-section-toggle is-expanded" data-admin-section-toggle="departments" type="button" aria-expanded="true" aria-label="부서 관리 접기">
+                    <svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M5 5.5h14v3.5H5z" /><path class="toggle-icon-triangle" d="M5 11h14l-7 8z" /></svg>
+                  </button>
+                  <button class="menu-row-action is-create" id="add-department-toggle" type="button" aria-label="Add department">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                  </button>
+                </div>
               </div>
               <hr class="section-divider department-divider" />
               <div id="department-form-slot"></div>
@@ -40,9 +45,14 @@
             <section class="panel admin-section">
               <div class="section-title-row menu-category-title-row">
                 <h2 data-i18n="passwordManagement">비밀번호 관리</h2>
-                <button class="menu-row-action is-create" id="add-access-toggle" type="button" aria-label="Add user">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
-                </button>
+                <div class="admin-section-actions">
+                  <button class="menu-row-action admin-section-toggle is-expanded" data-admin-section-toggle="access" type="button" aria-expanded="true" aria-label="비밀번호 관리 접기">
+                    <svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M5 5.5h14v3.5H5z" /><path class="toggle-icon-triangle" d="M5 11h14l-7 8z" /></svg>
+                  </button>
+                  <button class="menu-row-action is-create" id="add-access-toggle" type="button" aria-label="Add user">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                  </button>
+                </div>
               </div>
               <hr class="section-divider department-divider" />
               <div id="access-form-slot"></div>
@@ -52,6 +62,11 @@
             <section class="panel admin-section">
               <div class="section-title-row menu-category-title-row">
                 <h2 data-i18n="dataBackup">데이터 백업</h2>
+                <div class="admin-section-actions">
+                  <button class="menu-row-action admin-section-toggle is-expanded" data-admin-section-toggle="backup" type="button" aria-expanded="true" aria-label="데이터 백업 접기">
+                    <svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M5 5.5h14v3.5H5z" /><path class="toggle-icon-triangle" d="M5 11h14l-7 8z" /></svg>
+                  </button>
+                </div>
               </div>
               <hr class="section-divider department-divider" />
               <div class="admin-csv-list">
@@ -109,8 +124,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=v190"></script>
-    <script src="i18n.js?v=v190"></script>
-    <script src="admin.js?v=v190"></script>
+    <script src="storage.js?v=v191"></script>
+    <script src="i18n.js?v=v191"></script>
+    <script src="admin.js?v=v191"></script>
   </body>
 </html>

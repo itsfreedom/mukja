@@ -51,6 +51,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 ### 홈
 
 - 최신 요청 조회
+- 요청 내역 DB의 `updatedAt/createdAt` 기준 최신 요청 우선 표시
 - 부서별 요청 필터
 - 출고/입고 체크 저장
 - 요청별 메모 저장
@@ -122,6 +123,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 - 부서명 변경 시 재료/요청 내역/메모/접근 계정의 부서 참조 이관
 - 사용 중인 부서 삭제/비활성화 방지
 - 마지막 관리자 삭제 방지
+- 부서/비밀번호/데이터 백업 섹션 접기/펼치기
 - 관리자 화면 순서: 부서 관리, 비밀번호 관리, 데이터 백업
 - 요청 내역 CSV Export/Import
 - 재료 목록 CSV Export/Import

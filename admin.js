@@ -13,6 +13,7 @@
   const addDepartmentToggle = document.getElementById("add-department-toggle");
   let activeForm = null;
   let activeDepartmentForm = null;
+  const collapsedAdminSections = new Set();
 
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
 
@@ -161,7 +162,18 @@
     renderDepartmentFormSlot();
     renderDepartments();
     attachEvents();
+    applyAdminSectionState();
     I18n.applyI18n();
+  }
+
+  function applyAdminSectionState() {
+    document.querySelectorAll("[data-admin-section-toggle]").forEach((button) => {
+      const key = button.dataset.adminSectionToggle;
+      const collapsed = collapsedAdminSections.has(key);
+      button.classList.toggle("is-expanded", !collapsed);
+      button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      button.closest(".admin-section")?.classList.toggle("is-collapsed", collapsed);
+    });
   }
 
   async function saveAccess(form) {
@@ -318,6 +330,14 @@
   }
 
   function attachEvents() {
+    document.querySelectorAll("[data-admin-section-toggle]").forEach((button) => {
+      button.onclick = () => {
+        const key = button.dataset.adminSectionToggle;
+        if (collapsedAdminSections.has(key)) collapsedAdminSections.delete(key);
+        else collapsedAdminSections.add(key);
+        applyAdminSectionState();
+      };
+    });
     addToggle.onclick = () => {
       activeForm = activeForm?.mode === "create" ? null : { mode: "create" };
       renderAll();

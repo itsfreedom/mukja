@@ -61,7 +61,7 @@ function seededEntry(id) {
   return {
     id,
     date: today(),
-    time: '23:58',
+    time: '00:01',
     mode: 'simple',
     employee: '관리자',
     target: '',
@@ -130,8 +130,10 @@ async function runPage(userName, session, page, language = 'ko') {
     result.memoTextArea = window.document.querySelector('#home-memo')?.value || '';
     result.subtitle = window.document.querySelector('[data-home-subtitle]')?.textContent || '';
     result.sample = homeText.slice(0, 180);
+    result.latestRequestVisible = window.document.querySelectorAll('#home-request-list .receive-row').length > 0;
     result.pass = !/저장된 주문내역이 없습니다/.test(homeText) && homeText.length > 0
-      && expectedHomeMemos[userName].every((label) => result.memoLabels.includes(label));
+      && expectedHomeMemos[userName].every((label) => result.memoLabels.includes(label))
+      && result.latestRequestVisible;
   } else if (page.file === 'history.html') {
     const text = window.document.querySelector('#history-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
@@ -143,6 +145,7 @@ async function runPage(userName, session, page, language = 'ko') {
     result.hasKoreanDriedVegetables = text.includes('건나물');
     result.sample = text.slice(0, 180);
     if (userName === 'admin' && language === 'ko') {
+      [...window.document.querySelectorAll('#items-list input[data-item]:checked')].forEach((input) => input.click());
       const historyCountBeforeEmptySave = window.Store.getHistory().length;
       const standaloneMemosBeforeEmptySave = window.Store.getStandaloneMemos?.() || [];
       const memoCountBeforeEmptySave = standaloneMemosBeforeEmptySave.length;
@@ -332,6 +335,13 @@ async function runPage(userName, session, page, language = 'ko') {
       !adminText.includes('전체 백업') &&
       !adminText.includes('Full Backup');
     if (userName === 'admin') {
+      const sectionToggle = window.document.querySelector('[data-admin-section-toggle="departments"]');
+      sectionToggle?.click();
+      await waitUntil(() => sectionToggle.closest('.admin-section')?.classList.contains('is-collapsed'));
+      result.adminSectionCollapseWorks = Boolean(sectionToggle.closest('.admin-section')?.classList.contains('is-collapsed'))
+        && !window.document.querySelector('#department-list')?.checkVisibility?.();
+      sectionToggle?.click();
+      await waitUntil(() => !sectionToggle.closest('.admin-section')?.classList.contains('is-collapsed'));
       const backupBundle = await window.Store.createCsvBackupBundle();
       result.hiddenCsvBackupWorks = Array.isArray(backupBundle) &&
         backupBundle.length >= 8 &&
@@ -344,6 +354,7 @@ async function runPage(userName, session, page, language = 'ko') {
     if (userName === 'admin' && result.departmentListLanguageClean === false) result.pass = false;
     if (userName === 'admin' && result.hiddenCsvBackupFunction === false) result.pass = false;
     if (userName === 'admin' && result.hiddenCsvBackupWorks === false) result.pass = false;
+    if (userName === 'admin' && result.adminSectionCollapseWorks === false) result.pass = false;
   }
   return result;
 }

@@ -45,16 +45,17 @@
   }
 
   function latestEntry() {
+    const entryStamp = (entry) => {
+      const remoteStamp = entry?.updatedAt || entry?.createdAt || "";
+      if (remoteStamp) return remoteStamp;
+      return `${entry?.date || ""}T${entry?.time || "00:00"}`;
+    };
     const latestHistory = Store.getHistory()
       .map(visibleEntry)
       .filter(Boolean)
-      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0] || null;
-    const memoEntry = visibleEntry(latestStandaloneMemoEntry());
-    if (!latestHistory) return memoEntry;
-    if (!memoEntry) return latestHistory;
-    return `${memoEntry.date} ${memoEntry.time || ""}`.localeCompare(`${latestHistory.date} ${latestHistory.time || ""}`) >= 0
-      ? memoEntry
-      : latestHistory;
+      .sort((a, b) => entryStamp(b).localeCompare(entryStamp(a)))[0] || null;
+    if (latestHistory) return latestHistory;
+    return visibleEntry(latestStandaloneMemoEntry());
   }
 
   function categoryValue(item) {
