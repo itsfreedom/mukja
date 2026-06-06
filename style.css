@@ -603,6 +603,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   color: #ffffff;
   display: grid;
   place-items: center;
+  line-height: 0;
   font-size: 1.02rem;
   font-weight: 900;
   padding: 0;
@@ -634,6 +635,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 }
 
 .menu-row-action svg {
+  display: block;
   width: var(--ui-action-icon-size);
   height: var(--ui-action-icon-size);
   fill: none;
@@ -641,6 +643,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 520px) {
@@ -1032,6 +1035,7 @@ body {
   border-radius: 999px;
   display: grid;
   place-items: center;
+  line-height: 0;
   flex: 0 0 28px;
   background: rgba(255, 255, 255, 0.045);
   color: currentColor;
@@ -1047,6 +1051,7 @@ body {
 }
 
 .nav-icon svg {
+  display: block;
   width: 17px;
   height: 17px;
   fill: none;
@@ -1054,6 +1059,7 @@ body {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transform: translateY(-1px);
 }
 
 .nav-link.is-active {
