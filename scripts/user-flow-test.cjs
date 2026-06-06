@@ -164,6 +164,19 @@ async function runPage(userName, session, page, language = 'ko') {
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
         && result.kakaoLinks === 3;
+      const viewCategoryRow = window.document.querySelector('[data-request-category-row]');
+      const viewToggle = viewCategoryRow?.querySelector('[data-request-category-action="toggle"]');
+      const viewItemCount = viewCategoryRow?.querySelectorAll('[data-request-item-row]').length || 0;
+      viewToggle?.click();
+      await waitUntil(() => window.document.querySelector('[data-request-category-row]')?.classList.contains('is-collapsed'));
+      const viewCollapsedRow = window.document.querySelector('[data-request-category-row].is-collapsed');
+      result.requestViewCollapseWorks = Boolean(viewCollapsedRow)
+        && viewItemCount > 0
+        && viewCollapsedRow.querySelectorAll('[data-request-item-row]').length === 0
+        && Boolean(viewCollapsedRow.querySelector('[data-request-category-action="toggle"]'))
+        && !viewCollapsedRow.querySelector('[data-request-category-drag-handle]');
+      viewCollapsedRow?.querySelector('[data-request-category-action="toggle"]')?.click();
+      await waitUntil(() => !window.document.querySelector('[data-request-category-row]')?.classList.contains('is-collapsed'));
       window.document.querySelector('#order-mode-edit')?.click();
       await waitUntil(() => window.document.querySelector('[data-order-item-action="create"]'));
       const collapseRow = window.document.querySelector('[data-request-category-row]');
@@ -217,6 +230,7 @@ async function runPage(userName, session, page, language = 'ko') {
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.messageTestPass === false) result.pass = false;
+    if (result.requestViewCollapseWorks === false) result.pass = false;
     if (result.categoryCollapseWorks === false) result.pass = false;
     if (result.categoryAddIconButton === false) result.pass = false;
     if (result.targetCollapseWorks === false) result.pass = false;
@@ -226,6 +240,21 @@ async function runPage(userName, session, page, language = 'ko') {
   } else if (page.file === 'menu.html') {
     const text = window.document.querySelector('#menu-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
+    if (['admin','restaurant'].includes(userName)) {
+      const menuCategory = window.document.querySelector('[data-menu-category-row]');
+      const menuToggle = menuCategory?.querySelector('[data-menu-category-action="toggle"]');
+      const menuRowCount = menuCategory?.querySelectorAll('[data-menu]').length || 0;
+      menuToggle?.click();
+      await waitUntil(() => window.document.querySelector('[data-menu-category-row]')?.classList.contains('is-collapsed'));
+      const collapsedMenuCategory = window.document.querySelector('[data-menu-category-row].is-collapsed');
+      result.menuCategoryCollapseWorks = Boolean(collapsedMenuCategory)
+        && menuRowCount > 0
+        && collapsedMenuCategory.querySelectorAll('[data-menu]').length === 0
+        && Boolean(collapsedMenuCategory.querySelector('[data-menu-category-action="toggle"]'))
+        && !collapsedMenuCategory.querySelector('[data-menu-action="create"]');
+      collapsedMenuCategory?.querySelector('[data-menu-category-action="toggle"]')?.click();
+      await waitUntil(() => !window.document.querySelector('[data-menu-category-row]')?.classList.contains('is-collapsed'));
+    }
     if (userName === 'admin' && language === 'ko') {
       window.document.querySelector('#menu-mode-edit')?.click();
       await waitUntil(() => window.document.querySelector('[data-menu-action="create"]'));
@@ -240,6 +269,7 @@ async function runPage(userName, session, page, language = 'ko') {
         && window.Store.getMenus().length === menuCountBefore;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
+    if (result.menuCategoryCollapseWorks === false) result.pass = false;
     if (result.duplicateMenuBlocked === false) result.pass = false;
   } else if (page.file === 'recipes.html') {
     const text = window.document.querySelector('#recipe-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';

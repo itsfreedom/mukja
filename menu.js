@@ -63,10 +63,12 @@
   let draggedStepIndex = null;
   let draggedMenuId = null;
   let activeDropElement = null;
+  const collapsedMenuCategories = new Set();
   const session = Store.getAuth();
   const canViewMenu = ["restaurant", "admin"].includes(session?.role);
   const canManageMenu = session?.role === "admin";
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
+  const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12" /><path d="M12 16 7 10h10z" fill="currentColor" stroke="none" /></svg>';
   const photoIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h2l1.5-2h3L15 7h2a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3z"/><circle cx="12" cy="13" r="3"/></svg>';
 
   function isMenuEditMode() {
@@ -950,6 +952,16 @@
     activeDropElement = null;
   }
 
+  function isMenuCategoryCollapsed(categoryName) {
+    return collapsedMenuCategories.has(categoryName || "-");
+  }
+
+  function setMenuCategoryCollapsed(categoryName, collapsed) {
+    const key = categoryName || "-";
+    if (collapsed) collapsedMenuCategories.add(key);
+    else collapsedMenuCategories.delete(key);
+  }
+
   function markDropPosition(row, event) {
     if (!row) return "before";
     const rect = row.getBoundingClientRect();
@@ -1027,14 +1039,20 @@
       acc[key].push(menu);
       return acc;
     }, {});
-    list.innerHTML = Object.entries(groups).map(([group, groupMenus]) => `
-      <section class="menu-category-group">
+    list.innerHTML = Object.entries(groups).map(([group, groupMenus]) => {
+      const collapsed = isMenuCategoryCollapsed(group) && activeMenuEdit?.category !== group;
+      return `
+      <section class="menu-category-group ${collapsed ? "is-collapsed" : ""}" data-menu-category-row data-menu-category-name="${escapeHtml(group)}">
         <div class="section-title-row menu-category-title-row">
           <h2>${I18n.menuCategoryLabel(group, groupMenus[0])}</h2>
-          ${isMenuEditMode() ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
+          <div class="menu-row-actions menu-category-actions">
+            <button class="menu-row-action menu-category-toggle ${collapsed ? "" : "is-expanded"}" data-menu-category-action="toggle" data-menu-category="${escapeHtml(group)}" type="button" aria-expanded="${collapsed ? "false" : "true"}" aria-label="${I18n.menuCategoryLabel(group, groupMenus[0])} ${I18n.t(collapsed ? "expandCategory" : "collapseCategory")}">${toggleIcon}</button>
+            ${isMenuEditMode() && !collapsed ? `<button class="menu-row-action is-create" data-menu-action="create" data-menu-category="${escapeHtml(group)}" type="button" aria-label="${escapeHtml(group)} 메뉴 추가">${addIcon}</button>` : ""}
+          </div>
         </div>
-        <hr class="section-divider section-title-divider" />
-        <div class="list">
+        ${collapsed ? "" : `<hr class="section-divider section-title-divider" />`}
+        <div class="list menu-category-list">
+          ${collapsed ? "" : `
           ${groupMenus.map((menu) => `
             <article class="list-card menu-row ${isMenuEditMode() ? "has-leading-action" : ""}" data-menu="${menu.id}" ${isMenuEditMode() && activeMenuEdit?.id !== menu.id ? 'draggable="true"' : ""}>
               ${isMenuEditMode() ? actionButton("drag", I18n.t("moveOrder"), menu, "menu-drag-handle recipe-drag-handle") : ""}
@@ -1050,9 +1068,21 @@
             ${activeMenuEdit?.id === menu.id ? menuEditForm(menu) : ""}
           `).join("")}
           ${activeMenuEdit?.isNew && activeMenuEdit.category === group ? menuEditForm(null, { category: group }) : ""}
+          `}
         </div>
       </section>
-    `).join("");
+    `;
+    }).join("");
+    list.querySelectorAll("[data-menu-category-action]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const categoryName = button.dataset.menuCategory || "-";
+        setMenuCategoryCollapsed(categoryName, !isMenuCategoryCollapsed(categoryName));
+        activeMenuEdit = null;
+        clearDropMarker();
+        render();
+      });
+    });
     list.querySelectorAll("[data-menu-action]").forEach((button) => {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
