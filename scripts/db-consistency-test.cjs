@@ -72,9 +72,9 @@ function testEntry(id, suffix = "", date = today(), time = "23:59") {
     employee: "관리자",
     target: "",
     items: [
-      { id: `consistency-cafe-${suffix}`, name: "테스트 닭강정", nameKo: "테스트 닭강정", nameEn: "Test Gangjeong", section: "반조리", target: "카페테리아", quantity: "", unit: "", received: false, restaurantReceived: false },
-      { id: `consistency-veg-${suffix}`, name: "테스트 두부", nameKo: "테스트 두부", nameEn: "Test Tofu", section: "두부", target: "야채", quantity: "", unit: "", received: false, restaurantReceived: false },
-      { id: `consistency-grocery-${suffix}`, name: "테스트 다시다", nameKo: "테스트 다시다", nameEn: "Test Powder", section: "분말", target: "그로서리", quantity: "", unit: "", received: false, restaurantReceived: false }
+      { id: `consistency-cafe-${suffix}`, name: "테스트 닭강정", nameKo: "테스트 닭강정", nameEn: "Test Gangjeong", category: "반조리", target: "카페테리아", quantity: "", unit: "", received: false, restaurantReceived: false },
+      { id: `consistency-veg-${suffix}`, name: "테스트 두부", nameKo: "테스트 두부", nameEn: "Test Tofu", category: "두부", target: "야채", quantity: "", unit: "", received: false, restaurantReceived: false },
+      { id: `consistency-grocery-${suffix}`, name: "테스트 다시다", nameKo: "테스트 다시다", nameEn: "Test Powder", category: "분말", target: "그로서리", quantity: "", unit: "", received: false, restaurantReceived: false }
     ],
     memos: [
       { id: `consistency-memo-${suffix}`, role: "admin", department: "", authorLabel: "관리자", text: `DB 일관성 테스트 ${suffix}`, createdAt: new Date().toISOString() }
@@ -138,7 +138,7 @@ function assertCheck(report, check, ok, detail = "") {
     await req("/history", { method: "POST", body: JSON.stringify({ entry: testEntry(id, "create", requestDate, requestTime) }) });
     const afterCreate = ((await req("/history")).history || []).find((entry) => entry.id === id);
     assertCheck(report, "C history row persisted", Boolean(afterCreate));
-    assertCheck(report, "R sections persisted", ["반조리", "두부", "분말"].every((section) => afterCreate?.items?.some((item) => item.section === section)));
+    assertCheck(report, "R categories persisted", ["반조리", "두부", "분말"].every((category) => afterCreate?.items?.some((item) => item.category === category)));
 
     const updated = testEntry(id, "update", requestDate, requestTime);
     updated.items = updated.items.map((item) => item.target === "그로서리" ? { ...item, received: true, restaurantReceived: true } : item);

@@ -108,7 +108,7 @@ async function ensureSchema(client) {
       item_index integer not null default 0,
       name text not null,
       name_en text,
-      section text,
+      category text,
       target text,
       quantity text,
       unit text,
@@ -189,7 +189,8 @@ async function ensureSchema(client) {
       id text primary key,
       name_ko text not null,
       name_en text,
-      section text,
+      category text,
+      category_en text,
       unit text,
       target text,
       enabled boolean not null default true,
@@ -224,8 +225,11 @@ async function ensureSchema(client) {
     alter table menus add column if not exists category_en text;
     alter table menus add column if not exists sort_order integer not null default 0;
     alter table order_items add column if not exists name_en text;
+    alter table order_items add column if not exists category text;
     alter table order_items add column if not exists restaurant_received boolean not null default false;
     alter table ingredients add column if not exists name_en text;
+    alter table ingredients add column if not exists category text;
+    alter table ingredients add column if not exists category_en text;
     alter table ingredients add column if not exists sort_order integer not null default 0;
     alter table access_accounts add column if not exists user_name text;
     alter table access_accounts add column if not exists name text;
@@ -240,6 +244,21 @@ async function ensureSchema(client) {
     alter table recipes add column if not exists step_items jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists step_items_en jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists notes_en text;
+    do $$
+    begin
+      if exists (
+        select 1 from information_schema.columns
+        where table_name = 'order_items' and column_name = 'section'
+      ) then
+        execute 'update order_items set category = section where (category is null or category = '''') and section is not null';
+      end if;
+      if exists (
+        select 1 from information_schema.columns
+        where table_name = 'ingredients' and column_name = 'section'
+      ) then
+        execute 'update ingredients set category = section where (category is null or category = '''') and section is not null';
+      end if;
+    end $$;
 
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_access_accounts_role on access_accounts(role, department);
@@ -249,7 +268,7 @@ async function ensureSchema(client) {
     create index if not exists idx_department_confirmations_item on department_confirmations(order_item_id, department, confirmed_at desc);
     create index if not exists idx_recipes_section on recipes(section, enabled);
     create index if not exists idx_ingredients_target on ingredients(target, enabled);
-    create index if not exists idx_ingredients_section on ingredients(section, enabled);
+    create index if not exists idx_ingredients_category on ingredients(category, enabled);
     create index if not exists idx_menus_recipe_id on menus(recipe_id);
     create index if not exists idx_menus_category on menus(category, discontinued);
     create index if not exists idx_menus_status on menus(discontinued, seasonal);
@@ -466,7 +485,7 @@ async function upsertOrder(client, entry, info) {
   for (const [index, item] of entry.items.entries()) {
     await client.query(`
       insert into order_items (
-        id, order_id, item_index, name, name_en, section, target, quantity, unit,
+        id, order_id, item_index, name, name_en, category, target, quantity, unit,
         received, restaurant_received, received_by_identity_id, received_ip, received_user_agent, received_at
       )
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, case when $10 then now() else null end)
@@ -476,7 +495,7 @@ async function upsertOrder(client, entry, info) {
       index,
       item.nameKo || item.name || "",
       item.nameEn || "",
-      item.section || "",
+      item.category || item.section || "",
       item.target || "",
       item.quantity || "",
       item.unit || "",
@@ -617,16 +636,18 @@ async function listRecipes(client) {
 async function upsertIngredient(client, ingredient, info) {
   if (!ingredient?.id || !(ingredient.nameKo || ingredient.name)) throw new Error("Invalid ingredient");
   const nameKo = ingredient.nameKo || ingredient.name || "";
+  const category = ingredient.category || ingredient.section || "";
   await client.query(`
     insert into ingredients (
-      id, name_ko, name_en, section, unit, target, enabled, sort_order,
+      id, name_ko, name_en, category, category_en, unit, target, enabled, sort_order,
       changed_by_identity_id, changed_ip, changed_user_agent, synced_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())
     on conflict (id) do update set
       name_ko = excluded.name_ko,
       name_en = excluded.name_en,
-      section = excluded.section,
+      category = excluded.category,
+      category_en = excluded.category_en,
       unit = excluded.unit,
       target = excluded.target,
       enabled = excluded.enabled,
@@ -639,7 +660,8 @@ async function upsertIngredient(client, ingredient, info) {
     ingredient.id,
     nameKo,
     ingredient.nameEn || "",
-    ingredient.section || "",
+    category,
+    ingredient.categoryEn || ingredient.category_en || "",
     ingredient.unit || "",
     ingredient.target || "",
     ingredient.enabled !== false,
@@ -651,13 +673,14 @@ async function upsertIngredient(client, ingredient, info) {
 }
 
 async function listIngredients(client) {
-  const ingredients = await client.query("select * from ingredients order by sort_order asc, target asc, section asc, name_ko asc");
+  const ingredients = await client.query("select * from ingredients order by sort_order asc, target asc, category asc, name_ko asc");
   return ingredients.rows.map((row) => ({
     id: row.id,
     name: row.name_ko,
     nameKo: row.name_ko,
     nameEn: row.name_en || "",
-    section: row.section || "",
+    category: row.category || "",
+    categoryEn: row.category_en || "",
     unit: row.unit || "",
     target: row.target || "",
     enabled: row.enabled,
@@ -758,7 +781,7 @@ async function listHistory(client) {
       name: item.name,
       nameKo: item.name,
       nameEn: item.name_en || "",
-      section: item.section || "",
+      category: item.category || "",
       target: item.target || "",
       quantity: item.quantity || "",
       unit: item.unit || "",
@@ -891,6 +914,7 @@ exports.handler = async (event) => {
       const { recipes } = parseBody(event);
       if (!Array.isArray(recipes)) return json(400, { ok: false, error: "recipes must be an array" });
       await client.query("begin");
+      await client.query("delete from recipes");
       for (const recipe of recipes) await upsertRecipe(client, recipe, info);
       await client.query("commit");
       return json(200, { ok: true });
@@ -926,6 +950,7 @@ exports.handler = async (event) => {
       const { menus } = parseBody(event);
       if (!Array.isArray(menus)) return json(400, { ok: false, error: "menus must be an array" });
       await client.query("begin");
+      await client.query("delete from menus");
       for (const menu of menus) await upsertMenu(client, menu, info);
       await client.query("commit");
       return json(200, { ok: true });

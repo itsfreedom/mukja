@@ -28,8 +28,8 @@
       .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`))[0];
   }
 
-  function sectionFor(item) {
-    return item.section || "기타";
+  function categoryValue(item) {
+    return item.category || item.section || "기타";
   }
 
   function setStatus(text) {
@@ -130,13 +130,13 @@
 
   function categoryFor(item) {
     const target = targetFor(item);
-    const section = sectionFor(item);
-    if (target === "그로서리" && section === "식재료") return "상온";
-    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(section)) return section;
+    const category = categoryValue(item);
+    if (target === "그로서리" && category === "식재료") return "상온";
+    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(category)) return category;
     if (target === "그로서리") return "기타";
-    if (target === "야채") return section || "야채";
+    if (target === "야채") return category || "야채";
     const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
-    if (cafeteriaSections.includes(section)) return section;
+    if (cafeteriaSections.includes(category)) return category;
     return "기타";
   }
 

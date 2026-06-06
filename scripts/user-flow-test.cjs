@@ -27,8 +27,61 @@ const expectedHomeMemos = {
   grocery: ['관리자', '레스토랑', '카페테리아', '야채']
 };
 const sharedScripts = ['storage.js', 'i18n.js'];
+const apiHeaders = {
+  'Content-Type': 'application/json',
+  'X-Mukja-Member-Id': 'user-flow-test',
+  'X-Mukja-Role': 'admin',
+  'X-Mukja-Department': ''
+};
 const local = (file) => fs.readFile(path.join(cwd, file), 'utf8');
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function req(pathname, options = {}) {
+  const response = await fetch(`${site}/api${pathname}`, {
+    ...options,
+    headers: { ...apiHeaders, ...(options.headers || {}) }
+  });
+  const text = await response.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = { raw: text }; }
+  if (!response.ok || data.ok === false) throw new Error(`${options.method || 'GET'} ${pathname} ${response.status} ${data.error || text}`);
+  return data;
+}
+
+function today() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Toronto',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+}
+
+function seededEntry(id) {
+  return {
+    id,
+    date: today(),
+    time: '23:58',
+    mode: 'simple',
+    employee: '관리자',
+    target: '',
+    items: [
+      { id: `${id}-cafe`, name: '테스트 닭강정', nameKo: '테스트 닭강정', nameEn: 'Test Gangjeong', category: '반조리', target: '카페테리아', quantity: '', unit: '', received: false, restaurantReceived: false },
+      { id: `${id}-veg`, name: '테스트 두부', nameKo: '테스트 두부', nameEn: 'Test Tofu', category: '두부', target: '야채', quantity: '', unit: '', received: false, restaurantReceived: false },
+      { id: `${id}-grocery`, name: '테스트 다시다', nameKo: '테스트 다시다', nameEn: 'Test Powder', category: '분말', target: '그로서리', quantity: '', unit: '', received: true, restaurantReceived: true }
+    ],
+    memos: [
+      { id: `${id}-memo-admin`, role: 'admin', department: '', authorLabel: '관리자', text: '기능 테스트 관리자 메모', createdAt: new Date().toISOString() },
+      { id: `${id}-memo-restaurant`, role: 'restaurant', department: '', authorLabel: '레스토랑', text: '기능 테스트 레스토랑 메모', createdAt: new Date().toISOString() },
+      { id: `${id}-memo-cafe`, role: 'department', department: '카페테리아', authorLabel: '카페테리아', text: '기능 테스트 카페테리아 메모', createdAt: new Date().toISOString() },
+      { id: `${id}-memo-veg`, role: 'department', department: '야채', authorLabel: '야채', text: '기능 테스트 야채 메모', createdAt: new Date().toISOString() },
+      { id: `${id}-memo-grocery`, role: 'department', department: '그로서리', authorLabel: '그로서리', text: '기능 테스트 그로서리 메모', createdAt: new Date().toISOString() }
+    ],
+    memo: '[관리자] 기능 테스트 관리자 메모',
+    message: ''
+  };
+}
+
 async function waitUntil(fn, timeout = 8000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
@@ -97,11 +150,19 @@ async function runPage(userName, session, page) {
 }
 
 (async () => {
+  const seedId = `user-flow-${Date.now()}`;
   const results = [];
-  for (const [userName, session] of Object.entries(users)) {
-    for (const page of pages) {
-      try { results.push(await runPage(userName, session, page)); }
-      catch (error) { results.push({ user: userName, page: page.file, pass: false, fatal: error.message }); }
+  try {
+    await req('/history', { method: 'POST', body: JSON.stringify({ entry: seededEntry(seedId) }) });
+    for (const [userName, session] of Object.entries(users)) {
+      for (const page of pages) {
+        try { results.push(await runPage(userName, session, page)); }
+        catch (error) { results.push({ user: userName, page: page.file, pass: false, fatal: error.message }); }
+      }
+    }
+  } finally {
+    try { await req(`/history/${encodeURIComponent(seedId)}`, { method: 'DELETE' }); } catch (error) {
+      results.push({ user: 'cleanup', page: 'api/history', pass: false, fatal: error.message });
     }
   }
   console.log(JSON.stringify(results, null, 2));

@@ -813,18 +813,21 @@
 
   function normalizeTarget(item) {
     if (!item) return item;
-    if (item.target === "마트") return { ...item, target: item.section === "야채" ? "야채" : "그로서리" };
-    if (!defaultTargets.includes(item.target)) return { ...item, target: item.section === "야채" ? "야채" : "그로서리" };
+    const category = item.category || item.section || "";
+    if (item.target === "마트") return { ...item, target: category === "야채" ? "야채" : "그로서리" };
+    if (item.enabled === false && item.target && !defaultTargets.includes(item.target)) return item;
+    if (!defaultTargets.includes(item.target)) return { ...item, target: category === "야채" ? "야채" : "그로서리" };
     return item;
   }
 
   function normalizeSection(item) {
     if (!item) return item;
-    if (["item-oil", "item-soy-sauce"].includes(item.id)) return { ...item, target: "카페테리아", section: "소스" };
+    const category = item.category || item.section || "";
+    if (["item-oil", "item-soy-sauce"].includes(item.id)) return { ...item, target: "카페테리아", category: "소스" };
     if (item.target !== "카페테리아") return item;
-    if (item.section === "식재료") return { ...item, section: "냉장" };
+    if (category === "식재료") return { ...item, category: "냉장" };
     const cafeteriaSections = [...(dataState.sections.length ? dataState.sections : defaultSections), "기타"];
-    if (!cafeteriaSections.includes(item.section)) return { ...item, section: "냉장" };
+    if (!cafeteriaSections.includes(category)) return { ...item, category: "냉장" };
     return item;
   }
 
@@ -837,6 +840,8 @@
       name: nameKo,
       nameKo,
       nameEn: normalized.nameEn || normalized.name_en || seed?.nameEn || "",
+      category: normalized.category || normalized.section || seed?.category || seed?.section || "",
+      categoryEn: normalized.categoryEn || normalized.category_en || categoryEnglishLabels[normalized.category || normalized.section] || "",
       sortOrder: Number.isFinite(Number(normalized.sortOrder ?? normalized.sort_order))
         ? Number(normalized.sortOrder ?? normalized.sort_order)
         : 0
@@ -983,7 +988,7 @@
   }
 
   function ingredientsToCsv(rows) {
-    const header = ["id", "nameKo", "nameEn", "target", "section", "unit", "enabled", "sortOrder"];
+    const header = ["id", "nameKo", "nameEn", "target", "category", "categoryEn", "unit", "enabled", "sortOrder"];
     const lines = [header.map(csvEscape).join(",")];
     rows.forEach((item) => {
       lines.push([
@@ -991,7 +996,8 @@
         item.nameKo || item.name,
         item.nameEn || "",
         item.target || "",
-        item.section || "",
+        item.category || item.section || "",
+        item.categoryEn || item.category_en || categoryEnglishLabels[item.category || item.section] || "",
         item.unit || "",
         item.enabled === false ? "false" : "true",
         item.sortOrder ?? ""
@@ -1050,7 +1056,7 @@
         quantity: field(row, map, ["수량", "quantity", "Quantity"]),
         unit: field(row, map, ["단위", "unit", "Unit"]),
         received: ["Y", "true", "1", "입고"].includes(field(row, map, ["입고여부", "received", "Received"])),
-        section: "",
+        category: field(row, map, ["카테고리", "category", "분류", "section"]),
         enabled: true
       });
     });
@@ -1130,7 +1136,8 @@
         nameKo,
         nameEn: field(row, map, ["nameEn", "영문명", "englishName"]),
         target: normalizeTargetName(field(row, map, ["target", "부서", "주문부서"])) || "카페테리아",
-        section: field(row, map, ["section", "카테고리", "분류"]) || "기타",
+        category: field(row, map, ["category", "카테고리", "분류", "section"]) || "기타",
+        categoryEn: field(row, map, ["categoryEn", "category_en", "영문 카테고리", "English Category"]),
         unit: field(row, map, ["unit", "주문 단위", "단위"]),
         enabled: field(row, map, ["enabled", "사용"]) !== "false",
         sortOrder: field(row, map, ["sortOrder", "sort_order", "순서"]) || index

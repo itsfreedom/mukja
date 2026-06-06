@@ -168,6 +168,14 @@
     `;
   }
 
+  function menuPriceLabel(menu) {
+    const price = String(menu?.price || "").trim();
+    if (!price) return "";
+    const numeric = Number(price.replace(/,/g, ""));
+    const value = Number.isFinite(numeric) ? numeric.toFixed(2) : price;
+    return `${menu.currency || "CAD"} ${value}`;
+  }
+
   function escapeHtml(value) {
     return String(value || "")
       .replaceAll("&", "&amp;")
@@ -263,8 +271,9 @@
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
+            const rowDraggable = isMenuEditMode() && activeIngredientEdit?.index !== index;
             return `
-              <article class="list-card recipe-crud-row ${isMenuEditMode() ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${isMenuEditMode() ? 'draggable="true"' : ""}>
+              <article class="list-card recipe-crud-row ${isMenuEditMode() ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${rowDraggable ? 'draggable="true"' : ""}>
                 ${isMenuEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
@@ -329,8 +338,10 @@
           ${isMenuEditMode() ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
-          ${rows.length ? rows.map((step, index) => `
-            <article class="list-card recipe-crud-row recipe-step-crud-row ${isMenuEditMode() ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${isMenuEditMode() ? 'draggable="true"' : ""}>
+          ${rows.length ? rows.map((step, index) => {
+            const rowDraggable = isMenuEditMode() && activeStepEdit?.index !== index;
+            return `
+            <article class="list-card recipe-crud-row recipe-step-crud-row ${isMenuEditMode() ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${rowDraggable ? 'draggable="true"' : ""}>
               ${isMenuEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
@@ -344,7 +355,8 @@
             </article>
             ${stepPhotoPanel(step, index)}
             ${activeStepEdit?.index === index ? stepEditForm(step, index) : ""}
-          `).join("") : `<p class="muted">-</p>`}
+          `;
+          }).join("") : `<p class="muted">-</p>`}
           ${activeStepEdit?.isNew ? stepEditForm({}, rows.length) : ""}
         </div>
       </section>
@@ -596,6 +608,7 @@
   function handleIngredientDragStart(event) {
     const row = event.target.closest("[data-ingredient-index]");
     if (!row || !isMenuEditMode()) return;
+    if (event.target.closest("[data-ingredient-form]")) return;
     draggedIngredientIndex = Number(row.dataset.ingredientIndex);
     event.dataTransfer?.setData("text/plain", String(draggedIngredientIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -709,6 +722,7 @@
   function handleStepDragStart(event) {
     const row = event.target.closest("[data-step-index]");
     if (!row || !isMenuEditMode()) return;
+    if (event.target.closest("[data-step-form]")) return;
     draggedStepIndex = Number(row.dataset.stepIndex);
     event.dataTransfer?.setData("text/plain", String(draggedStepIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -1001,12 +1015,13 @@
         <hr class="section-divider section-title-divider" />
         <div class="list">
           ${groupMenus.map((menu) => `
-            <article class="list-card menu-row ${isMenuEditMode() ? "has-leading-action" : ""}" data-menu="${menu.id}" ${isMenuEditMode() ? 'draggable="true"' : ""}>
+            <article class="list-card menu-row ${isMenuEditMode() ? "has-leading-action" : ""}" data-menu="${menu.id}" ${isMenuEditMode() && activeMenuEdit?.id !== menu.id ? 'draggable="true"' : ""}>
               ${isMenuEditMode() ? actionButton("drag", I18n.t("moveOrder"), menu, "menu-drag-handle recipe-drag-handle") : ""}
               <div class="menu-row-main">
                 <div class="menu-title-line">
                   <span class="menu-title-badges">${menuStatusBadges(menu)}</span>
                   <strong class="${menu.discontinued ? "is-discontinued" : ""}">${I18n.menuName(menu)}</strong>
+                  ${!isMenuEditMode() && menuPriceLabel(menu) ? `<span class="menu-price-label">${escapeHtml(menuPriceLabel(menu))}</span>` : ""}
                 </div>
               </div>
               ${rowActions(menu)}
@@ -1055,6 +1070,7 @@
     list.querySelectorAll("[data-menu]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
         if (!isMenuEditMode()) return;
+        if (event.target.closest("[data-menu-form]")) return;
         draggedMenuId = row.dataset.menu;
         event.dataTransfer?.setData("text/plain", draggedMenuId);
         event.dataTransfer && (event.dataTransfer.effectAllowed = "move");

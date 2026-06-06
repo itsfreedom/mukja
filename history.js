@@ -135,14 +135,14 @@
 
   function categoryFor(item) {
     const target = targetFor(item);
-    const section = item.section || "기타";
-    if (target === "그로서리" && section === "식재료") return "분말";
-    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(section)) return section;
+    const category = item.category || item.section || "기타";
+    if (target === "그로서리" && category === "식재료") return "분말";
+    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(category)) return category;
     if (target === "그로서리") return "기타";
-    if (target === "야채") return section || "야채";
+    if (target === "야채") return category || "야채";
     const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
-    if (cafeteriaSections.includes(section)) return section;
-    return section || "기타";
+    if (cafeteriaSections.includes(category)) return category;
+    return category || "기타";
   }
 
   function orderedKeys(groups, order) {

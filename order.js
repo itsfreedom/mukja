@@ -87,7 +87,7 @@
     return [
       targetFor(item),
       categoryFor(item),
-      item.section || "",
+      item.category || item.section || "",
       item.nameKo || item.name || ""
     ].join("|");
   }
@@ -114,14 +114,14 @@
 
   function categoryFor(item) {
     const target = targetFor(item);
-    const section = item.section || "기타";
-    if (target === "그로서리" && section === "식재료") return "상온";
-    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(section)) return section;
+    const category = item.category || item.section || "기타";
+    if (target === "그로서리" && category === "식재료") return "상온";
+    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(category)) return category;
     if (target === "그로서리") return "기타";
-    if (target === "야채" && Store.getRequestCategories("야채").includes(section)) return section;
+    if (target === "야채" && Store.getRequestCategories("야채").includes(category)) return category;
     if (target === "야채") return "야채";
     const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
-    if (cafeteriaSections.includes(section)) return section;
+    if (cafeteriaSections.includes(category)) return category;
     return "기타";
   }
 
@@ -203,7 +203,7 @@
     }
     if (mode !== "create") {
       Store.setIngredients(Store.getIngredients().map((item) =>
-        targetFor(item) === target && ((item.section || "기타") === oldName || categoryFor(item) === oldName) ? { ...item, section: nextName } : item
+        targetFor(item) === target && ((item.category || item.section || "기타") === oldName || categoryFor(item) === oldName) ? { ...item, category: nextName } : item
       ));
     }
     Store.setRequestCategories(target, mode === "create"
@@ -223,7 +223,7 @@
     if (!window.confirm(I18n.format("confirmDeleteCategory", { name: I18n.sectionLabel(oldName), fallback: I18n.sectionLabel(fallback) }))) return;
     Store.setRequestCategories(target, Store.getRequestCategories(target).filter((category) => category !== oldName));
     Store.setIngredients(Store.getIngredients().map((item) =>
-      targetFor(item) === target && categoryFor(item) === oldName ? { ...item, section: fallback } : item
+      targetFor(item) === target && categoryFor(item) === oldName ? { ...item, category: fallback } : item
     ));
     activeCategoryEdit = null;
     renderItems();
@@ -302,7 +302,7 @@
 
   function itemForm(item = null, defaults = {}) {
     const target = item?.target || defaults.target || "카페테리아";
-    const section = item?.section || sectionForTargetCategory(target, defaults.category || "기타");
+    const category = item?.category || item?.section || sectionForTargetCategory(target, defaults.category || "기타");
     return `
       <div class="recipe-item-form order-item-form" data-order-item-form="${item?.id || "__new__"}">
         <label><span>${I18n.t("itemName")}</span><input data-order-item-name-ko value="${escapeHtml(item?.nameKo || item?.name || "")}" /></label>
@@ -310,7 +310,7 @@
         <label><span>${I18n.t("department")}</span><select data-order-item-target>
           ${Store.getTargets().map((name) => `<option value="${name}" ${name === target ? "selected" : ""}>${I18n.targetLabel(name)}</option>`).join("")}
         </select></label>
-        <label><span>${I18n.t("menuCategory")}</span><select data-order-item-section>${categoryOptions(target, section)}</select></label>
+        <label><span>${I18n.t("menuCategory")}</span><select data-order-item-category>${categoryOptions(target, category)}</select></label>
         <label class="order-unit-field hidden"><span>${I18n.t("orderUnit")}</span><input data-order-item-unit value="${escapeHtml(item?.unit || "")}" /></label>
         <div class="recipe-item-form-actions">
           <button class="button" data-order-item-action="save" data-order-item-id="${item?.id || ""}" type="button">${I18n.t("save")}</button>
@@ -352,7 +352,7 @@
       return;
     }
     const target = form.querySelector("[data-order-item-target]")?.value || "카페테리아";
-    const section = form.querySelector("[data-order-item-section]")?.value.trim() || "기타";
+    const category = form.querySelector("[data-order-item-category]")?.value.trim() || "기타";
     const nextItem = {
       ...(item || {}),
       id: item?.id || Store.id("item"),
@@ -360,7 +360,7 @@
       nameKo,
       nameEn: form.querySelector("[data-order-item-name-en]")?.value.trim() || "",
       target,
-      section,
+      category,
       unit: form.querySelector("[data-order-item-unit]")?.value.trim() || item?.unit || "",
       enabled: item?.enabled !== false
     };
@@ -378,9 +378,9 @@
     const ids = [...editSelected];
     if (!ids.length) return;
     const target = form?.querySelector("[data-bulk-selection-target]")?.value || "카페테리아";
-    const section = form?.querySelector("[data-bulk-selection-section]")?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
+    const category = form?.querySelector("[data-bulk-selection-section]")?.value || sectionForTargetCategory(target, categoriesForTarget(target)[0]);
     await Store.setIngredients(Store.getIngredients().map((item) =>
-      ids.includes(item.id) ? { ...item, target, section } : item
+      ids.includes(item.id) ? { ...item, target, category } : item
     ));
     editSelected.clear();
     lastSelectedItemId = null;
@@ -432,8 +432,9 @@
       <div class="item-section-list">
         ${items.map((item) => {
           const checked = isEditMode() ? editSelected.has(item.id) : selected.has(itemKey(item));
+          const rowDraggable = isEditMode() && activeItemEdit?.id !== item.id;
           return `
-          <article class="list-card request-item-row" data-request-item-row data-item-id="${escapeHtml(item.id)}" data-item-target="${escapeHtml(targetFor(item))}" data-item-category="${escapeHtml(categoryFor(item))}" draggable="${isEditMode() ? "true" : "false"}">
+          <article class="list-card request-item-row" data-request-item-row data-item-id="${escapeHtml(item.id)}" data-item-target="${escapeHtml(targetFor(item))}" data-item-category="${escapeHtml(categoryFor(item))}" draggable="${rowDraggable ? "true" : "false"}">
             <label class="request-item-check">
               <input type="checkbox" data-item="${itemKey(item)}" data-item-id="${escapeHtml(item.id)}" ${checked ? "checked" : ""} />
               <span class="receive-row-main">
@@ -467,6 +468,7 @@
       "그로서리": uniqueList(Store.getRequestCategories("그로서리"))
     };
     const groups = Store.getIngredients()
+      .filter((item) => item.enabled !== false)
       .reduce((acc, item) => {
         const target = targetFor(item);
         const category = categoryFor(item);
@@ -502,8 +504,11 @@
           <hr class="section-divider department-divider" />
           ${isEditMode() && activeCategoryEdit?.mode === "create" && activeCategoryEdit.target === target ? categoryForm(target, "", "create") : ""}
           <div class="department-card request-target-section">
-            ${categories.map((category) => `
-              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="${isEditMode() ? "true" : "false"}">
+            ${categories.map((category) => {
+              const categoryEditing = categoryKey(activeCategoryEdit?.target, activeCategoryEdit?.category) === categoryKey(target, category) ||
+                (activeItemEdit?.isNew && activeItemEdit.target === target && activeItemEdit.category === category);
+              return `
+              <section class="item-section home-request-section request-category-section" data-request-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" draggable="${isEditMode() && !categoryEditing ? "true" : "false"}">
                 <div class="section-title-row request-category-title-row">
                   <h3>${I18n.sectionLabel(category)}</h3>
                   ${categoryActions(target, category)}
@@ -513,7 +518,8 @@
                 ${renderItemRows(categoryGroups[category])}
                 ${isEditMode() && activeItemEdit?.isNew && activeItemEdit.target === target && activeItemEdit.category === category ? itemForm(null, activeItemEdit) : ""}
               </section>
-            `).join("")}
+            `;
+            }).join("")}
           </div>
       </section>
       `;
@@ -530,12 +536,9 @@
             if (lastSelectedItemId === input.dataset.itemId) {
               lastSelectedItemId = [...editSelected][editSelected.size - 1] || null;
             }
+            if (activeItemEdit?.id === input.dataset.itemId) activeItemEdit = null;
           }
-          if (editSelected.size === 1) {
-            activeItemEdit = { id: [...editSelected][0] };
-          } else {
-            activeItemEdit = null;
-          }
+          if (editSelected.size !== 1 && activeItemEdit && !activeItemEdit.isNew) activeItemEdit = null;
           renderItems();
           return;
         }
@@ -546,7 +549,7 @@
     els.list.querySelectorAll("[data-order-item-target]").forEach((select) => {
       select.addEventListener("change", () => {
         const form = select.closest("[data-order-item-form]");
-        const categorySelect = form?.querySelector("[data-order-item-section]");
+        const categorySelect = form?.querySelector("[data-order-item-category]");
         if (!categorySelect) return;
         categorySelect.innerHTML = categoryOptions(select.value);
       });
@@ -655,6 +658,7 @@
     els.list.querySelectorAll("[data-request-category-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
         if (!isEditMode()) return;
+        if (event.target.closest("[data-request-category-form], [data-order-item-form], [data-order-selection-form]")) return;
         if (event.target.closest("[data-request-item-row]")) return;
         draggedCategory = {
           target: row.dataset.categoryTarget,
@@ -691,6 +695,7 @@
     els.list.querySelectorAll("[data-request-item-row]").forEach((row) => {
       row.addEventListener("dragstart", (event) => {
         if (!isEditMode()) return;
+        if (event.target.closest("[data-request-category-form], [data-order-item-form], [data-order-selection-form]")) return;
         event.stopPropagation();
         draggedItem = {
           id: row.dataset.itemId,

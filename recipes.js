@@ -150,8 +150,9 @@
         <div class="recipe-crud-list">
           ${rows.length ? rows.map((item, index) => {
             const amount = splitAmount(item.amount);
+            const rowDraggable = isRecipeEditMode() && activeIngredientEdit?.index !== index;
             return `
-              <article class="list-card recipe-crud-row ${isRecipeEditMode() ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${isRecipeEditMode() ? 'draggable="true"' : ""}>
+              <article class="list-card recipe-crud-row ${isRecipeEditMode() ? "recipe-sortable-row" : ""}" data-ingredient-index="${index}" ${rowDraggable ? 'draggable="true"' : ""}>
                 ${isRecipeEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-ingredient-drag-handle type="button" aria-label="${escapeHtml(item.name)} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
                 <div class="recipe-crud-main">
                   <strong>${escapeHtml(item.name)}</strong>
@@ -216,8 +217,10 @@
           ${isRecipeEditMode() ? `<button class="menu-row-action is-create" data-step-action="add" type="button" aria-label="${I18n.t("addStep")}">${addIcon}</button>` : ""}
         </div>
         <div class="recipe-crud-list">
-          ${rows.length ? rows.map((step, index) => `
-            <article class="list-card recipe-crud-row recipe-step-crud-row ${isRecipeEditMode() ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${isRecipeEditMode() ? 'draggable="true"' : ""}>
+          ${rows.length ? rows.map((step, index) => {
+            const rowDraggable = isRecipeEditMode() && activeStepEdit?.index !== index;
+            return `
+            <article class="list-card recipe-crud-row recipe-step-crud-row ${isRecipeEditMode() ? "recipe-sortable-row" : ""}" data-step-index="${index}" ${rowDraggable ? 'draggable="true"' : ""}>
               ${isRecipeEditMode() ? `<button class="menu-row-action recipe-drag-handle recipe-leading-drag-handle" data-step-drag-handle type="button" aria-label="${index + 1} ${I18n.t("moveOrder")}">${dragIcon}</button>` : ""}
               <div class="recipe-step-crud-main">
                 <p>${escapeHtml(step.text || "-")}</p>
@@ -231,7 +234,8 @@
             </article>
             ${stepPhotoPanel(step, index)}
             ${activeStepEdit?.index === index ? stepEditForm(step, index) : ""}
-          `).join("") : `<p class="muted">-</p>`}
+          `;
+          }).join("") : `<p class="muted">-</p>`}
           ${activeStepEdit?.isNew ? stepEditForm({}, rows.length) : ""}
         </div>
       </section>
@@ -493,6 +497,7 @@
   function handleIngredientDragStart(event) {
     const row = event.target.closest("[data-ingredient-index]");
     if (!row || !isRecipeEditMode()) return;
+    if (event.target.closest("[data-ingredient-form]")) return;
     draggedIngredientIndex = Number(row.dataset.ingredientIndex);
     event.dataTransfer?.setData("text/plain", String(draggedIngredientIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");
@@ -580,6 +585,7 @@
   function handleStepDragStart(event) {
     const row = event.target.closest("[data-step-index]");
     if (!row || !isRecipeEditMode()) return;
+    if (event.target.closest("[data-step-form]")) return;
     draggedStepIndex = Number(row.dataset.stepIndex);
     event.dataTransfer?.setData("text/plain", String(draggedStepIndex));
     event.dataTransfer && (event.dataTransfer.effectAllowed = "move");

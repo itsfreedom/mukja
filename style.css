@@ -557,6 +557,12 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
 .menu-title-line strong {
   font-weight: 800;
 }
+.menu-price-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .menu-title-line strong.is-discontinued {
   text-decoration: line-through;
   text-decoration-thickness: 2px;

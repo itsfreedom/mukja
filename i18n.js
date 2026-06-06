@@ -380,7 +380,7 @@
       confirmDiscontinueMenu: "Save this menu as discontinued?",
       moveOrder: "Move Order",
       top: "Top",
-      previous: "Previous",
+      previous: "Pre",
       next: "Next",
       bottom: "Bottom",
       move: "Move",
