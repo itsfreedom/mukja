@@ -2168,6 +2168,31 @@ body.modal-open {
   outline-offset: 4px;
 }
 
+.request-category-title-button {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+}
+
+.request-category-title-button:focus-visible {
+  outline: 2px solid rgba(130, 168, 255, 0.86);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.request-category-toggle {
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .order-selection-form {
   margin-top: 8px;
 }
@@ -2211,6 +2236,14 @@ body.modal-open {
 .request-category-section {
   display: grid;
   gap: 8px;
+}
+
+.request-category-section.is-collapsed {
+  gap: 0;
+}
+
+.request-category-section.is-collapsed .request-category-title-row {
+  min-height: var(--ui-row-min-height);
 }
 
 .order-page .request-target-group {

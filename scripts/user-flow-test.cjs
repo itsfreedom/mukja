@@ -166,6 +166,23 @@ async function runPage(userName, session, page, language = 'ko') {
         && result.kakaoLinks === 3;
       window.document.querySelector('#order-mode-edit')?.click();
       await waitUntil(() => window.document.querySelector('[data-order-item-action="create"]'));
+      const collapseRow = window.document.querySelector('[data-request-category-row]');
+      const collapseToggle = collapseRow?.querySelector('[data-request-category-action="toggle"]');
+      const rowItemCountBeforeCollapse = collapseRow?.querySelectorAll('[data-request-item-row]').length || 0;
+      collapseToggle?.click();
+      await waitUntil(() => window.document.querySelector('[data-request-category-row]')?.classList.contains('is-collapsed'));
+      const collapsedRow = window.document.querySelector('[data-request-category-row].is-collapsed');
+      result.categoryCollapseWorks = Boolean(collapsedRow)
+        && rowItemCountBeforeCollapse > 0
+        && collapsedRow.querySelectorAll('[data-request-item-row]').length === 0
+        && !collapsedRow.querySelector('[data-order-item-action="create"]')
+        && !collapsedRow.querySelector('[data-request-category-action="edit"]')
+        && Boolean(collapsedRow.querySelector('[data-request-category-drag-handle]'))
+        && Boolean(collapsedRow.querySelector('[data-request-category-action="toggle"]'));
+      collapsedRow?.querySelector('[data-request-category-action="focus"]')?.click();
+      result.categoryTitleFocusWorks = collapsedRow?.classList.contains('is-jump-focused') || false;
+      collapsedRow?.querySelector('[data-request-category-action="toggle"]')?.click();
+      await waitUntil(() => !window.document.querySelector('[data-request-category-row]')?.classList.contains('is-collapsed'));
       const createButton = window.document.querySelector('[data-order-item-action="create"]');
       const duplicateTarget = createButton?.dataset.orderItemTarget || '';
       const duplicateCategory = createButton?.dataset.orderItemCategory || '';
@@ -184,6 +201,8 @@ async function runPage(userName, session, page, language = 'ko') {
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.messageTestPass === false) result.pass = false;
+    if (result.categoryCollapseWorks === false) result.pass = false;
+    if (result.categoryTitleFocusWorks === false) result.pass = false;
     if (result.duplicateIngredientBlocked === false) result.pass = false;
     if (result.dragLockedWhileEditFormOpen === false) result.pass = false;
   } else if (page.file === 'menu.html') {

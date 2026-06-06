@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v179";
+  const appAssetVersion = "v180";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
