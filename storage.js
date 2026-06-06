@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v162";
+  const appAssetVersion = "v163";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -25,7 +25,7 @@
     history: []
   };
 
-  const defaultSections = ["반조리", "반찬", "소스", "냉장", "냉동"];
+  const defaultSections = ["반조리", "반찬", "소스", "고기", "해물", "기타"];
   const defaultEmployees = [
     { id: "emp-1", name: "직원1", enabled: true },
     { id: "emp-2", name: "직원2", enabled: true }
@@ -33,8 +33,8 @@
   const defaultTargets = ["카페테리아", "야채", "그로서리"];
   const defaultRequestCategories = {
     "카페테리아": defaultSections,
-    "야채": ["야채"],
-    "그로서리": ["상온", "냉장", "냉동", "기타"]
+    "야채": ["신선", "두부"],
+    "그로서리": ["분말", "냉장", "냉동", "소스류", "곡류", "면류", "반찬", "포장 박스"]
   };
   const categoryEnglishLabels = {
     "반조리": "Semi-prepared",
