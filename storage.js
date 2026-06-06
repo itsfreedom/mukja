@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v188";
+  const appAssetVersion = "v189";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -603,6 +603,7 @@
       password,
       {
         ...account,
+        userId: account.userId || account.user_id || "",
         userName: account.userName || account.user_name || password,
         name: account.name || account.label || account.department || account.role,
         label: account.label || account.name || account.department || account.role
@@ -1184,6 +1185,81 @@
     return `\ufeff${lines.join("\n")}`;
   }
 
+  function departmentsToCsv(rows) {
+    const header = ["id", "name", "nameEn", "enabled", "sortOrder"];
+    const lines = [header.map(csvEscape).join(",")];
+    normalizeDepartments(rows).forEach((department) => {
+      lines.push([
+        department.id,
+        department.name,
+        department.nameEn,
+        department.enabled === false ? "false" : "true",
+        department.sortOrder
+      ].map(csvEscape).join(","));
+    });
+    return `\ufeff${lines.join("\n")}`;
+  }
+
+  function requestCategoriesToCsv(rows) {
+    const header = ["department", "category", "sortOrder"];
+    const lines = [header.map(csvEscape).join(",")];
+    Object.entries(rows || {}).forEach(([department, categories]) => {
+      (Array.isArray(categories) ? categories : []).forEach((category, index) => {
+        lines.push([department, category, index + 1].map(csvEscape).join(","));
+      });
+    });
+    return `\ufeff${lines.join("\n")}`;
+  }
+
+  function accessAccountsToCsv(rows) {
+    const header = ["userId", "userName", "role", "department", "label", "name", "enabled"];
+    const lines = [header.map(csvEscape).join(",")];
+    Object.values(rows || {}).forEach((account) => {
+      lines.push([
+        account.userId || account.user_id || "",
+        account.userName || account.user_name || "",
+        account.role || "",
+        account.department || "",
+        account.label || "",
+        account.name || "",
+        account.enabled === false ? "false" : "true"
+      ].map(csvEscape).join(","));
+    });
+    return `\ufeff${lines.join("\n")}`;
+  }
+
+  function standaloneMemosToCsv(rows) {
+    const header = ["id", "role", "department", "authorLabel", "text", "createdAt", "updatedAt"];
+    const lines = [header.map(csvEscape).join(",")];
+    (Array.isArray(rows) ? rows : []).forEach((memo) => {
+      lines.push([
+        memo.id || "",
+        memo.role || "",
+        memo.department || "",
+        memo.authorLabel || "",
+        memo.text || "",
+        memo.createdAt || "",
+        memo.updatedAt || ""
+      ].map(csvEscape).join(","));
+    });
+    return `\ufeff${lines.join("\n")}`;
+  }
+
+  async function createCsvBackupBundle() {
+    await ensureData(["access", "settings", "history", "ingredients", "recipes", "menus"]);
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    return [
+      { filename: `mukja-backup-${stamp}-request-history.csv`, text: historyToCsv(dataState.history), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-ingredients.csv`, text: ingredientsToCsv(dataState.ingredients), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-menus.csv`, text: menusToCsv(dataState.menus), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-recipes.csv`, text: recipesToCsv(dataState.recipes), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-departments.csv`, text: departmentsToCsv(dataState.departments), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-request-categories.csv`, text: requestCategoriesToCsv(dataState.requestCategories), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-access-accounts.csv`, text: accessAccountsToCsv(accessAccounts()), type: "text/csv;charset=utf-8" },
+      { filename: `mukja-backup-${stamp}-standalone-memos.csv`, text: standaloneMemosToCsv(dataState.standaloneMemos), type: "text/csv;charset=utf-8" }
+    ];
+  }
+
   function headerMap(header) {
     return header.reduce((acc, name, index) => {
       acc[String(name || "").trim()] = index;
@@ -1663,6 +1739,11 @@
     menusFromCsv,
     ingredientsToCsv,
     ingredientsFromCsv,
+    departmentsToCsv,
+    requestCategoriesToCsv,
+    accessAccountsToCsv,
+    standaloneMemosToCsv,
+    createCsvBackupBundle,
     normalizeRecipe,
     parseRecipeItems,
     parseRecipeSteps,

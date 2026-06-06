@@ -7,10 +7,10 @@
     <meta name="format-detection" content="telephone=no" />
     <script>document.documentElement.dataset.preferredLang=localStorage.getItem("restaurant_lang")||"ko";document.documentElement.lang=document.documentElement.dataset.preferredLang;</script>
     <title>관리자</title>
-    <link rel="manifest" href="manifest.json?v=v188" />
-    <link rel="icon" href="assets/favicon.ico?v=v188" sizes="any" />
-    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=v188" />
-    <link rel="stylesheet" href="style.css?v=v188" />
+    <link rel="manifest" href="manifest.json?v=v189" />
+    <link rel="icon" href="assets/favicon.ico?v=v189" sizes="any" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=v189" />
+    <link rel="stylesheet" href="style.css?v=v189" />
   </head>
   <body class="sidebar-collapsed">
     <div class="shell">
@@ -23,19 +23,7 @@
                 <h1 data-i18n="admin">관리자</h1>
               </div>
             </header>
-
-            <section class="panel admin-section">
-              <div class="section-title-row menu-category-title-row">
-                <h2 data-i18n="passwordManagement">비밀번호 관리</h2>
-                <button class="menu-row-action is-create" id="add-access-toggle" type="button" aria-label="Add user">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
-                </button>
-              </div>
-              <hr class="section-divider department-divider" />
-              <div id="access-form-slot"></div>
-              <div id="access-list" class="admin-access-list"></div>
-              <p id="admin-status" class="status"></p>
-            </section>
+            <p id="admin-status" class="status admin-status"></p>
 
             <section class="panel admin-section">
               <div class="section-title-row menu-category-title-row">
@@ -51,7 +39,19 @@
 
             <section class="panel admin-section">
               <div class="section-title-row menu-category-title-row">
-                <h2 data-i18n="csvManagement">CSV 관리</h2>
+                <h2 data-i18n="passwordManagement">비밀번호 관리</h2>
+                <button class="menu-row-action is-create" id="add-access-toggle" type="button" aria-label="Add user">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+                </button>
+              </div>
+              <hr class="section-divider department-divider" />
+              <div id="access-form-slot"></div>
+              <div id="access-list" class="admin-access-list"></div>
+            </section>
+
+            <section class="panel admin-section">
+              <div class="section-title-row menu-category-title-row">
+                <h2 data-i18n="dataBackup">데이터 백업</h2>
               </div>
               <hr class="section-divider department-divider" />
               <div class="admin-csv-list">
@@ -109,8 +109,8 @@
         </div>
       </main>
     </div>
-    <script src="storage.js?v=v188"></script>
-    <script src="i18n.js?v=v188"></script>
-    <script src="admin.js?v=v188"></script>
+    <script src="storage.js?v=v189"></script>
+    <script src="i18n.js?v=v189"></script>
+    <script src="admin.js?v=v189"></script>
   </body>
 </html>

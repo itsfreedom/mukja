@@ -320,10 +320,30 @@ async function runPage(userName, session, page, language = 'ko') {
     result.pass = text.length > 0 && !/레시피가 없습니다/.test(text);
   } else if (page.file === 'admin.html') {
     result.adminHidden = window.document.querySelector('#admin-panel')?.classList.contains('hidden');
+    const adminText = window.document.querySelector('#admin-panel')?.textContent || '';
     result.departmentManagementVisible = Boolean(window.document.querySelector('#department-list')) &&
       (window.document.querySelector('#department-list')?.textContent || '').includes('카페테리아');
+    result.adminSectionOrder = ['부서 관리', '비밀번호 관리', '데이터 백업'].every((label) => adminText.includes(label)) &&
+      adminText.indexOf('부서 관리') < adminText.indexOf('비밀번호 관리') &&
+      adminText.indexOf('비밀번호 관리') < adminText.indexOf('데이터 백업');
+    const departmentText = window.document.querySelector('#department-list')?.textContent || '';
+    result.departmentListLanguageClean = userName !== 'admin' || (!departmentText.includes('Cafeteria') && !departmentText.includes('사용') && !departmentText.includes('Enabled'));
+    result.hiddenCsvBackupFunction = typeof window.Store.createCsvBackupBundle === 'function' &&
+      !adminText.includes('전체 백업') &&
+      !adminText.includes('Full Backup');
+    if (userName === 'admin') {
+      const backupBundle = await window.Store.createCsvBackupBundle();
+      result.hiddenCsvBackupWorks = Array.isArray(backupBundle) &&
+        backupBundle.length >= 8 &&
+        backupBundle.some((file) => file.filename.includes('departments') && file.text.includes('카페테리아')) &&
+        backupBundle.some((file) => file.filename.includes('access-accounts'));
+    }
     result.pass = userName === 'admin' ? result.adminHidden === false : result.adminHidden === true;
     if (userName === 'admin' && result.departmentManagementVisible === false) result.pass = false;
+    if (userName === 'admin' && result.adminSectionOrder === false) result.pass = false;
+    if (userName === 'admin' && result.departmentListLanguageClean === false) result.pass = false;
+    if (userName === 'admin' && result.hiddenCsvBackupFunction === false) result.pass = false;
+    if (userName === 'admin' && result.hiddenCsvBackupWorks === false) result.pass = false;
   }
   return result;
 }

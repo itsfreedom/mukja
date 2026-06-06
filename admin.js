@@ -137,9 +137,7 @@
         <div class="admin-access-main">
           <span class="admin-access-number">${index + 1}</span>
           ${badgeIcon(accountBadge({ role: "department", department: department.name }))}
-          <strong>${escapeHtml(department.name)}</strong>
-          <span class="muted">${escapeHtml(department.nameEn || "")}</span>
-          <span class="muted">${department.enabled === false ? I18n.t("disabled") : I18n.t("enabled")}</span>
+          <strong>${escapeHtml(I18n.targetLabel(department.name))}</strong>
         </div>
         <div class="menu-row-actions admin-access-actions">
           <button class="menu-row-action is-edit" data-department-action="edit" data-department-id="${escapeHtml(department.id)}" type="button" aria-label="${I18n.t("edit")}">${editIcon}</button>

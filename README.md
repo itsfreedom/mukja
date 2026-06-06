@@ -35,7 +35,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 | 야채 | `v1234` | 야채 요청 확인, 메모 작성 |
 | 그로서리 | `g1234` | 그로서리 요청 확인, 메모 작성 |
 | 레스토랑 | `m1234` | 전체 요청 작성, 입고 확인, 메뉴/레시피 조회 |
-| 관리자 | `madmin` | 전체 기능, 재료/메뉴/레시피/비밀번호/CSV 관리 |
+| 관리자 | `madmin` | 전체 기능, 재료/메뉴/레시피/부서/비밀번호/데이터 백업 관리 |
 
 ## 기능 요약
 
@@ -122,20 +122,29 @@ https://mukjamtl.netlify.app/reset-cache.html
 - 부서명 변경 시 재료/요청 내역/메모/접근 계정의 부서 참조 이관
 - 사용 중인 부서 삭제/비활성화 방지
 - 마지막 관리자 삭제 방지
+- 관리자 화면 순서: 부서 관리, 비밀번호 관리, 데이터 백업
 - 요청 내역 CSV Export/Import
 - 재료 목록 CSV Export/Import
 - 메뉴 CSV Export/Import
 - 레시피 CSV Export/Import
+- 숨겨진 전체 CSV 백업 묶음 생성 함수
 
 ## 데이터 저장 방식
 
 Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우선 사용합니다. DB 연결이 없거나 Netlify Functions가 동작하지 않는 환경에서는 브라우저 `localStorage`를 보조 저장소로 사용합니다.
 
+일반 모드 확장을 위한 요청 수량과 단위는 이미 `order_items.quantity`, `order_items.unit`, 요청 내역 CSV의 `수량`, `단위` 컬럼으로 저장됩니다. 현재 간편 모드 화면에서는 수량 입력 UI를 노출하지 않지만, DB와 CSV 구조는 일반 모드 확장에 사용할 수 있습니다.
+
+회원 관리 확장을 위해 `app_users` 사용자 DB를 추가했습니다. 현재 화면에서는 회원 관리 기능을 구현하거나 노출하지 않고, 기존 비밀번호 관리는 `access_accounts`에서 계속 동작합니다. 다만 비밀번호 계정 저장 시 대응되는 `app_users` row와 `access_accounts.user_id` 연결을 함께 유지해 추후 회원 관리로 확장할 수 있게 했습니다.
+
+전체 CSV 백업 묶음 생성 기능은 `Store.createCsvBackupBundle()`로 구현되어 있지만 아직 화면에 버튼으로 표시하지 않습니다. 현재 화면의 데이터 백업 섹션에는 기존 개별 CSV Export/Import만 표시합니다.
+
 | 테이블 | 목적 |
 | --- | --- |
 | `access_identities` | 브라우저별 익명 사용자, 역할, 부서 기록 |
 | `access_logs` | API 접속 IP, 기기, 역할 로그 |
-| `access_accounts` | 입장 비밀번호, 역할, 부서, 표시 이름 |
+| `app_users` | 추후 회원 관리 확장을 위한 사용자 기준 DB |
+| `access_accounts` | 입장 비밀번호, 연결 사용자, 역할, 부서, 표시 이름 |
 | `app_settings` | 부서 DB 설정, 부서별 요청 카테고리, 요청 내역 없이 저장한 독립 메모 등 설정 |
 | `orders` | 요청 날짜, 시간, 메모, 요청 메시지 |
 | `order_items` | 요청별 품목, 카테고리, 부서, 입고 상태 |
@@ -156,7 +165,8 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | --- | --- |
 | `access_identities` | `id` PK, `role`, `department`, `display_name`, `first_seen_at`, `last_seen_at`, `last_ip`, `last_user_agent` |
 | `access_logs` | `id` UUID PK, `identity_id` FK, `role`, `department`, `path`, `method`, `ip_address`, `user_agent`, `created_at` |
-| `access_accounts` | `password` PK, `role`, `department`, `label`, `user_name`, `name`, `enabled`, 변경자/접속 정보, `updated_at` |
+| `app_users` | `id` PK, `user_name` unique, `display_name`, `role`, `department`, `email`, `enabled`, 생성/변경자/접속 정보, `created_at`, `updated_at` |
+| `access_accounts` | `password` PK, `user_id` FK, `role`, `department`, `label`, `user_name`, `name`, `enabled`, 변경자/접속 정보, `updated_at` |
 | `app_settings` | `setting_key` PK, `setting_value` JSONB, 변경자/접속 정보, `updated_at`; `departments` 설정에는 부서 기준 데이터, `requestCategories` 설정에는 부서별 카테고리, `standaloneMemos` 설정에는 요청 품목 없이 저장한 메모 목록 저장 |
 
 ### 요청/입고 테이블
@@ -182,6 +192,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | 관계 | 삭제 정책 |
 | --- | --- |
 | `app_settings.departments.name -> access_accounts.department / ingredients.target / orders.target / order_items.target / order_memos.department / department_confirmations.department` | 앱 레벨 참조. 부서명 변경 시 관련 데이터 이관, 사용 중인 부서 삭제 방지 |
+| `access_accounts.user_id -> app_users.id` | 사용자 삭제 시 비밀번호 계정의 연결만 해제 |
 | `order_items.order_id -> orders.id` | 요청 삭제 시 품목도 삭제 |
 | `order_memos.order_id -> orders.id` | 요청 삭제 시 메모도 삭제 |
 | `receipt_confirmations.order_item_id -> order_items.id` | 품목 삭제 시 입고 확인 기록도 삭제 |
@@ -238,7 +249,7 @@ npm run test:user-flows
 npm run test:db-consistency
 ```
 
-- `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 관리자 페이지에서는 부서 관리 영역 표시도 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
+- `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 관리자 페이지에서는 부서 관리 영역 표시, 부서/비밀번호/데이터 백업 순서, 부서 목록 언어 표시, 숨겨진 CSV 백업 함수도 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
 - 요청하기 테스트는 요청 버튼 클릭 후 부서별 메시지 3개와 카카오톡 열기 링크 3개가 생성되는지, 메시지에 카테고리 라인이 포함되는지, 재료 한글명/영문명 필수 입력과 중복 저장 차단이 동작하는지, 부서/카테고리 접기와 카테고리 추가 아이콘이 동작하는지도 확인합니다.
 - 메뉴 테스트는 카테고리 접기/펼치기, 메뉴 한글명/영문명 필수 입력, 중복 메뉴명 저장 차단도 확인합니다.
 - `test:db-consistency`: 실제 DB에 임시 요청을 생성, 조회, 수정, 삭제하고 홈/요청 내역/상세 화면의 데이터 일관성을 확인합니다. `app_settings.departments` 부서 DB 설정도 확인합니다.

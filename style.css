@@ -775,7 +775,14 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font-size: 0.8rem;
   white-space: nowrap;
 }
-.admin-section { margin-top: 14px; }
+#admin-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-section { margin-top: 0; }
+.admin-status { margin: 0; }
+.admin-status:empty { display: none; }
 .hidden { display: none !important; }
 .status { min-height: 24px; color: #bff9df; font-size: 0.86rem; }
 

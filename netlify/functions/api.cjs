@@ -63,8 +63,25 @@ async function ensureSchema(client) {
       created_at timestamptz not null default now()
     );
 
+    create table if not exists app_users (
+      id text primary key,
+      user_name text unique not null,
+      display_name text,
+      role text not null default 'department',
+      department text,
+      email text,
+      enabled boolean not null default true,
+      created_by_identity_id text references access_identities(id) on delete set null,
+      changed_by_identity_id text references access_identities(id) on delete set null,
+      changed_ip text,
+      changed_user_agent text,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    );
+
     create table if not exists access_accounts (
       password text primary key,
+      user_id text references app_users(id) on delete set null,
       role text not null,
       department text,
       label text,
@@ -233,6 +250,7 @@ async function ensureSchema(client) {
     alter table ingredients add column if not exists sort_order integer not null default 0;
     alter table access_accounts add column if not exists user_name text;
     alter table access_accounts add column if not exists name text;
+    alter table access_accounts add column if not exists user_id text references app_users(id) on delete set null;
     alter table recipes add column if not exists ingredient_items jsonb not null default '[]'::jsonb;
     alter table recipes add column if not exists name_en text;
     alter table recipes add column if not exists description_en text;
@@ -262,6 +280,8 @@ async function ensureSchema(client) {
 
     create index if not exists idx_orders_created_at on orders(created_at desc);
     create index if not exists idx_access_accounts_role on access_accounts(role, department);
+    create index if not exists idx_app_users_role on app_users(role, department, enabled);
+    create index if not exists idx_app_users_user_name on app_users(user_name);
     create index if not exists idx_order_items_order_id on order_items(order_id, item_index);
     create index if not exists idx_order_memos_order_id on order_memos(order_id, memo_index);
     create index if not exists idx_receipt_confirmations_item on receipt_confirmations(order_item_id, confirmed_at desc);
@@ -333,18 +353,55 @@ async function recordAccess(client, event, path) {
   return info;
 }
 
+function dbSafeId(prefix, value) {
+  const slug = String(value || prefix)
+    .trim()
+    .replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-")
+    .slice(0, 140);
+  return `${prefix}-${slug || Date.now()}`;
+}
+
 async function upsertAccessAccount(client, password, account, info) {
   if (!password || !account?.role) throw new Error("Invalid access account");
   const label = account.label || account.name || account.department || account.role;
   const name = account.name || label;
   const userName = account.userName || account.user_name || password;
+  const userId = account.userId || account.user_id || dbSafeId("user", userName || password);
+  await client.query(`
+    insert into app_users (
+      id, user_name, display_name, role, department, enabled,
+      created_by_identity_id, changed_by_identity_id, changed_ip, changed_user_agent, updated_at
+    )
+    values ($1, $2, $3, $4, $5, $6, $7, $7, $8, $9, now())
+    on conflict (id) do update set
+      user_name = excluded.user_name,
+      display_name = excluded.display_name,
+      role = excluded.role,
+      department = excluded.department,
+      enabled = excluded.enabled,
+      changed_by_identity_id = excluded.changed_by_identity_id,
+      changed_ip = excluded.changed_ip,
+      changed_user_agent = excluded.changed_user_agent,
+      updated_at = now()
+  `, [
+    userId,
+    userName,
+    name,
+    account.role,
+    account.department || "",
+    account.enabled !== false,
+    info.memberId,
+    info.ip,
+    info.userAgent
+  ]);
   await client.query(`
     insert into access_accounts (
-      password, role, department, label, user_name, name, enabled,
+      password, user_id, role, department, label, user_name, name, enabled,
       changed_by_identity_id, changed_ip, changed_user_agent, updated_at
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now())
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now())
     on conflict (password) do update set
+      user_id = excluded.user_id,
       role = excluded.role,
       department = excluded.department,
       label = excluded.label,
@@ -357,6 +414,7 @@ async function upsertAccessAccount(client, password, account, info) {
       updated_at = now()
   `, [
     password,
+    userId,
     account.role,
     account.department || "",
     label,
@@ -373,6 +431,7 @@ async function listAccessAccounts(client) {
   const rows = await client.query("select * from access_accounts where enabled = true order by role asc, department asc, label asc");
   return rows.rows.reduce((accounts, row) => {
     accounts[row.password] = {
+      userId: row.user_id || "",
       role: row.role,
       department: row.department || "",
       label: row.label || row.department || row.role,
@@ -424,6 +483,7 @@ async function replaceSeedData(client, data, info) {
   await client.query("delete from recipes");
   await client.query("delete from ingredients");
   await client.query("delete from access_accounts");
+  await client.query("delete from app_users");
   await client.query("delete from app_settings");
   for (const [password, account] of Object.entries(accessAccounts)) {
     await upsertAccessAccount(client, password, account, info);
