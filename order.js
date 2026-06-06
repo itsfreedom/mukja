@@ -766,28 +766,12 @@
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
 
-  function messageForDepartment(target, items, memo = "") {
-    const groups = items.reduce((acc, item) => {
-      const category = I18n.sectionLabel(categoryFor(item));
-      acc[category] = acc[category] || [];
-      acc[category].push(I18n.itemName(item));
-      return acc;
-    }, {});
-    const lines = [`[${I18n.targetLabel(target)} ${I18n.t("request")}]`];
-    Object.entries(groups).forEach(([category, names]) => {
-      lines.push("");
-      lines.push(category);
-      names.forEach((name) => lines.push(`- ${name}`));
-    });
-    if (memo) {
-      lines.push("");
-      lines.push(`${I18n.t("memo")}: ${memo}`);
-    }
-    return lines.join("\n");
+  function messageForDepartment(_target, items) {
+    const names = items.map((item) => item.nameKo || item.name || I18n.itemName(item)).filter(Boolean);
+    return `[ 먹자 ]\n${names.join(", ")} 필요합니다`;
   }
 
   function departmentMessages() {
-    const memo = els.memo.value.trim();
     const groups = selectedItems().reduce((acc, item) => {
       const target = targetFor(item);
       acc[target] = acc[target] || [];
@@ -799,7 +783,7 @@
       .map((target) => ({
         target,
         label: I18n.targetLabel(target),
-        message: messageForDepartment(target, groups[target], memo)
+        message: messageForDepartment(target, groups[target])
       }));
   }
 
@@ -815,7 +799,10 @@
       <article class="department-message-card">
         <div class="department-message-card-header">
           <strong>${escapeHtml(row.label)}</strong>
-          <button class="ghost-button compact-button" data-copy-department-message="${escapeHtml(row.target)}" type="button">${I18n.t("copyMessage")}</button>
+          <div class="department-message-actions">
+            <button class="ghost-button compact-button" data-copy-department-message="${escapeHtml(row.target)}" type="button">${I18n.t("copyMessage")}</button>
+            <a class="ghost-button compact-button" href="kakaotalk://" aria-label="${I18n.t("openKakao")}">${I18n.t("openKakao")}</a>
+          </div>
         </div>
         <pre>${escapeHtml(row.message)}</pre>
       </article>
@@ -881,6 +868,7 @@
       return;
     }
     templateEntry = entry;
+    if (items.length) renderDepartmentMessages();
     setStatus(I18n.t("saved"));
   }
 

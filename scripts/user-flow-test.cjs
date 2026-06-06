@@ -153,7 +153,12 @@ async function runPage(userName, session, page, language = 'ko') {
       window.document.querySelector('#generate-department-messages')?.click();
       const messageText = window.document.querySelector('#department-message-panel')?.textContent || '';
       result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
-      result.messageTestPass = ['카페테리아', '야채', '그로서리'].every((target) => messageText.includes(target)) && messageText.includes('테스트 메모');
+      result.kakaoLinks = window.document.querySelectorAll('a[href="kakaotalk://"]').length;
+      result.messageTestPass = ['카페테리아', '야채', '그로서리'].every((target) => messageText.includes(target))
+        && messageText.includes('[ 먹자 ]')
+        && messageText.includes('필요합니다')
+        && !messageText.includes('테스트 메모')
+        && result.kakaoLinks === 3;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.messageTestPass === false) result.pass = false;

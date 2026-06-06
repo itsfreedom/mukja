@@ -2097,6 +2097,13 @@ body.modal-open {
   gap: 10px;
 }
 
+.department-message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .department-message-card pre {
   margin: 0;
   white-space: pre-wrap;
