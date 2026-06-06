@@ -20,6 +20,8 @@
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const editIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>';
   const dragIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="m8 9 4-4 4 4" /><path d="m8 15 4 4 4-4" /></svg>';
+  const expandIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12" /><path d="m8 10 4 4 4-4" /></svg>';
+  const collapseIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4-4 4 4" /><path d="M6 18h12" /></svg>';
   const els = {
     list: document.getElementById("items-list"),
     memo: document.getElementById("memo"),
@@ -463,7 +465,7 @@
     if (!isEditMode()) return "";
     return `
       <div class="menu-row-actions request-row-actions">
-        <button class="menu-row-action request-category-toggle" data-request-category-action="toggle" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-expanded="${collapsed ? "false" : "true"}" aria-label="${I18n.sectionLabel(category)} ${I18n.t(collapsed ? "expandCategory" : "collapseCategory")}">${collapsed ? "+" : "−"}</button>
+        <button class="menu-row-action request-category-toggle" data-request-category-action="toggle" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-expanded="${collapsed ? "false" : "true"}" aria-label="${I18n.sectionLabel(category)} ${I18n.t(collapsed ? "expandCategory" : "collapseCategory")}">${collapsed ? expandIcon : collapseIcon}</button>
         ${collapsed ? "" : `<button class="menu-row-action is-create" data-order-item-action="create" data-order-item-target="${escapeHtml(target)}" data-order-item-category="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} ${I18n.t("add")}">${addIcon}</button>`}
         ${collapsed ? "" : `<button class="menu-row-action is-edit" data-request-category-action="edit" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-label="${I18n.sectionLabel(category)} ${I18n.t("edit")}">${editIcon}</button>`}
         <button class="menu-row-action request-category-drag-handle recipe-drag-handle" data-request-category-drag-handle type="button" aria-label="${I18n.sectionLabel(category)} ${I18n.t("moveOrder")}">${dragIcon}</button>
