@@ -1,5 +1,6 @@
 (function () {
-  const appAssetVersion = "v192";
+  const appAssetVersion = "v193";
+  const appDisplayVersion = "Version 1.0";
   const keys = {
     initialized: "restaurant_initialized",
     lang: "restaurant_lang",
@@ -1850,6 +1851,10 @@
             </a>
           `).join("")}
         </nav>
+        <div class="sidebar-version" aria-label="${appDisplayVersion}">
+          <span class="sidebar-version-full">${appDisplayVersion}</span>
+          <span class="sidebar-version-short">V1.0</span>
+        </div>
       `;
       const sidebarToggle = sidebar.querySelector("[data-sidebar-toggle]");
       if (sidebarToggle) {

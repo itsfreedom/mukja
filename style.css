@@ -1071,6 +1071,22 @@ body {
   backdrop-filter: none;
 }
 
+.sidebar-version {
+  margin-top: auto;
+  padding: 10px 8px 2px;
+  color: rgba(217, 227, 255, 0.62);
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sidebar-version-short {
+  display: none;
+}
+
 .nav-link {
   box-sizing: border-box;
   height: 46px;
@@ -1235,8 +1251,13 @@ body {
 .sidebar-collapsed .brand-role,
 .sidebar-collapsed .lang-toggle,
 .sidebar-collapsed .header-logout,
-.sidebar-collapsed .nav-link span:not(.nav-icon) {
+.sidebar-collapsed .nav-link span:not(.nav-icon),
+.sidebar-collapsed .sidebar-version-full {
   display: none;
+}
+
+.sidebar-collapsed .sidebar-version-short {
+  display: inline;
 }
 
 .sidebar-collapsed .brand-sub-row {
