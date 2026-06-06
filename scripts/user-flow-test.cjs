@@ -108,8 +108,14 @@ async function runPage(userName, session, page, language = 'ko') {
   window.localStorage.setItem('restaurant_auth', JSON.stringify({ ...session, signedInAt: new Date().toISOString() }));
   for (const script of [...sharedScripts, page.script]) window.eval(`${await local(script)}\n//# sourceURL=${script}`);
   await waitUntil(() => {
-    if (page.file === 'index.html') return (window.document.querySelector('#home-request-list')?.textContent || '').trim();
-    if (page.file === 'history.html') return (window.document.querySelector('#history-list')?.textContent || '').trim();
+    if (page.file === 'index.html') {
+      const text = (window.document.querySelector('#home-request-list')?.textContent || '').trim();
+      return text && !/저장된 주문내역이 없습니다|No saved request history/.test(text);
+    }
+    if (page.file === 'history.html') {
+      const text = (window.document.querySelector('#history-list')?.textContent || '').trim();
+      return text && !/저장된 주문내역이 없습니다|No saved request history/.test(text);
+    }
     if (page.file === 'order.html') return (window.document.querySelector('#items-list')?.textContent || '').trim();
     if (page.file === 'menu.html') return (window.document.querySelector('#menu-list')?.textContent || '').trim();
     if (page.file === 'recipes.html') return (window.document.querySelector('#recipe-list')?.textContent || '').trim();
@@ -135,7 +141,22 @@ async function runPage(userName, session, page, language = 'ko') {
     result.hasDriedVegetables = text.includes('Dried Vegetables');
     result.hasKoreanDriedVegetables = text.includes('건나물');
     result.sample = text.slice(0, 180);
+    if (userName === 'admin' && language === 'ko') {
+      const chosenTargets = new Set();
+      [...window.document.querySelectorAll('#items-list input[data-item]')].forEach((input) => {
+        const target = input.closest('[data-request-item-row]')?.dataset.itemTarget;
+        if (!target || chosenTargets.has(target)) return;
+        chosenTargets.add(target);
+        input.click();
+      });
+      window.document.querySelector('#memo').value = '테스트 메모';
+      window.document.querySelector('#generate-department-messages')?.click();
+      const messageText = window.document.querySelector('#department-message-panel')?.textContent || '';
+      result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
+      result.messageTestPass = ['카페테리아', '야채', '그로서리'].every((target) => messageText.includes(target)) && messageText.includes('테스트 메모');
+    }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
+    if (result.messageTestPass === false) result.pass = false;
   } else if (page.file === 'menu.html') {
     const text = window.document.querySelector('#menu-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);

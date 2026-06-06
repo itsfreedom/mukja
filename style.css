@@ -2061,6 +2061,52 @@ body.modal-open {
   margin-bottom: 0;
 }
 
+.order-page #order-message-row {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.order-page #order-message-row .ghost-button {
+  width: 100%;
+}
+
+.department-message-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.department-message-list {
+  display: grid;
+  gap: 10px;
+}
+
+.department-message-card {
+  display: grid;
+  gap: 9px;
+  border: 1px solid rgba(184, 196, 240, 0.14);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.department-message-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.department-message-card pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.55;
+}
+
 .order-bulk-panel {
   position: sticky;
   top: 0;

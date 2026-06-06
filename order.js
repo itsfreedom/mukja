@@ -24,12 +24,16 @@
     memo: document.getElementById("memo"),
     status: document.getElementById("status"),
     save: document.getElementById("save-create-message"),
+    generateMessages: document.getElementById("generate-department-messages"),
     reset: document.getElementById("reset-order"),
     modeRow: document.getElementById("order-mode-row"),
     orderModeButton: document.getElementById("order-mode-order"),
     editModeButton: document.getElementById("order-mode-edit"),
     resetRow: document.getElementById("order-reset-row"),
     saveRow: document.getElementById("order-save-row"),
+    messageRow: document.getElementById("order-message-row"),
+    messagePanel: document.getElementById("department-message-panel"),
+    messageList: document.getElementById("department-message-list"),
     bulkPanel: document.getElementById("order-bulk-panel"),
     bulkTarget: document.getElementById("bulk-target"),
     bulkCategory: document.getElementById("bulk-category"),
@@ -74,6 +78,8 @@
     els.editModeButton?.classList.toggle("is-active", edit);
     els.resetRow?.classList.toggle("hidden", edit || !canCreateRequest);
     els.saveRow?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.messageRow?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.messagePanel?.classList.toggle("hidden", edit || !canCreateRequest || !els.messageList?.children.length);
     els.memoPanel?.classList.toggle("hidden", edit || !canCreateRequest);
     els.memoDivider?.classList.toggle("hidden", edit || !canCreateRequest);
     els.bulkPanel?.classList.toggle("hidden", !canCreateRequest);
@@ -544,6 +550,7 @@
         }
         if (input.checked) selected.add(input.dataset.item);
         else selected.delete(input.dataset.item);
+        if (els.messageList?.children.length) renderDepartmentMessages();
       });
     });
     els.list.querySelectorAll("[data-order-item-target]").forEach((select) => {
@@ -759,6 +766,93 @@
     return memos.map((memo) => `[${memoLabel(memo)}] ${memo.text}`).join("\n");
   }
 
+  function messageForDepartment(target, items, memo = "") {
+    const groups = items.reduce((acc, item) => {
+      const category = I18n.sectionLabel(categoryFor(item));
+      acc[category] = acc[category] || [];
+      acc[category].push(I18n.itemName(item));
+      return acc;
+    }, {});
+    const lines = [`[${I18n.targetLabel(target)} ${I18n.t("request")}]`];
+    Object.entries(groups).forEach(([category, names]) => {
+      lines.push("");
+      lines.push(category);
+      names.forEach((name) => lines.push(`- ${name}`));
+    });
+    if (memo) {
+      lines.push("");
+      lines.push(`${I18n.t("memo")}: ${memo}`);
+    }
+    return lines.join("\n");
+  }
+
+  function departmentMessages() {
+    const memo = els.memo.value.trim();
+    const groups = selectedItems().reduce((acc, item) => {
+      const target = targetFor(item);
+      acc[target] = acc[target] || [];
+      acc[target].push(item);
+      return acc;
+    }, {});
+    return ["카페테리아", "야채", "그로서리"]
+      .filter((target) => groups[target]?.length)
+      .map((target) => ({
+        target,
+        label: I18n.targetLabel(target),
+        message: messageForDepartment(target, groups[target], memo)
+      }));
+  }
+
+  function renderDepartmentMessages() {
+    const messages = departmentMessages();
+    if (!messages.length) {
+      els.messageList.innerHTML = "";
+      els.messagePanel?.classList.add("hidden");
+      setStatus(I18n.t("chooseAtLeastOne"));
+      return;
+    }
+    els.messageList.innerHTML = messages.map((row) => `
+      <article class="department-message-card">
+        <div class="department-message-card-header">
+          <strong>${escapeHtml(row.label)}</strong>
+          <button class="ghost-button compact-button" data-copy-department-message="${escapeHtml(row.target)}" type="button">${I18n.t("copyMessage")}</button>
+        </div>
+        <pre>${escapeHtml(row.message)}</pre>
+      </article>
+    `).join("");
+    els.messagePanel?.classList.remove("hidden");
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+
+  async function copyDepartmentMessage(target) {
+    const row = departmentMessages().find((item) => item.target === target);
+    if (!row) {
+      setStatus(I18n.t("emptyMessage"));
+      return;
+    }
+    try {
+      await copyText(row.message);
+      setStatus(`${row.label} ${I18n.t("copied")}`);
+    } catch {
+      setStatus(I18n.t("emptyMessage"));
+    }
+  }
+
   async function saveRequest() {
     if (!canCreateRequest) return;
     const items = selectedItems();
@@ -864,6 +958,12 @@
   }
 
   els.save.addEventListener("click", () => saveRequest());
+  els.generateMessages?.addEventListener("click", renderDepartmentMessages);
+  els.messageList?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-copy-department-message]");
+    if (!button) return;
+    copyDepartmentMessage(button.dataset.copyDepartmentMessage);
+  });
   els.reset.addEventListener("click", resetForm);
   els.orderModeButton?.addEventListener("click", () => setRequestMode("order"));
   els.editModeButton?.addEventListener("click", () => setRequestMode("edit"));
