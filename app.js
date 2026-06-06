@@ -132,10 +132,11 @@
     const target = targetFor(item);
     const section = sectionFor(item);
     if (target === "그로서리" && section === "식재료") return "상온";
-    if (target === "그로서리" && ["상온", "냉장", "냉동", "기타"].includes(section)) return section;
+    if (target === "그로서리" && Store.getRequestCategories("그로서리").includes(section)) return section;
     if (target === "그로서리") return "기타";
-    if (target === "야채") return "야채";
-    if (["반조리", "소스", "반찬", "냉장", "냉동", "기타"].includes(section)) return section;
+    if (target === "야채") return section || "야채";
+    const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
+    if (cafeteriaSections.includes(section)) return section;
     return "기타";
   }
 
@@ -225,9 +226,9 @@
     const isDepartment = session?.role === "department";
     const targetOrder = ["카페테리아", "야채", "그로서리"];
     const categoryOrders = {
-      "카페테리아": ["반조리", "소스", "반찬", "냉장", "냉동", "기타"],
-      "야채": ["야채"],
-      "그로서리": ["상온", "냉장", "냉동", "기타"]
+      "카페테리아": [...Store.getRequestCategories("카페테리아"), "기타"],
+      "야채": Store.getRequestCategories("야채"),
+      "그로서리": Store.getRequestCategories("그로서리")
     };
     const targetGroups = draftItems.reduce((acc, item) => {
       const target = isDepartment ? (session.department || targetFor(item)) : targetFor(item);
