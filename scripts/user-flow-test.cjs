@@ -225,6 +225,8 @@ async function runPage(userName, session, page, language = 'ko') {
       await waitUntil(() => !window.document.querySelector('[data-request-category-row]')?.classList.contains('is-collapsed'));
       window.document.querySelector('#order-mode-edit')?.click();
       await waitUntil(() => window.document.querySelector('[data-order-item-action="create"]'));
+      window.document.querySelector('#bulk-jump-top')?.click();
+      result.topJumpFocusesTitle = window.document.querySelector('#order-panel .page-header')?.classList.contains('is-jump-focused') || false;
       const collapseRow = window.document.querySelector('[data-request-category-row]');
       const collapseToggle = collapseRow?.querySelector('[data-request-category-action="toggle"]');
       const rowItemCountBeforeCollapse = collapseRow?.querySelectorAll('[data-request-item-row]').length || 0;
@@ -295,6 +297,7 @@ async function runPage(userName, session, page, language = 'ko') {
     if (result.categoryCollapseWorks === false) result.pass = false;
     if (result.categoryAddIconButton === false) result.pass = false;
     if (result.targetCollapseWorks === false) result.pass = false;
+    if (result.topJumpFocusesTitle === false) result.pass = false;
     if (result.categoryTitleFocusWorks === false) result.pass = false;
     if (result.requiredIngredientNamesBlocked === false) result.pass = false;
     if (result.duplicateIngredientBlocked === false) result.pass = false;

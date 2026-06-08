@@ -31,6 +31,7 @@
     modeRow: document.getElementById("order-mode-row"),
     orderModeButton: document.getElementById("order-mode-order"),
     editModeButton: document.getElementById("order-mode-edit"),
+    pageHeader: document.querySelector("#order-panel .page-header"),
     resetRow: document.getElementById("order-reset-row"),
     saveRow: document.getElementById("order-save-row"),
     requestSummary: document.getElementById("request-total-summary"),
@@ -1127,6 +1128,18 @@
     setTimeout(() => row.classList.remove("is-jump-focused"), 1400);
   }
 
+  function scrollToRequestHeader() {
+    const header = els.pageHeader;
+    if (!header) return;
+    const top = header.getBoundingClientRect().top + window.scrollY - 12;
+    const isTestDom = navigator.userAgent.toLowerCase().includes("jsdom");
+    if (!isTestDom) {
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+    header.classList.add("is-jump-focused");
+    setTimeout(() => header.classList.remove("is-jump-focused"), 1400);
+  }
+
   function jumpToCategory() {
     if (!canCreateRequest) return;
     scrollToCategoryRow(currentCategoryRow());
@@ -1146,8 +1159,12 @@
 
   function jumpToEdge(edge) {
     if (!canCreateRequest) return;
+    if (edge === "top") {
+      scrollToRequestHeader();
+      return;
+    }
     const rows = categoryRows();
-    const row = edge === "bottom" ? rows[rows.length - 1] : rows[0];
+    const row = rows[rows.length - 1];
     syncJumpSelects(row);
     scrollToCategoryRow(row);
   }

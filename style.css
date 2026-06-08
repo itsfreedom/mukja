@@ -2271,6 +2271,12 @@ body.modal-open {
   outline-offset: 4px;
 }
 
+.order-page .page-header.is-jump-focused {
+  outline: 2px solid rgba(255, 216, 106, 0.72);
+  outline-offset: 6px;
+  border-radius: 10px;
+}
+
 .request-category-title-button {
   width: 100%;
   min-width: 0;
