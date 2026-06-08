@@ -310,6 +310,21 @@ async function runPage(userName, session, page, language = 'ko') {
         && targetRows().every((row) => !row.querySelector('[data-order-item-action="create"]') && !row.querySelector('[data-request-category-action="edit"]'));
       currentTargetToggle()?.click();
       await waitUntil(() => targetRows().some((row) => !row.classList.contains('is-collapsed')));
+      const duplicateCategoryRows = targetRows().filter((row) => row.dataset.categoryName && row.dataset.categoryName !== '기타');
+      const categoryEditRow = duplicateCategoryRows[0];
+      const duplicateCategoryName = duplicateCategoryRows.find((row) => row !== categoryEditRow)?.dataset.categoryName || '';
+      const categoryDuplicateTarget = categoryEditRow?.dataset.categoryTarget || '';
+      const categoryCountBeforeDuplicate = window.Store.getRequestCategories(categoryDuplicateTarget).length;
+      categoryEditRow?.querySelector('[data-request-category-action="edit"]')?.click();
+      await waitUntil(() => window.document.querySelector('[data-request-category-form]'));
+      const categoryDuplicateForm = window.document.querySelector('[data-request-category-form]');
+      categoryDuplicateForm.querySelector('[data-request-category-name]').value = duplicateCategoryName;
+      const alertCountBeforeCategoryDuplicate = alerts.length;
+      categoryDuplicateForm.querySelector('[data-request-category-action="save"]')?.click();
+      result.duplicateCategoryBlocked = Boolean(duplicateCategoryName)
+        && alerts.slice(alertCountBeforeCategoryDuplicate).some((message) => message.includes('이미 같은 카테고리명'))
+        && window.Store.getRequestCategories(categoryDuplicateTarget).length === categoryCountBeforeDuplicate;
+      window.document.querySelector('[data-request-category-form] [data-request-category-action="cancel"]')?.click();
       result.otherCategoryAvailableForEveryTarget = window.Store.getTargets()
         .every((target) => window.Store.getRequestCategories(target).includes('기타'));
       const otherCategoryRow = window.document.querySelector('[data-request-category-row][data-category-name="기타"]');
@@ -332,6 +347,8 @@ async function runPage(userName, session, page, language = 'ko') {
       const duplicateRow = [...window.document.querySelectorAll('[data-request-item-row]')]
         .find((row) => row.dataset.itemTarget === duplicateTarget && row.dataset.itemCategory === duplicateCategory);
       const duplicateName = duplicateRow?.querySelector('strong')?.textContent?.trim() || '';
+      const duplicateItem = window.Store.getIngredients().find((row) => row.id === duplicateRow?.dataset.itemId);
+      const duplicateEnglishName = duplicateItem?.nameEn || '';
       const ingredientCountBefore = window.Store.getIngredients().length;
       createButton?.click();
       await waitUntil(() => window.document.querySelector('[data-order-item-form="__new__"]'));
@@ -349,9 +366,18 @@ async function runPage(userName, session, page, language = 'ko') {
       result.requiredIngredientNamesBlocked = ingredientKoreanRequiredBlocked && ingredientEnglishRequiredBlocked;
       ingredientForm.querySelector('[data-order-item-name-ko]').value = duplicateName;
       ingredientForm.querySelector('[data-order-item-name-en]').value = 'Duplicate Test';
+      const alertCountBeforeKoreanDuplicate = alerts.length;
       ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
-      result.duplicateIngredientBlocked = alerts.some((message) => message.includes('이미 같은 품목명'))
+      const duplicateIngredientKoreanBlocked = alerts.slice(alertCountBeforeKoreanDuplicate).some((message) => message.includes('이미 같은 품목명'))
         && window.Store.getIngredients().length === ingredientCountBefore;
+      ingredientForm.querySelector('[data-order-item-name-ko]').value = `영문 중복 테스트 ${Date.now()}`;
+      ingredientForm.querySelector('[data-order-item-name-en]').value = duplicateEnglishName;
+      const alertCountBeforeEnglishDuplicate = alerts.length;
+      ingredientForm.querySelector('[data-order-item-action="save"]')?.click();
+      const duplicateIngredientEnglishBlocked = Boolean(duplicateEnglishName)
+        && alerts.slice(alertCountBeforeEnglishDuplicate).some((message) => message.includes('이미 같은 품목명'))
+        && window.Store.getIngredients().length === ingredientCountBefore;
+      result.duplicateIngredientBlocked = duplicateIngredientKoreanBlocked && duplicateIngredientEnglishBlocked;
       result.dragLockedWhileEditFormOpen = window.document.querySelectorAll('[data-request-item-row][draggable="true"], [data-request-category-row][draggable="true"]').length === 0;
     }
     result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
@@ -363,6 +389,7 @@ async function runPage(userName, session, page, language = 'ko') {
     if (result.categoryCollapseWorks === false) result.pass = false;
     if (result.categoryAddIconButton === false) result.pass = false;
     if (result.targetCollapseWorks === false) result.pass = false;
+    if (result.duplicateCategoryBlocked === false) result.pass = false;
     if (result.otherCategoryAvailableForEveryTarget === false) result.pass = false;
     if (result.otherCategoryDeleteHidden === false) result.pass = false;
     if (result.otherCategoryRenameBlocked === false) result.pass = false;

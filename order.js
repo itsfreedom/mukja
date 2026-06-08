@@ -159,13 +159,25 @@
     return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
   }
 
-  function findDuplicateIngredientName({ id = "", target = "", nameKo = "" }) {
-    const normalizedName = normalizeDuplicateName(nameKo);
+  function findDuplicateCategoryName({ target = "", oldName = "", name = "" }) {
+    const normalizedName = normalizeDuplicateName(name);
+    const normalizedOldName = normalizeDuplicateName(oldName);
     if (!normalizedName) return null;
+    return targetCategories(target).find((category) =>
+      normalizeDuplicateName(category) === normalizedName &&
+      normalizeDuplicateName(category) !== normalizedOldName
+    ) || null;
+  }
+
+  function findDuplicateIngredientName({ id = "", target = "", nameKo = "", nameEn = "" }) {
+    const normalizedKo = normalizeDuplicateName(nameKo);
+    const normalizedEn = normalizeDuplicateName(nameEn);
+    if (!normalizedKo && !normalizedEn) return null;
     return Store.getIngredients().find((row) =>
       row.id !== id &&
       targetFor(row) === target &&
-      normalizeDuplicateName(row.nameKo || row.name) === normalizedName
+      ((normalizedKo && normalizeDuplicateName(row.nameKo || row.name) === normalizedKo) ||
+        (normalizedEn && normalizeDuplicateName(row.nameEn) === normalizedEn))
     ) || null;
   }
 
@@ -258,8 +270,14 @@
       setStatus(I18n.t("defaultCategoryProtected"));
       return;
     }
-    if (categories.includes(nextName) && nextName !== oldName) {
-      setStatus(I18n.t("categoryDuplicate"));
+    const duplicateCategory = findDuplicateCategoryName({ target, oldName, name: nextName });
+    if (duplicateCategory) {
+      const message = I18n.format("duplicateCategoryName", {
+        department: I18n.targetLabel(target),
+        name: nextName
+      });
+      window.alert(message);
+      setStatus(message);
       return;
     }
     if (mode !== "create") {
@@ -427,11 +445,12 @@
     }
     const target = form.querySelector("[data-order-item-target]")?.value || Store.getTargets()[0] || "카페테리아";
     const category = form.querySelector("[data-order-item-category]")?.value.trim() || "기타";
-    const duplicate = findDuplicateIngredientName({ id: item?.id || "", target, nameKo });
+    const duplicate = findDuplicateIngredientName({ id: item?.id || "", target, nameKo, nameEn });
     if (duplicate) {
+      const duplicatedByEnglish = normalizeDuplicateName(duplicate.nameEn) === normalizeDuplicateName(nameEn);
       const message = I18n.format("duplicateIngredientName", {
         department: I18n.targetLabel(target),
-        name: nameKo
+        name: duplicatedByEnglish ? nameEn : nameKo
       });
       window.alert(message);
       setStatus(message);

@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v199";
+  const appAssetVersion = "v200";
   const appDisplayVersion = "Version 1.0";
   const keys = {
     initialized: "restaurant_initialized",
@@ -608,8 +608,19 @@
     return withOtherCategory(defaultRequestCategories[target] || ["기타"]);
   }
 
+  function categoryKey(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
   function withOtherCategory(categories = []) {
-    return Array.from(new Set([...(Array.isArray(categories) ? categories : []).filter(Boolean), "기타"]));
+    const next = [];
+    [...(Array.isArray(categories) ? categories : []), "기타"].forEach((category) => {
+      const name = String(category || "").trim();
+      const key = categoryKey(name);
+      if (!key || next.some((item) => categoryKey(item) === key)) return;
+      next.push(name);
+    });
+    return next;
   }
 
   function normalizeRequestCategories(value = {}) {
