@@ -33,6 +33,7 @@
     editModeButton: document.getElementById("order-mode-edit"),
     resetRow: document.getElementById("order-reset-row"),
     saveRow: document.getElementById("order-save-row"),
+    requestSummary: document.getElementById("request-total-summary"),
     messagePanel: document.getElementById("department-message-panel"),
     messageList: document.getElementById("department-message-list"),
     bulkPanel: document.getElementById("order-bulk-panel"),
@@ -81,6 +82,7 @@
     els.editModeButton?.classList.toggle("is-active", edit);
     els.resetRow?.classList.toggle("hidden", edit || !canCreateRequest);
     els.saveRow?.classList.toggle("hidden", edit || !canCreateRequest);
+    els.requestSummary?.classList.toggle("hidden", edit || !canCreateRequest || !els.requestSummary.textContent.trim());
     els.messagePanel?.classList.toggle("hidden", edit || !canCreateRequest || !els.messageList?.children.length);
     els.memoPanel?.classList.toggle("hidden", edit || !canCreateRequest);
     els.memoDivider?.classList.toggle("hidden", edit || !canCreateRequest);
@@ -963,6 +965,17 @@
     els.messagePanel?.classList.remove("hidden");
   }
 
+  function setRequestSummary(count) {
+    if (!els.requestSummary) return;
+    if (!count) {
+      els.requestSummary.textContent = "";
+      els.requestSummary.classList.add("hidden");
+      return;
+    }
+    els.requestSummary.textContent = I18n.format("requestTotalSummary", { count });
+    els.requestSummary.classList.remove("hidden");
+  }
+
   async function copyText(text) {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
@@ -1015,6 +1028,7 @@
     const items = selectedItems();
     const memo = memoEntry();
     if (!items.length && !memo) {
+      setRequestSummary(0);
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
@@ -1041,8 +1055,10 @@
     }
     templateEntry = entry;
     if (items.length) {
+      setRequestSummary(items.length);
       renderDepartmentMessages();
     } else {
+      setRequestSummary(0);
       els.messageList.innerHTML = "";
       els.messagePanel?.classList.add("hidden");
     }
@@ -1053,11 +1069,13 @@
     if (!window.confirm(I18n.t("confirmResetRequest"))) return;
     selected.clear();
     els.memo.value = "";
+    setRequestSummary(0);
     renderItems();
   }
 
   function cancelForm() {
     loadLatestRequest();
+    setRequestSummary(0);
     els.messageList.innerHTML = "";
     els.messagePanel?.classList.add("hidden");
     renderItems();

@@ -155,7 +155,8 @@ async function runPage(userName, session, page, language = 'ko') {
       window.document.querySelector('#save-create-message')?.click();
       result.emptyRequestBlocked = window.Store.getHistory().length === historyCountBeforeEmptySave
         && (window.Store.getStandaloneMemos?.().length || 0) === memoCountBeforeEmptySave
-        && window.document.querySelectorAll('.department-message-card').length === 0;
+        && window.document.querySelectorAll('.department-message-card').length === 0
+        && window.document.querySelector('#request-total-summary')?.classList.contains('hidden');
       window.document.querySelector('#cancel-order')?.click();
       await waitUntil(() => window.document.querySelectorAll('#items-list input[data-item]:checked').length === checkedBeforeClear);
       result.cancelRestoresLatestRequest = window.document.querySelectorAll('#items-list input[data-item]:checked').length === checkedBeforeClear;
@@ -166,7 +167,8 @@ async function runPage(userName, session, page, language = 'ko') {
       result.memoOnlyCreatesHistory = window.Store.getHistory().length === historyCountBeforeEmptySave
         && Boolean(memoOnlyEntry)
         && (memoOnlyEntry.items || []).length === 0
-        && (window.Store.getStandaloneMemos?.().length || 0) === memoCountBeforeEmptySave;
+        && (window.Store.getStandaloneMemos?.().length || 0) === memoCountBeforeEmptySave
+        && window.document.querySelector('#request-total-summary')?.classList.contains('hidden');
       await window.Store.setStandaloneMemos?.(standaloneMemosBeforeEmptySave);
       window.document.querySelector('#memo').value = '';
       const historyIdsBeforeMessage = new Set(window.Store.getHistory().map((entry) => entry.id));
@@ -181,17 +183,20 @@ async function runPage(userName, session, page, language = 'ko') {
       window.document.querySelector('#save-create-message')?.click();
       await waitUntil(() => window.document.querySelectorAll('.department-message-card').length === 3);
       const messageText = window.document.querySelector('#department-message-panel')?.textContent || '';
+      const requestTotalSummary = window.document.querySelector('#request-total-summary')?.textContent || '';
       const messageLines = messageText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
       result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
       result.kakaoLinks = window.document.querySelectorAll('a[href="kakaotalk://"]').length;
       result.copyOpenKakaoButtons = window.document.querySelectorAll('[data-copy-open-kakao]').length;
       result.standaloneCopyButtons = window.document.querySelectorAll('[data-copy-department-message]').length;
+      result.requestTotalSummary = requestTotalSummary;
       result.categoryMessageLines = messageLines.filter((line) => /^[^:]+: .+/.test(line)).length;
       result.messageTestPass = ['카페테리아', '야채', '매장'].every((target) => messageText.includes(target))
         && messageText.includes('[ 먹자 ]')
         && result.categoryMessageLines >= 3
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
+        && requestTotalSummary.includes('총 3개의 품목을 요청합니다.')
         && messageText.includes('문자 복사 / 카톡 열기')
         && result.kakaoLinks === 3
         && result.copyOpenKakaoButtons === 3
