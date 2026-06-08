@@ -184,13 +184,18 @@ async function runPage(userName, session, page, language = 'ko') {
       const messageLines = messageText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
       result.departmentMessageCards = window.document.querySelectorAll('.department-message-card').length;
       result.kakaoLinks = window.document.querySelectorAll('a[href="kakaotalk://"]').length;
+      result.copyOpenKakaoButtons = window.document.querySelectorAll('[data-copy-open-kakao]').length;
+      result.standaloneCopyButtons = window.document.querySelectorAll('[data-copy-department-message]').length;
       result.categoryMessageLines = messageLines.filter((line) => /^[^:]+: .+/.test(line)).length;
       result.messageTestPass = ['카페테리아', '야채', '매장'].every((target) => messageText.includes(target))
         && messageText.includes('[ 먹자 ]')
         && result.categoryMessageLines >= 3
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
-        && result.kakaoLinks === 3;
+        && messageText.includes('문자 복사 / 카톡 열기')
+        && result.kakaoLinks === 3
+        && result.copyOpenKakaoButtons === 3
+        && result.standaloneCopyButtons === 0;
       const createdRequestIds = window.Store.getHistory()
         .filter((entry) => !historyIdsBeforeMessage.has(entry.id))
         .map((entry) => entry.id);

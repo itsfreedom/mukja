@@ -955,12 +955,9 @@
       <article class="department-message-card">
         <div class="department-message-card-header">
           <strong>${escapeHtml(row.label)}</strong>
-          <div class="department-message-actions">
-            <button class="ghost-button compact-button" data-copy-department-message="${escapeHtml(row.target)}" type="button">${I18n.t("copyMessage")}</button>
-          </div>
         </div>
         <pre>${escapeHtml(row.message)}</pre>
-        <a class="button department-kakao-button" href="kakaotalk://" aria-label="${I18n.t("openKakao")}">${I18n.t("openKakao")}</a>
+        <a class="button department-kakao-button" href="kakaotalk://" data-copy-open-kakao="${escapeHtml(row.target)}" aria-label="${I18n.t("copyAndOpenKakao")}">${I18n.t("copyAndOpenKakao")}</a>
       </article>
     `).join("");
     els.messagePanel?.classList.remove("hidden");
@@ -991,6 +988,23 @@
     try {
       await copyText(row.message);
       setStatus(`${row.label} ${I18n.t("copied")}`);
+    } catch {
+      setStatus(I18n.t("emptyMessage"));
+    }
+  }
+
+  async function copyMessageAndOpenKakao(target) {
+    const row = departmentMessages().find((item) => item.target === target);
+    if (!row) {
+      setStatus(I18n.t("emptyMessage"));
+      return;
+    }
+    try {
+      await copyText(row.message);
+      setStatus(`${row.label} ${I18n.t("copiedOpeningKakao")}`);
+      if (!navigator.userAgent.toLowerCase().includes("jsdom")) {
+        window.location.href = "kakaotalk://";
+      }
     } catch {
       setStatus(I18n.t("emptyMessage"));
     }
@@ -1122,9 +1136,15 @@
 
   els.save.addEventListener("click", () => saveRequest());
   els.messageList?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-copy-department-message]");
-    if (!button) return;
-    copyDepartmentMessage(button.dataset.copyDepartmentMessage);
+    const copyButton = event.target.closest("[data-copy-department-message]");
+    if (copyButton) {
+      copyDepartmentMessage(copyButton.dataset.copyDepartmentMessage);
+      return;
+    }
+    const kakaoButton = event.target.closest("[data-copy-open-kakao]");
+    if (!kakaoButton) return;
+    event.preventDefault();
+    copyMessageAndOpenKakao(kakaoButton.dataset.copyOpenKakao);
   });
   els.reset.addEventListener("click", resetForm);
   els.cancel?.addEventListener("click", cancelForm);
