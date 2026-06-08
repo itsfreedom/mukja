@@ -10,6 +10,23 @@
   const session = Store.getAuth();
   let currentEntry = null;
   let draftItems = [];
+  let homeJumpSelection = { target: "", category: "" };
+  const collapsedHomeCategories = new Set();
+  const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M5 5.5h14v3.5H5z" /><path class="toggle-icon-triangle" d="M5 11h14l-7 8z" /></svg>';
+
+  function canUseHomeNavigation() {
+    return ["admin", "restaurant"].includes(session?.role);
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "\"": "&quot;",
+      "'": "&#039;"
+    }[char]));
+  }
 
   function visibleEntry(entry) {
     if (!entry) return null;
@@ -183,6 +200,51 @@
     ];
   }
 
+  function homeCategoryKey(target, category) {
+    return `${Store.normalizeTargetName(target)}::${category}`;
+  }
+
+  function isHomeCategoryCollapsed(target, category) {
+    return collapsedHomeCategories.has(homeCategoryKey(target, category));
+  }
+
+  function setHomeCategoryCollapsed(target, category, collapsed) {
+    const key = homeCategoryKey(target, category);
+    if (collapsed) collapsedHomeCategories.add(key);
+    else collapsedHomeCategories.delete(key);
+  }
+
+  function areHomeTargetCategoriesCollapsed(target, categories) {
+    return categories.length > 0 && categories.every((category) => isHomeCategoryCollapsed(target, category));
+  }
+
+  function renderHomeJumpPanel(targets, targetCategoryMap) {
+    if (!canUseHomeNavigation() || !targets.length) return "";
+    const selectedTarget = targets.includes(homeJumpSelection.target) ? homeJumpSelection.target : targets[0];
+    const categories = targetCategoryMap[selectedTarget] || [];
+    const selectedCategory = categories.includes(homeJumpSelection.category) ? homeJumpSelection.category : (categories[0] || "");
+    homeJumpSelection = { target: selectedTarget, category: selectedCategory };
+    return `
+      <div class="recipe-item-form order-bulk-panel home-jump-panel admin-section" data-home-jump-panel>
+        <div class="order-jump-selects">
+          <label><span>${I18n.t("department")}</span><select data-home-jump-target>
+            ${targets.map((target) => `<option value="${escapeHtml(target)}" ${target === selectedTarget ? "selected" : ""}>${I18n.targetLabel(target)}</option>`).join("")}
+          </select></label>
+          <label><span>${I18n.t("menuCategory")}</span><select data-home-jump-category>
+            ${categories.map((category) => `<option value="${escapeHtml(category)}" ${category === selectedCategory ? "selected" : ""}>${I18n.sectionLabel(category)}</option>`).join("")}
+          </select></label>
+        </div>
+        <div class="order-jump-actions">
+          <button class="ghost-button" data-home-jump="top" type="button">${I18n.t("top")}</button>
+          <button class="ghost-button" data-home-jump="prev" type="button">${I18n.t("previous")}</button>
+          <button class="button" data-home-jump="current" type="button">${I18n.t("move")}</button>
+          <button class="ghost-button" data-home-jump="next" type="button">${I18n.t("next")}</button>
+          <button class="ghost-button" data-home-jump="bottom" type="button">${I18n.t("bottom")}</button>
+        </div>
+      </div>
+    `;
+  }
+
   function renderRows(items) {
     const showRestaurantReceive = session?.role === "restaurant";
     return `
@@ -240,14 +302,184 @@
     `;
   }
 
-  function renderCategorySection(category, items) {
+  function renderCategorySection(target, category, items) {
+    const collapsed = canUseHomeNavigation() && isHomeCategoryCollapsed(target, category);
     return `
-      <section class="item-section home-request-section">
-        <h3>${I18n.sectionLabel(category)}</h3>
-        <hr class="section-divider" />
+      <section class="item-section home-request-section request-category-section ${collapsed ? "is-collapsed" : ""}" data-home-category-row data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}">
+        <div class="section-title-row request-category-title-row">
+          <h3><button class="request-category-title-button" data-home-category-action="focus" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button">${I18n.sectionLabel(category)}</button></h3>
+          ${canUseHomeNavigation() ? `
+            <div class="menu-row-actions request-row-actions">
+              <button class="menu-row-action request-category-toggle ${collapsed ? "" : "is-expanded"}" data-home-category-action="toggle" data-category-target="${escapeHtml(target)}" data-category-name="${escapeHtml(category)}" type="button" aria-expanded="${collapsed ? "false" : "true"}" aria-label="${I18n.sectionLabel(category)} ${I18n.t(collapsed ? "expandCategory" : "collapseCategory")}">${toggleIcon}</button>
+            </div>
+          ` : ""}
+        </div>
+        <hr class="section-divider section-title-divider" />
         ${renderRows(items)}
       </section>
     `;
+  }
+
+  function homeCategoryRows() {
+    return [...list.querySelectorAll("[data-home-category-row]")];
+  }
+
+  function homeCategoryRowsForTarget(target) {
+    return homeCategoryRows().filter((row) => row.dataset.categoryTarget === target);
+  }
+
+  function homeJumpPanel() {
+    return list.querySelector("[data-home-jump-panel]");
+  }
+
+  function homeJumpTargetSelect() {
+    return list.querySelector("[data-home-jump-target]");
+  }
+
+  function homeJumpCategorySelect() {
+    return list.querySelector("[data-home-jump-category]");
+  }
+
+  function updateHomeCategorySelect() {
+    const targetSelect = homeJumpTargetSelect();
+    const categorySelect = homeJumpCategorySelect();
+    if (!targetSelect || !categorySelect) return;
+    const rows = homeCategoryRowsForTarget(targetSelect.value);
+    const current = categorySelect.value;
+    categorySelect.innerHTML = rows.map((row) => {
+      const category = row.dataset.categoryName || "";
+      return `<option value="${escapeHtml(category)}" ${category === current ? "selected" : ""}>${I18n.sectionLabel(category)}</option>`;
+    }).join("");
+    if (![...categorySelect.options].some((option) => option.value === current)) {
+      categorySelect.value = rows[0]?.dataset.categoryName || "";
+    }
+    homeJumpSelection = { target: targetSelect.value, category: categorySelect.value };
+  }
+
+  function currentHomeCategoryRow() {
+    const target = homeJumpTargetSelect()?.value || "";
+    const category = homeJumpCategorySelect()?.value || "";
+    return homeCategoryRows().find((row) => row.dataset.categoryTarget === target && row.dataset.categoryName === category);
+  }
+
+  function syncHomeJumpSelects(row) {
+    if (!row) return;
+    const targetSelect = homeJumpTargetSelect();
+    const categorySelect = homeJumpCategorySelect();
+    if (!targetSelect || !categorySelect) return;
+    targetSelect.value = row.dataset.categoryTarget || "";
+    updateHomeCategorySelect();
+    categorySelect.value = row.dataset.categoryName || "";
+    homeJumpSelection = { target: targetSelect.value, category: categorySelect.value };
+  }
+
+  function scrollToHomeRow(row) {
+    if (!row) {
+      setStatus(I18n.t("categoryNotFound"));
+      return;
+    }
+    const stickyOffset = (homeJumpPanel()?.offsetHeight || 0) + 14;
+    const top = row.getBoundingClientRect().top + window.scrollY - stickyOffset;
+    const isTestDom = navigator.userAgent.toLowerCase().includes("jsdom");
+    if (!isTestDom) {
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+    row.classList.add("is-jump-focused");
+    setTimeout(() => row.classList.remove("is-jump-focused"), 1400);
+  }
+
+  function scrollToHomeHeader() {
+    const header = document.querySelector(".home-last-order .page-header");
+    if (!header) return;
+    const top = header.getBoundingClientRect().top + window.scrollY - 12;
+    const isTestDom = navigator.userAgent.toLowerCase().includes("jsdom");
+    if (!isTestDom) {
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    }
+    header.classList.add("is-jump-focused");
+    setTimeout(() => header.classList.remove("is-jump-focused"), 1400);
+  }
+
+  function updateHomeTargetToggle(target) {
+    const rows = homeCategoryRowsForTarget(target);
+    const button = [...list.querySelectorAll("[data-home-target-action='toggle']")]
+      .find((node) => node.dataset.categoryTarget === target);
+    if (!button || !rows.length) return;
+    const collapsed = rows.every((row) => row.classList.contains("is-collapsed"));
+    button.classList.toggle("is-expanded", !collapsed);
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", `${I18n.targetLabel(target)} ${I18n.t(collapsed ? "expandCategory" : "collapseCategory")}`);
+  }
+
+  function setHomeRowCollapsed(row, collapsed) {
+    if (!row) return;
+    const target = row.dataset.categoryTarget || "";
+    const category = row.dataset.categoryName || "";
+    row.classList.toggle("is-collapsed", collapsed);
+    const button = row.querySelector("[data-home-category-action='toggle']");
+    if (button) {
+      button.classList.toggle("is-expanded", !collapsed);
+      button.setAttribute("aria-expanded", String(!collapsed));
+      button.setAttribute("aria-label", `${I18n.sectionLabel(category)} ${I18n.t(collapsed ? "expandCategory" : "collapseCategory")}`);
+    }
+    setHomeCategoryCollapsed(target, category, collapsed);
+    updateHomeTargetToggle(target);
+  }
+
+  function bindHomeNavigation() {
+    if (!canUseHomeNavigation()) return;
+    homeJumpTargetSelect()?.addEventListener("change", () => updateHomeCategorySelect());
+    homeJumpCategorySelect()?.addEventListener("change", () => {
+      homeJumpSelection = {
+        target: homeJumpTargetSelect()?.value || "",
+        category: homeJumpCategorySelect()?.value || ""
+      };
+    });
+    list.querySelectorAll("[data-home-jump]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const rows = homeCategoryRows();
+        if (!rows.length) return;
+        const action = button.dataset.homeJump;
+        if (action === "top") {
+          scrollToHomeHeader();
+          return;
+        }
+        const current = currentHomeCategoryRow();
+        const currentIndex = Math.max(0, rows.indexOf(current));
+        const index = {
+          current: currentIndex,
+          prev: Math.max(0, currentIndex - 1),
+          next: Math.min(rows.length - 1, currentIndex + 1),
+          bottom: rows.length - 1
+        }[action] ?? currentIndex;
+        const row = rows[index];
+        syncHomeJumpSelects(row);
+        scrollToHomeRow(row);
+      });
+    });
+    list.querySelectorAll("[data-home-category-action]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const row = button.closest("[data-home-category-row]");
+        if (button.dataset.homeCategoryAction === "focus") {
+          syncHomeJumpSelects(row);
+          scrollToHomeRow(row);
+          return;
+        }
+        setHomeRowCollapsed(row, !row.classList.contains("is-collapsed"));
+      });
+    });
+    list.querySelectorAll("[data-home-target-action='toggle']").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const target = button.dataset.categoryTarget || "";
+        const rows = homeCategoryRowsForTarget(target);
+        const collapse = !rows.every((row) => row.classList.contains("is-collapsed"));
+        rows.forEach((row) => setHomeRowCollapsed(row, collapse));
+      });
+    });
   }
 
   function renderLatest(entry) {
@@ -281,22 +513,36 @@
       return acc;
     }, {});
     const targets = isDepartment ? Object.keys(targetGroups) : orderedKeys(targetGroups, targetOrder);
+    const targetCategoryMap = Object.fromEntries(targets.map((target) => [
+      target,
+      orderedKeys(targetGroups[target], categoryOrders[target] || ["기타"])
+    ]));
     list.innerHTML = `
+      ${renderHomeJumpPanel(targets, targetCategoryMap)}
       ${targets.map((target) => {
         const categoryGroups = targetGroups[target];
-        const categories = orderedKeys(categoryGroups, categoryOrders[target] || ["기타"]);
+        const categories = targetCategoryMap[target] || [];
+        const targetCollapsed = canUseHomeNavigation() && areHomeTargetCategoriesCollapsed(target, categories);
         return `
-          <section class="department-group home-target-group">
-            <h2>${I18n.targetLabel(target)}</h2>
+          <section class="department-group home-target-group request-target-group" data-home-target-group data-category-target="${escapeHtml(target)}">
+            <div class="section-title-row menu-category-title-row">
+              <h2>${I18n.targetLabel(target)}</h2>
+              ${canUseHomeNavigation() ? `
+                <div class="menu-row-actions request-target-actions">
+                  <button class="menu-row-action request-target-toggle ${targetCollapsed ? "" : "is-expanded"}" data-home-target-action="toggle" data-category-target="${escapeHtml(target)}" type="button" aria-expanded="${targetCollapsed ? "false" : "true"}" aria-label="${I18n.targetLabel(target)} ${I18n.t(targetCollapsed ? "expandCategory" : "collapseCategory")}">${toggleIcon}</button>
+                </div>
+              ` : ""}
+            </div>
             <hr class="section-divider department-divider" />
-            <div class="department-card home-target-section">
-              ${categories.map((category) => renderCategorySection(category, categoryGroups[category])).join("")}
+            <div class="department-card home-target-section request-target-section">
+              ${categories.map((category) => renderCategorySection(target, category, categoryGroups[category])).join("")}
             </div>
           </section>
         `;
       }).join("")}
       ${renderMemoPanel(entry)}
     `;
+    bindHomeNavigation();
     list.querySelectorAll("[data-receive]").forEach((input) => {
       input.addEventListener("change", () => {
         const itemId = input.dataset.receive;

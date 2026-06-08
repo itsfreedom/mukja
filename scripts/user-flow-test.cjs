@@ -131,9 +131,38 @@ async function runPage(userName, session, page, language = 'ko') {
     result.subtitle = window.document.querySelector('[data-home-subtitle]')?.textContent || '';
     result.sample = homeText.slice(0, 180);
     result.latestRequestVisible = window.document.querySelectorAll('#home-request-list .receive-row').length > 0;
+    const expectsHomeControls = ['admin', 'restaurant'].includes(userName);
+    if (expectsHomeControls) {
+      result.homeJumpPanelVisible = Boolean(window.document.querySelector('[data-home-jump-panel]'));
+      const targetToggle = window.document.querySelector('[data-home-target-action="toggle"]');
+      const targetName = targetToggle?.dataset.categoryTarget || '';
+      const targetRows = () => [...window.document.querySelectorAll(`[data-home-category-row][data-category-target="${targetName}"]`)];
+      targetToggle?.click();
+      await waitUntil(() => targetRows().length > 0 && targetRows().every((row) => row.classList.contains('is-collapsed')));
+      result.homeTargetCollapseWorks = targetRows().length > 0 && targetRows().every((row) => row.classList.contains('is-collapsed'));
+      targetToggle?.click();
+      await waitUntil(() => targetRows().some((row) => !row.classList.contains('is-collapsed')));
+      const categoryToggle = window.document.querySelector('[data-home-category-action="toggle"]');
+      const categoryRow = categoryToggle?.closest('[data-home-category-row]');
+      categoryToggle?.click();
+      result.homeCategoryCollapseWorks = Boolean(categoryRow?.classList.contains('is-collapsed'));
+      categoryToggle?.click();
+      window.document.querySelector('[data-home-jump="current"]')?.click();
+      result.homeJumpMoveFocusWorks = Boolean(window.document.querySelector('[data-home-category-row].is-jump-focused'));
+      window.document.querySelector('[data-home-jump="top"]')?.click();
+      result.homeJumpTopFocusWorks = Boolean(window.document.querySelector('.home-last-order .page-header.is-jump-focused'));
+    } else {
+      result.homeJumpPanelHidden = !window.document.querySelector('[data-home-jump-panel]');
+    }
     result.pass = !/저장된 주문내역이 없습니다/.test(homeText) && homeText.length > 0
       && expectedHomeMemos[userName].every((label) => result.memoLabels.includes(label))
       && result.latestRequestVisible;
+    if (expectsHomeControls && result.homeJumpPanelVisible === false) result.pass = false;
+    if (expectsHomeControls && result.homeTargetCollapseWorks === false) result.pass = false;
+    if (expectsHomeControls && result.homeCategoryCollapseWorks === false) result.pass = false;
+    if (expectsHomeControls && result.homeJumpMoveFocusWorks === false) result.pass = false;
+    if (expectsHomeControls && result.homeJumpTopFocusWorks === false) result.pass = false;
+    if (!expectsHomeControls && result.homeJumpPanelHidden === false) result.pass = false;
   } else if (page.file === 'history.html') {
     const text = window.document.querySelector('#history-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);

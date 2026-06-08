@@ -446,6 +446,14 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   padding: 0 2px;
   margin: 0;
 }
+.home-target-group .section-title-row h2 {
+  color: #eef3ff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  padding: 0 2px;
+  margin: 0;
+}
 .department-divider {
   margin: 0;
 }
@@ -473,6 +481,19 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 700;
+}
+.home-page .page-header.is-jump-focused,
+.home-request-section.is-jump-focused {
+  outline: 2px solid rgba(255, 216, 106, 0.72);
+  outline-offset: 6px;
+  border-radius: 10px;
+}
+.home-request-section.is-collapsed .section-title-divider,
+.home-request-section.is-collapsed .item-section-list {
+  display: none;
+}
+.home-target-section.request-target-section {
+  gap: 0;
 }
 .home-action-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
