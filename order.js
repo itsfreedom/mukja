@@ -128,13 +128,13 @@
     const category = item.category || item.section || "기타";
     const targetCategories = Store.getRequestCategories(target);
     if (!["매장", "야채", "카페테리아"].includes(target)) {
-      return targetCategories.includes(category) ? category : (category || "기타");
+      return targetCategories.includes(category) ? category : "기타";
     }
     if (target === "매장" && category === "식재료") return "상온";
     if (target === "매장" && Store.getRequestCategories("매장").includes(category)) return category;
     if (target === "매장") return "기타";
     if (target === "야채" && Store.getRequestCategories("야채").includes(category)) return category;
-    if (target === "야채") return "야채";
+    if (target === "야채") return "기타";
     const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
     if (cafeteriaSections.includes(category)) return category;
     return "기타";
@@ -179,14 +179,14 @@
 
   function sectionForTargetCategory(target, category) {
     if (target === "매장") return category || "기타";
-    if (target === "야채") return category || "야채";
+    if (target === "야채") return category || "기타";
     return category || "기타";
   }
 
   function categoriesForTarget(target) {
     return uniqueList([
       ...Store.getRequestCategories(target),
-      ...(target === "야채" ? ["야채"] : ["기타"])
+      "기타"
     ]);
   }
 
@@ -231,8 +231,7 @@
 
   function categoryForm(target, category = "", mode = "edit") {
     const isNew = mode === "create";
-    const fallback = categoriesForTarget(target)[0] || "기타";
-    const canDelete = !isNew && category !== fallback;
+    const canDelete = !isNew && category !== "기타";
     return `
       <div class="recipe-item-form request-category-form" data-request-category-form data-category-target="${escapeHtml(target)}" data-category-old-name="${escapeHtml(category)}" data-category-mode="${mode}">
         <label><span>${I18n.t("categoryName")}</span><input data-request-category-name value="${escapeHtml(category)}" placeholder="${I18n.t("categoryName")}" /></label>
@@ -255,6 +254,10 @@
       return;
     }
     const categories = Store.getRequestCategories(target);
+    if (mode !== "create" && oldName === "기타" && nextName !== "기타") {
+      setStatus(I18n.t("defaultCategoryProtected"));
+      return;
+    }
     if (categories.includes(nextName) && nextName !== oldName) {
       setStatus(I18n.t("categoryDuplicate"));
       return;
@@ -277,9 +280,13 @@
     const target = form?.dataset.categoryTarget || Store.getTargets()[0] || "카페테리아";
     const oldName = form?.dataset.categoryOldName || "";
     if (!oldName) return;
-    const fallback = categoriesForTarget(target).find((category) => category !== oldName) || "기타";
+    if (oldName === "기타") {
+      setStatus(I18n.t("defaultCategoryProtected"));
+      return;
+    }
+    const fallback = "기타";
     if (!window.confirm(I18n.format("confirmDeleteCategory", { name: I18n.sectionLabel(oldName), fallback: I18n.sectionLabel(fallback) }))) return;
-    Store.setRequestCategories(target, Store.getRequestCategories(target).filter((category) => category !== oldName));
+    Store.setRequestCategories(target, uniqueList([...Store.getRequestCategories(target).filter((category) => category !== oldName), fallback]));
     Store.setIngredients(Store.getIngredients().map((item) =>
       targetFor(item) === target && categoryFor(item) === oldName ? { ...item, category: fallback } : item
     ));

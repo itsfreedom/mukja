@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v198";
+  const appAssetVersion = "v199";
   const appDisplayVersion = "Version 1.0";
   const keys = {
     initialized: "restaurant_initialized",
@@ -42,8 +42,8 @@
   ];
   const defaultRequestCategories = {
     "카페테리아": defaultSections,
-    "야채": ["신선", "두부"],
-    "매장": ["분말", "냉장", "냉동", "소스류", "곡류", "면류", "반찬", "포장 박스"],
+    "야채": ["신선", "두부", "기타"],
+    "매장": ["분말", "냉장", "냉동", "소스류", "곡류", "면류", "반찬", "포장 박스", "기타"],
     "먹자": ["기타"]
   };
   const categoryEnglishLabels = {
@@ -605,20 +605,25 @@
   }
 
   function defaultCategoriesForTarget(target) {
-    return defaultRequestCategories[target] || ["기타"];
+    return withOtherCategory(defaultRequestCategories[target] || ["기타"]);
+  }
+
+  function withOtherCategory(categories = []) {
+    return Array.from(new Set([...(Array.isArray(categories) ? categories : []).filter(Boolean), "기타"]));
   }
 
   function normalizeRequestCategories(value = {}) {
     const source = value && typeof value === "object" ? value : {};
     const next = { ...defaultRequestCategories, ...source };
     activeTargetNames().forEach((target) => {
-      next[target] = Array.isArray(next[target]) && next[target].length
+      const categories = Array.isArray(next[target]) && next[target].length
         ? next[target]
         : defaultCategoriesForTarget(target);
+      next[target] = withOtherCategory(categories);
     });
-    next["카페테리아"] = Array.isArray(next["카페테리아"]) && next["카페테리아"].length
+    next["카페테리아"] = withOtherCategory(Array.isArray(next["카페테리아"]) && next["카페테리아"].length
       ? next["카페테리아"]
-      : dataState.sections;
+      : dataState.sections);
     return next;
   }
 
@@ -1718,7 +1723,7 @@
     getSections: () => dataState.sections.length ? dataState.sections.slice() : defaultSections.slice(),
     setSections: (v) => {
       dataState.sections = Array.isArray(v) ? v : defaultSections.slice();
-      dataState.requestCategories = { ...dataState.requestCategories, "카페테리아": dataState.sections };
+      dataState.requestCategories = { ...dataState.requestCategories, "카페테리아": withOtherCategory(dataState.sections) };
       syncSettings();
     },
     getRequestCategories: (target) => {
@@ -1728,7 +1733,7 @@
     setRequestCategories: (target, categories) => {
       dataState.requestCategories = {
         ...dataState.requestCategories,
-        [target]: Array.isArray(categories) ? categories : (defaultRequestCategories[target] || [])
+        [target]: withOtherCategory(Array.isArray(categories) ? categories : (defaultRequestCategories[target] || []))
       };
       if (target === "카페테리아") dataState.sections = dataState.requestCategories[target].filter((category) => category !== "기타");
       return syncSettings();

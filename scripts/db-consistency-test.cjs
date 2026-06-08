@@ -53,6 +53,22 @@ function today() {
   return formatter.format(new Date());
 }
 
+function currentHistoryDate() {
+  const date = new Date(`${today()}T00:00:00`);
+  const day = date.getDay();
+  const daysSinceTuesday = (day + 5) % 7;
+  const start = new Date(date);
+  start.setDate(date.getDate() - daysSinceTuesday);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 5);
+  const visibleDate = date > end ? end : date;
+  return [
+    visibleDate.getFullYear(),
+    String(visibleDate.getMonth() + 1).padStart(2, "0"),
+    String(visibleDate.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
 function nowTime() {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Toronto",
@@ -130,10 +146,12 @@ function assertCheck(report, check, ok, detail = "") {
     assertCheck(report, "settings include vegetable category", (settings.requestCategories?.["야채"] || []).includes("두부"));
     assertCheck(report, "settings include store category", (settings.requestCategories?.["매장"] || settings.requestCategories?.["그로서리"] || []).includes("분말"));
     assertCheck(report, "settings include department DB", (settings.departments || []).some((row) => row.name === "카페테리아" && row.nameEn));
+    assertCheck(report, "settings include other category for every department", (settings.departments || [])
+      .map((row) => row.name)
+      .filter(Boolean)
+      .every((name) => (settings.requestCategories?.[name] || []).includes("기타")));
 
-    const beforeHistory = (await req("/history")).history || [];
-    const latestBefore = beforeHistory.slice().sort((a, b) => `${b.date || ""} ${b.time || ""}`.localeCompare(`${a.date || ""} ${a.time || ""}`))[0];
-    const requestDate = latestBefore?.date || today();
+    const requestDate = currentHistoryDate();
     const requestTime = "23:59";
 
     await req("/history", { method: "POST", body: JSON.stringify({ entry: testEntry(id, "create", requestDate, requestTime) }) });

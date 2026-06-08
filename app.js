@@ -182,12 +182,13 @@
     const category = categoryValue(item);
     const targetCategories = Store.getRequestCategories(target);
     if (!["매장", "야채", "카페테리아"].includes(target)) {
-      return targetCategories.includes(category) ? category : (category || "기타");
+      return targetCategories.includes(category) ? category : "기타";
     }
     if (target === "매장" && category === "식재료") return "상온";
     if (target === "매장" && Store.getRequestCategories("매장").includes(category)) return category;
     if (target === "매장") return "기타";
-    if (target === "야채") return category || "야채";
+    if (target === "야채" && Store.getRequestCategories("야채").includes(category)) return category;
+    if (target === "야채") return "기타";
     const cafeteriaSections = [...Store.getRequestCategories("카페테리아"), "기타"];
     if (cafeteriaSections.includes(category)) return category;
     return "기타";

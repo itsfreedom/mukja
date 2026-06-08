@@ -20,11 +20,11 @@ const pages = [
   { file: 'admin.html', script: 'admin.js' }
 ];
 const expectedHomeMemos = {
-  admin: ['레스토랑', '카페테리아', '야채', '매장', '먹자'],
-  restaurant: ['관리자', '카페테리아', '야채', '매장', '먹자'],
-  cafeteria: ['관리자', '레스토랑', '야채', '매장', '먹자'],
-  vegetable: ['관리자', '레스토랑', '카페테리아', '매장', '먹자'],
-  grocery: ['관리자', '레스토랑', '카페테리아', '야채', '먹자']
+  admin: ['레스토랑', '카페테리아', '야채', '매장', '먹자', '로드포드'],
+  restaurant: ['관리자', '카페테리아', '야채', '매장', '먹자', '로드포드'],
+  cafeteria: ['관리자', '레스토랑', '야채', '매장', '먹자', '로드포드'],
+  vegetable: ['관리자', '레스토랑', '카페테리아', '매장', '먹자', '로드포드'],
+  grocery: ['관리자', '레스토랑', '카페테리아', '야채', '먹자', '로드포드']
 };
 const sharedScripts = ['storage.js', 'i18n.js'];
 const apiHeaders = {
@@ -57,10 +57,26 @@ function today() {
   }).format(new Date());
 }
 
+function currentHistoryDate() {
+  const date = new Date(`${today()}T00:00:00`);
+  const day = date.getDay();
+  const daysSinceTuesday = (day + 5) % 7;
+  const start = new Date(date);
+  start.setDate(date.getDate() - daysSinceTuesday);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 5);
+  const visibleDate = date > end ? end : date;
+  return [
+    visibleDate.getFullYear(),
+    String(visibleDate.getMonth() + 1).padStart(2, '0'),
+    String(visibleDate.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
 function seededEntry(id) {
   return {
     id,
-    date: today(),
+    date: currentHistoryDate(),
     time: '00:01',
     mode: 'simple',
     employee: '관리자',
@@ -68,14 +84,16 @@ function seededEntry(id) {
     items: [
       { id: `${id}-cafe`, name: '테스트 닭강정', nameKo: '테스트 닭강정', nameEn: 'Test Gangjeong', category: '반조리', target: '카페테리아', quantity: '', unit: '', received: false, restaurantReceived: false },
       { id: `${id}-veg`, name: '테스트 두부', nameKo: '테스트 두부', nameEn: 'Test Tofu', category: '두부', target: '야채', quantity: '', unit: '', received: false, restaurantReceived: false },
-      { id: `${id}-grocery`, name: '테스트 다시다', nameKo: '테스트 다시다', nameEn: 'Test Powder', category: '분말', target: '매장', quantity: '', unit: '', received: true, restaurantReceived: true }
+      { id: `${id}-grocery`, name: '테스트 다시다', nameKo: '테스트 다시다', nameEn: 'Test Powder', category: '분말', target: '매장', quantity: '', unit: '', received: true, restaurantReceived: true },
+      { id: `${id}-roadford`, name: '테스트 감자전분', nameKo: '테스트 감자전분', nameEn: 'Test Potato Starch', category: '식자재', target: '로드포드', quantity: '', unit: '', received: false, restaurantReceived: false }
     ],
     memos: [
       { id: `${id}-memo-admin`, role: 'admin', department: '', authorLabel: '관리자', text: '기능 테스트 관리자 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-restaurant`, role: 'restaurant', department: '', authorLabel: '레스토랑', text: '기능 테스트 레스토랑 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-cafe`, role: 'department', department: '카페테리아', authorLabel: '카페테리아', text: '기능 테스트 카페테리아 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-veg`, role: 'department', department: '야채', authorLabel: '야채', text: '기능 테스트 야채 메모', createdAt: new Date().toISOString() },
-      { id: `${id}-memo-grocery`, role: 'department', department: '매장', authorLabel: '매장', text: '기능 테스트 매장 메모', createdAt: new Date().toISOString() }
+      { id: `${id}-memo-grocery`, role: 'department', department: '매장', authorLabel: '매장', text: '기능 테스트 매장 메모', createdAt: new Date().toISOString() },
+      { id: `${id}-memo-roadford`, role: 'department', department: '로드포드', authorLabel: '로드포드', text: '기능 테스트 로드포드 메모', createdAt: new Date().toISOString() }
     ],
     memo: '[관리자] 기능 테스트 관리자 메모',
     message: ''
@@ -166,7 +184,9 @@ async function runPage(userName, session, page, language = 'ko') {
   } else if (page.file === 'history.html') {
     const text = window.document.querySelector('#history-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
-    result.pass = !/저장된 주문내역이 없습니다/.test(text) && text.length > 0;
+    const isEmptyHistory = /저장된 주문내역이 없습니다|No saved request history/.test(text);
+    result.emptyHistoryVisible = isEmptyHistory;
+    result.pass = text.length > 0 && (session.role === 'department' || !isEmptyHistory);
   } else if (page.file === 'order.html') {
     const text = window.document.querySelector('#items-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.checked = window.document.querySelectorAll('#items-list input[type="checkbox"]:checked').length;
@@ -208,9 +228,10 @@ async function runPage(userName, session, page, language = 'ko') {
         chosenTargets.add(target);
         input.click();
       });
+      const expectedMessageTargets = [...chosenTargets];
       window.document.querySelector('#memo').value = '테스트 메모';
       window.document.querySelector('#save-create-message')?.click();
-      await waitUntil(() => window.document.querySelectorAll('.department-message-card').length === 3);
+      await waitUntil(() => window.document.querySelectorAll('.department-message-card').length === expectedMessageTargets.length);
       const messageText = window.document.querySelector('#department-message-panel')?.textContent || '';
       const requestTotalSummary = window.document.querySelector('#request-total-summary')?.textContent || '';
       const messageLines = messageText.split(/\n+/).map((line) => line.trim()).filter(Boolean);
@@ -220,15 +241,15 @@ async function runPage(userName, session, page, language = 'ko') {
       result.standaloneCopyButtons = window.document.querySelectorAll('[data-copy-department-message]').length;
       result.requestTotalSummary = requestTotalSummary;
       result.categoryMessageLines = messageLines.filter((line) => /^[^:]+: .+/.test(line)).length;
-      result.messageTestPass = ['카페테리아', '야채', '매장'].every((target) => messageText.includes(target))
+      result.messageTestPass = expectedMessageTargets.every((target) => messageText.includes(target))
         && messageText.includes('[ 먹자 ]')
-        && result.categoryMessageLines >= 3
+        && result.categoryMessageLines >= expectedMessageTargets.length
         && messageText.includes('필요합니다')
         && !messageText.includes('테스트 메모')
-        && requestTotalSummary.includes('총 3개의 품목을 요청합니다.')
+        && requestTotalSummary.includes(`총 ${expectedMessageTargets.length}개의 품목을 요청합니다.`)
         && messageText.includes('문자 복사 / 카톡 열기')
-        && result.kakaoLinks === 3
-        && result.copyOpenKakaoButtons === 3
+        && result.kakaoLinks === expectedMessageTargets.length
+        && result.copyOpenKakaoButtons === expectedMessageTargets.length
         && result.standaloneCopyButtons === 0;
       const createdRequestIds = window.Store.getHistory()
         .filter((entry) => !historyIdsBeforeMessage.has(entry.id))
@@ -289,6 +310,22 @@ async function runPage(userName, session, page, language = 'ko') {
         && targetRows().every((row) => !row.querySelector('[data-order-item-action="create"]') && !row.querySelector('[data-request-category-action="edit"]'));
       currentTargetToggle()?.click();
       await waitUntil(() => targetRows().some((row) => !row.classList.contains('is-collapsed')));
+      result.otherCategoryAvailableForEveryTarget = window.Store.getTargets()
+        .every((target) => window.Store.getRequestCategories(target).includes('기타'));
+      const otherCategoryRow = window.document.querySelector('[data-request-category-row][data-category-name="기타"]');
+      otherCategoryRow?.querySelector('[data-request-category-action="edit"]')?.click();
+      await waitUntil(() => window.document.querySelector('[data-request-category-form][data-category-old-name="기타"]'));
+      const otherCategoryForm = window.document.querySelector('[data-request-category-form][data-category-old-name="기타"]');
+      const otherCategoryTarget = otherCategoryForm?.dataset.categoryTarget || '';
+      const categoriesBeforeOtherSave = window.Store.getRequestCategories(otherCategoryTarget).join('|');
+      const otherDeleteButton = otherCategoryForm?.querySelector('[data-request-category-action="delete"]');
+      result.otherCategoryDeleteHidden = Boolean(otherDeleteButton?.classList.contains('hidden'));
+      otherCategoryForm.querySelector('[data-request-category-name]').value = '기타 변경 테스트';
+      otherCategoryForm.querySelector('[data-request-category-action="save"]')?.click();
+      result.otherCategoryRenameBlocked = categoriesBeforeOtherSave === window.Store.getRequestCategories(otherCategoryTarget).join('|')
+        && window.Store.getRequestCategories(otherCategoryTarget).includes('기타')
+        && !window.Store.getRequestCategories(otherCategoryTarget).includes('기타 변경 테스트');
+      window.document.querySelector('[data-request-category-form] [data-request-category-action="cancel"]')?.click();
       const createButton = window.document.querySelector('[data-order-item-action="create"]');
       const duplicateTarget = createButton?.dataset.orderItemTarget || '';
       const duplicateCategory = createButton?.dataset.orderItemCategory || '';
@@ -326,6 +363,9 @@ async function runPage(userName, session, page, language = 'ko') {
     if (result.categoryCollapseWorks === false) result.pass = false;
     if (result.categoryAddIconButton === false) result.pass = false;
     if (result.targetCollapseWorks === false) result.pass = false;
+    if (result.otherCategoryAvailableForEveryTarget === false) result.pass = false;
+    if (result.otherCategoryDeleteHidden === false) result.pass = false;
+    if (result.otherCategoryRenameBlocked === false) result.pass = false;
     if (result.topJumpFocusesTitle === false) result.pass = false;
     if (result.categoryTitleFocusWorks === false) result.pass = false;
     if (result.requiredIngredientNamesBlocked === false) result.pass = false;
