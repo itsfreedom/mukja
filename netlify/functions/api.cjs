@@ -35,6 +35,19 @@ function getPool() {
   return pool;
 }
 
+function todayInToronto() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date()).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 async function ensureSchema(client) {
   if (schemaReady) return schemaReady;
   schemaReady = client.query(`
@@ -560,7 +573,7 @@ async function upsertOrder(client, entry, info) {
       updated_at = now()
   `, [
     id,
-    entry.date || new Date().toISOString().slice(0, 10),
+    entry.date || todayInToronto(),
     entry.time || "",
     entry.mode || "simple",
     entry.employee || "",
