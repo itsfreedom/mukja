@@ -148,6 +148,7 @@ async function runPage(userName, file, query = "") {
   });
   return {
     text: window.document.body.textContent.replace(/\s+/g, " ").trim(),
+    pagerText: (window.document.querySelector("#week-pager")?.textContent || "").replace(/\s+/g, " ").trim(),
     errors
   };
 }
@@ -218,6 +219,7 @@ function assertCheck(report, check, ok, detail = "") {
     assertCheck(report, "D history row removed", !afterDelete && !afterMondayDelete);
     const defaultHistoryList = await runPage("admin", "history.html");
     assertCheck(report, "history default opens populated week when history exists", !remainingHistory.length || !defaultHistoryList.text.includes("저장된 주문내역이 없습니다."));
+    assertCheck(report, "history populated fallback week is labeled page 1", !remainingHistory.length || /^< 1\b/.test(defaultHistoryList.pagerText), defaultHistoryList.pagerText);
   } catch (error) {
     report.push({ check: "fatal", ok: false, detail: error.message });
     try { await req(`/history/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {}

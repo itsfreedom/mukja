@@ -15,6 +15,7 @@
   const hasWeekParam = params.has("week");
   const pageParam = Number(params.get("week") || "0");
   let weekOffset = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
+  let weekBaseOffset = 0;
   const session = Store.getAuth();
 
   function visibleHistory() {
@@ -80,13 +81,23 @@
     return 0;
   }
 
+  function syncWeekBaseOffset() {
+    weekBaseOffset = pageHasItems(0) ? 0 : firstOffsetWithItems();
+    if (weekOffset < weekBaseOffset) weekOffset = weekBaseOffset;
+  }
+
+  function weekDisplayNumber(offset) {
+    return offset - weekBaseOffset + 1;
+  }
+
   function renderPager() {
-    const startSlot = Math.max(0, weekOffset - 2);
+    syncWeekBaseOffset();
+    const startSlot = Math.max(weekBaseOffset, weekOffset - 2);
     const slots = Array.from({ length: 5 }, (_, index) => startSlot + index);
     pager.innerHTML = `
-      <button type="button" data-week-jump="${Math.max(0, weekOffset - 1)}">&lt;</button>
+      <button type="button" data-week-jump="${Math.max(weekBaseOffset, weekOffset - 1)}">&lt;</button>
       ${slots.map((offset) => pageHasItems(offset)
-        ? `<button type="button" class="${offset === weekOffset ? "is-active" : ""}" data-week-jump="${offset}">${offset + 1}</button>`
+        ? `<button type="button" class="${offset === weekOffset ? "is-active" : ""}" data-week-jump="${offset}">${weekDisplayNumber(offset)}</button>`
         : `<span>.</span>`
       ).join("")}
       <button type="button" data-week-jump="${weekOffset + 1}">&gt;</button>
