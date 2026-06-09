@@ -1419,12 +1419,6 @@ body {
   border-color: rgba(130, 168, 255, 0.32);
 }
 
-.history-week-range {
-  color: var(--muted);
-  font-size: 0.86rem;
-  margin-bottom: 10px;
-}
-
 .history-table {
   display: grid;
   gap: 8px;

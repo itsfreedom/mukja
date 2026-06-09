@@ -183,10 +183,13 @@ async function runPage(userName, session, page, language = 'ko') {
     if (!expectsHomeControls && result.homeJumpPanelHidden === false) result.pass = false;
   } else if (page.file === 'history.html') {
     const text = window.document.querySelector('#history-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+    const pagerText = window.document.querySelector('#history-pager')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
+    result.historyPagerGeneral = !pagerText.includes('.');
     const isEmptyHistory = /저장된 주문내역이 없습니다|No saved request history/.test(text);
     result.emptyHistoryVisible = isEmptyHistory;
     result.pass = text.length > 0 && (session.role === 'department' || !isEmptyHistory);
+    if (result.historyPagerGeneral === false) result.pass = false;
   } else if (page.file === 'order.html') {
     const text = window.document.querySelector('#items-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.checked = window.document.querySelectorAll('#items-list input[type="checkbox"]:checked').length;

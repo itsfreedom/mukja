@@ -5,17 +5,16 @@
 
   const params = new URLSearchParams(window.location.search);
   const detailId = params.get("id") || "";
-  const weekView = document.getElementById("history-week-view");
+  const listView = document.getElementById("history-list-view");
   const detailView = document.getElementById("history-detail");
   const closeDetail = document.getElementById("close-detail");
   const pageTitle = document.getElementById("history-page-title");
   const pageMeta = document.getElementById("history-page-meta");
   const list = document.getElementById("history-list");
-  const pager = document.getElementById("week-pager");
-  const hasWeekParam = params.has("week");
-  const pageParam = Number(params.get("week") || "0");
-  let weekOffset = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
-  let weekBaseOffset = 0;
+  const pager = document.getElementById("history-pager");
+  const pageSize = 10;
+  const pageParam = Number(params.get("page") || "0");
+  let pageIndex = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
   const session = Store.getAuth();
 
   function visibleHistory() {
@@ -26,18 +25,6 @@
       const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
       return items.length ? [{ ...entry, items }] : [];
     });
-  }
-
-  function dateOnly(value) {
-    const date = new Date(`${value}T00:00:00`);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
   }
 
   function formatSavedAt(entry) {
@@ -52,81 +39,46 @@
     });
   }
 
-  function weekRange(offset) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const day = today.getDay();
-    const daysSinceTuesday = (day + 5) % 7;
-    const start = new Date(today);
-    start.setDate(today.getDate() - daysSinceTuesday - offset * 7);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    return { start, end };
+  function sortedHistory() {
+    return visibleHistory()
+      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`));
   }
 
-  function inRange(entry, range) {
-    const date = dateOnly(entry.date);
-    return date && date >= range.start && date <= range.end;
-  }
-
-  function pageHasItems(offset) {
-    const range = weekRange(offset);
-    return visibleHistory().some((entry) => inRange(entry, range));
-  }
-
-  function firstOffsetWithItems(maxOffset = 52) {
-    for (let offset = 0; offset <= maxOffset; offset += 1) {
-      if (pageHasItems(offset)) return offset;
+  function renderPager(totalPages) {
+    if (totalPages <= 0) {
+      pager.innerHTML = "";
+      return;
     }
-    return 0;
-  }
-
-  function syncWeekBaseOffset() {
-    weekBaseOffset = pageHasItems(0) ? 0 : firstOffsetWithItems();
-    if (weekOffset < weekBaseOffset) weekOffset = weekBaseOffset;
-  }
-
-  function weekDisplayNumber(offset) {
-    return offset - weekBaseOffset + 1;
-  }
-
-  function renderPager() {
-    syncWeekBaseOffset();
-    const startSlot = Math.max(weekBaseOffset, weekOffset - 2);
-    const slots = Array.from({ length: 5 }, (_, index) => startSlot + index);
+    pageIndex = Math.min(Math.max(pageIndex, 0), totalPages - 1);
+    const startSlot = Math.max(0, Math.min(pageIndex - 2, Math.max(0, totalPages - 5)));
+    const slots = Array.from({ length: Math.min(5, totalPages - startSlot) }, (_, index) => startSlot + index);
     pager.innerHTML = `
-      <button type="button" data-week-jump="${Math.max(weekBaseOffset, weekOffset - 1)}">&lt;</button>
-      ${slots.map((offset) => pageHasItems(offset)
-        ? `<button type="button" class="${offset === weekOffset ? "is-active" : ""}" data-week-jump="${offset}">${weekDisplayNumber(offset)}</button>`
-        : `<span>.</span>`
-      ).join("")}
-      <button type="button" data-week-jump="${weekOffset + 1}">&gt;</button>
+      <button type="button" data-history-page="${Math.max(0, pageIndex - 1)}">&lt;</button>
+      ${slots.map((page) => `<button type="button" class="${page === pageIndex ? "is-active" : ""}" data-history-page="${page}">${page + 1}</button>`).join("")}
+      <button type="button" data-history-page="${Math.min(totalPages - 1, pageIndex + 1)}">&gt;</button>
     `;
-    pager.querySelectorAll("[data-week-jump]").forEach((button) => {
+    pager.querySelectorAll("[data-history-page]").forEach((button) => {
       button.addEventListener("click", () => {
-        weekOffset = Number(button.dataset.weekJump || "0");
+        pageIndex = Number(button.dataset.historyPage || "0");
         renderList();
       });
     });
   }
 
   function renderList() {
-    renderPager();
-    const range = weekRange(weekOffset);
-    const entries = visibleHistory()
-      .filter((entry) => inRange(entry, range))
-      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`));
-    const rangeLabel = `<div class="history-week-range">${formatDate(range.start)} - ${formatDate(range.end)}</div>`;
+    const entries = sortedHistory();
+    const totalPages = Math.ceil(entries.length / pageSize);
+    renderPager(totalPages);
     if (!entries.length) {
-      list.innerHTML = `${rangeLabel}<div class="list-card muted">${I18n.t("noHistory")}</div>`;
+      list.innerHTML = `<div class="list-card muted">${I18n.t("noHistory")}</div>`;
       return;
     }
+    const pageEntries = entries.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
     list.innerHTML = `
-      ${rangeLabel}
       <div class="history-table">
-        ${entries.map((entry, index) => `
-          <a class="history-row" href="history.html?id=${encodeURIComponent(entry.id)}&week=${weekOffset}">
-            <span>${index + 1}</span>
+        ${pageEntries.map((entry, index) => `
+          <a class="history-row" href="history.html?id=${encodeURIComponent(entry.id)}&page=${pageIndex}">
+            <span>${pageIndex * pageSize + index + 1}</span>
             <span class="history-row-main">
               <strong>${entry.date} ${entry.time || ""}</strong>
               <small>${formatSavedAt(entry)}</small>
@@ -258,7 +210,7 @@
       detailView.innerHTML = `<div class="list-card muted">${I18n.t("noHistory")}</div>`;
       return;
     }
-    weekView.classList.add("hidden");
+    listView.classList.add("hidden");
     detailView.classList.remove("hidden");
     closeDetail.classList.remove("hidden");
     pageTitle.textContent = I18n.t("detailHistory");
@@ -279,12 +231,8 @@
   }
 
   closeDetail.addEventListener("click", () => {
-    window.location.href = `history.html?week=${weekOffset}`;
+    window.location.href = `history.html?page=${pageIndex}`;
   });
-
-  if (!detailId && !hasWeekParam && !pageHasItems(weekOffset)) {
-    weekOffset = firstOffsetWithItems();
-  }
 
   if (detailId) renderDetail();
   else renderList();

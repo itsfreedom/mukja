@@ -54,19 +54,7 @@ function today() {
 }
 
 function currentHistoryDate() {
-  const date = new Date(`${today()}T00:00:00`);
-  const day = date.getDay();
-  const daysSinceTuesday = (day + 5) % 7;
-  const start = new Date(date);
-  start.setDate(date.getDate() - daysSinceTuesday);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  const visibleDate = date > end ? end : date;
-  return [
-    visibleDate.getFullYear(),
-    String(visibleDate.getMonth() + 1).padStart(2, "0"),
-    String(visibleDate.getDate()).padStart(2, "0")
-  ].join("-");
+  return today();
 }
 
 function formatLocalDate(date) {
@@ -77,15 +65,10 @@ function formatLocalDate(date) {
   ].join("-");
 }
 
-function previousWeekMondayDate() {
+function pastHistoryDate(daysAgo = 30) {
   const date = new Date(`${today()}T00:00:00`);
-  const day = date.getDay();
-  const daysSinceTuesday = (day + 5) % 7;
-  const start = new Date(date);
-  start.setDate(date.getDate() - daysSinceTuesday - 7);
-  const monday = new Date(start);
-  monday.setDate(start.getDate() + 6);
-  return formatLocalDate(monday);
+  date.setDate(date.getDate() - daysAgo);
+  return formatLocalDate(date);
 }
 
 function nowTime() {
@@ -148,7 +131,7 @@ async function runPage(userName, file, query = "") {
   });
   return {
     text: window.document.body.textContent.replace(/\s+/g, " ").trim(),
-    pagerText: (window.document.querySelector("#week-pager")?.textContent || "").replace(/\s+/g, " ").trim(),
+    pagerText: (window.document.querySelector("#history-pager")?.textContent || "").replace(/\s+/g, " ").trim(),
     errors
   };
 }
@@ -159,7 +142,7 @@ function assertCheck(report, check, ok, detail = "") {
 
 (async () => {
   const id = `consistency-${Date.now()}`;
-  const mondayId = `${id}-monday-edge`;
+  const oldId = `${id}-older-list-row`;
   const report = [];
   try {
     const settings = (await req("/settings")).settings || {};
@@ -206,24 +189,30 @@ function assertCheck(report, check, ok, detail = "") {
     assertCheck(report, "history detail shows vegetable category", historyDetail.text.includes("두부") && historyDetail.text.includes("테스트 두부"));
     assertCheck(report, "history detail shows grocery category", historyDetail.text.includes("분말") && historyDetail.text.includes("테스트 다시다"));
 
-    const mondayDate = previousWeekMondayDate();
-    await req("/history", { method: "POST", body: JSON.stringify({ entry: testEntry(mondayId, "monday", mondayDate, "23:58") }) });
-    const previousWeekList = await runPage("admin", "history.html", "?week=1");
-    assertCheck(report, "history previous week includes Monday edge date", previousWeekList.text.includes(mondayDate) && previousWeekList.text.includes("23:58"));
+    const oldDate = pastHistoryDate();
+    await req("/history", { method: "POST", body: JSON.stringify({ entry: testEntry(oldId, "older", oldDate, "23:58") }) });
+    const historyAfterOldCreate = ((await req("/history")).history || [])
+      .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`));
+    const oldIndex = historyAfterOldCreate.findIndex((entry) => entry.id === oldId);
+    const oldPage = oldIndex >= 0 ? Math.floor(oldIndex / 10) : 0;
+    const generalHistoryList = await runPage("admin", "history.html");
+    const oldHistoryPage = await runPage("admin", "history.html", `?page=${oldPage}`);
+    assertCheck(report, "history list shows recent request on general first page", generalHistoryList.text.includes(requestDate) && generalHistoryList.text.includes(requestTime));
+    assertCheck(report, "history list reaches older request by general page", oldHistoryPage.text.includes(oldDate) && oldHistoryPage.text.includes("23:58"));
+    assertCheck(report, "history pager does not show empty date-group dots", !generalHistoryList.pagerText.includes("."), generalHistoryList.pagerText);
 
     await req(`/history/${encodeURIComponent(id)}`, { method: "DELETE" });
-    await req(`/history/${encodeURIComponent(mondayId)}`, { method: "DELETE" });
+    await req(`/history/${encodeURIComponent(oldId)}`, { method: "DELETE" });
     const remainingHistory = (await req("/history")).history || [];
     const afterDelete = remainingHistory.some((entry) => entry.id === id);
-    const afterMondayDelete = remainingHistory.some((entry) => entry.id === mondayId);
-    assertCheck(report, "D history row removed", !afterDelete && !afterMondayDelete);
+    const afterOldDelete = remainingHistory.some((entry) => entry.id === oldId);
+    assertCheck(report, "D history row removed", !afterDelete && !afterOldDelete);
     const defaultHistoryList = await runPage("admin", "history.html");
-    assertCheck(report, "history default opens populated week when history exists", !remainingHistory.length || !defaultHistoryList.text.includes("저장된 주문내역이 없습니다."));
-    assertCheck(report, "history populated fallback week is labeled page 1", !remainingHistory.length || /^< 1\b/.test(defaultHistoryList.pagerText), defaultHistoryList.pagerText);
+    assertCheck(report, "history default opens populated list when history exists", !remainingHistory.length || !defaultHistoryList.text.includes("저장된 주문내역이 없습니다."));
   } catch (error) {
     report.push({ check: "fatal", ok: false, detail: error.message });
     try { await req(`/history/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {}
-    try { await req(`/history/${encodeURIComponent(mondayId)}`, { method: "DELETE" }); } catch {}
+    try { await req(`/history/${encodeURIComponent(oldId)}`, { method: "DELETE" }); } catch {}
   }
 
   console.table(report);
