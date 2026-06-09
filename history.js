@@ -12,6 +12,7 @@
   const pageMeta = document.getElementById("history-page-meta");
   const list = document.getElementById("history-list");
   const pager = document.getElementById("week-pager");
+  const hasWeekParam = params.has("week");
   const pageParam = Number(params.get("week") || "0");
   let weekOffset = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
   const session = Store.getAuth();
@@ -58,7 +59,7 @@
     const start = new Date(today);
     start.setDate(today.getDate() - daysSinceTuesday - offset * 7);
     const end = new Date(start);
-    end.setDate(start.getDate() + 5);
+    end.setDate(start.getDate() + 6);
     return { start, end };
   }
 
@@ -70,6 +71,13 @@
   function pageHasItems(offset) {
     const range = weekRange(offset);
     return visibleHistory().some((entry) => inRange(entry, range));
+  }
+
+  function firstOffsetWithItems(maxOffset = 52) {
+    for (let offset = 0; offset <= maxOffset; offset += 1) {
+      if (pageHasItems(offset)) return offset;
+    }
+    return 0;
   }
 
   function renderPager() {
@@ -97,12 +105,13 @@
     const entries = visibleHistory()
       .filter((entry) => inRange(entry, range))
       .sort((a, b) => `${b.date} ${b.time || ""}`.localeCompare(`${a.date} ${a.time || ""}`));
+    const rangeLabel = `<div class="history-week-range">${formatDate(range.start)} - ${formatDate(range.end)}</div>`;
     if (!entries.length) {
-      list.innerHTML = `<div class="list-card muted">${I18n.t("noHistory")}</div>`;
+      list.innerHTML = `${rangeLabel}<div class="list-card muted">${I18n.t("noHistory")}</div>`;
       return;
     }
     list.innerHTML = `
-      <div class="history-week-range">${formatDate(range.start)} - ${formatDate(range.end)}</div>
+      ${rangeLabel}
       <div class="history-table">
         ${entries.map((entry, index) => `
           <a class="history-row" href="history.html?id=${encodeURIComponent(entry.id)}&week=${weekOffset}">
@@ -261,6 +270,10 @@
   closeDetail.addEventListener("click", () => {
     window.location.href = `history.html?week=${weekOffset}`;
   });
+
+  if (!detailId && !hasWeekParam && !pageHasItems(weekOffset)) {
+    weekOffset = firstOffsetWithItems();
+  }
 
   if (detailId) renderDetail();
   else renderList();

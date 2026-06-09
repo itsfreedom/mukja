@@ -64,7 +64,7 @@ function currentHistoryDate() {
   const start = new Date(date);
   start.setDate(date.getDate() - daysSinceTuesday);
   const end = new Date(start);
-  end.setDate(start.getDate() + 5);
+  end.setDate(start.getDate() + 6);
   const visibleDate = date > end ? end : date;
   return [
     visibleDate.getFullYear(),

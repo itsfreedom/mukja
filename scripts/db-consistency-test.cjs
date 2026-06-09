@@ -60,13 +60,32 @@ function currentHistoryDate() {
   const start = new Date(date);
   start.setDate(date.getDate() - daysSinceTuesday);
   const end = new Date(start);
-  end.setDate(start.getDate() + 5);
+  end.setDate(start.getDate() + 6);
   const visibleDate = date > end ? end : date;
   return [
     visibleDate.getFullYear(),
     String(visibleDate.getMonth() + 1).padStart(2, "0"),
     String(visibleDate.getDate()).padStart(2, "0")
   ].join("-");
+}
+
+function formatLocalDate(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function previousWeekMondayDate() {
+  const date = new Date(`${today()}T00:00:00`);
+  const day = date.getDay();
+  const daysSinceTuesday = (day + 5) % 7;
+  const start = new Date(date);
+  start.setDate(date.getDate() - daysSinceTuesday - 7);
+  const monday = new Date(start);
+  monday.setDate(start.getDate() + 6);
+  return formatLocalDate(monday);
 }
 
 function nowTime() {
@@ -139,6 +158,7 @@ function assertCheck(report, check, ok, detail = "") {
 
 (async () => {
   const id = `consistency-${Date.now()}`;
+  const mondayId = `${id}-monday-edge`;
   const report = [];
   try {
     const settings = (await req("/settings")).settings || {};
@@ -185,12 +205,23 @@ function assertCheck(report, check, ok, detail = "") {
     assertCheck(report, "history detail shows vegetable category", historyDetail.text.includes("두부") && historyDetail.text.includes("테스트 두부"));
     assertCheck(report, "history detail shows grocery category", historyDetail.text.includes("분말") && historyDetail.text.includes("테스트 다시다"));
 
+    const mondayDate = previousWeekMondayDate();
+    await req("/history", { method: "POST", body: JSON.stringify({ entry: testEntry(mondayId, "monday", mondayDate, "23:58") }) });
+    const previousWeekList = await runPage("admin", "history.html", "?week=1");
+    assertCheck(report, "history previous week includes Monday edge date", previousWeekList.text.includes(mondayDate) && previousWeekList.text.includes("23:58"));
+
     await req(`/history/${encodeURIComponent(id)}`, { method: "DELETE" });
-    const afterDelete = ((await req("/history")).history || []).some((entry) => entry.id === id);
-    assertCheck(report, "D history row removed", !afterDelete);
+    await req(`/history/${encodeURIComponent(mondayId)}`, { method: "DELETE" });
+    const remainingHistory = (await req("/history")).history || [];
+    const afterDelete = remainingHistory.some((entry) => entry.id === id);
+    const afterMondayDelete = remainingHistory.some((entry) => entry.id === mondayId);
+    assertCheck(report, "D history row removed", !afterDelete && !afterMondayDelete);
+    const defaultHistoryList = await runPage("admin", "history.html");
+    assertCheck(report, "history default opens populated week when history exists", !remainingHistory.length || !defaultHistoryList.text.includes("저장된 주문내역이 없습니다."));
   } catch (error) {
     report.push({ check: "fatal", ok: false, detail: error.message });
     try { await req(`/history/${encodeURIComponent(id)}`, { method: "DELETE" }); } catch {}
+    try { await req(`/history/${encodeURIComponent(mondayId)}`, { method: "DELETE" }); } catch {}
   }
 
   console.table(report);
