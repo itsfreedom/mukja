@@ -65,7 +65,7 @@
   let activeDropElement = null;
   const collapsedMenuCategories = new Set();
   const session = Store.getAuth();
-  const canViewMenu = ["restaurant", "admin"].includes(session?.role);
+  const canViewMenu = session?.role === "admin" || Store.isMukjaSession(session);
   const canManageMenu = session?.role === "admin";
   const addIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14" /><path d="M5 12h14" /></svg>';
   const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M5 5.5h14v3.5H5z" /><path class="toggle-icon-triangle" d="M5 11h14l-7 8z" /></svg>';

@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v204";
+  const appAssetVersion = "v205";
   const appDisplayVersion = "Version 1.0";
   const keys = {
     initialized: "restaurant_initialized",
@@ -78,7 +78,7 @@
     c1234: { role: "department", department: "카페테리아", label: "카페테리아", userName: "c1234", name: "카페테리아" },
     v1234: { role: "department", department: "야채", label: "야채", userName: "v1234", name: "야채" },
     g1234: { role: "department", department: "매장", label: "매장", userName: "g1234", name: "매장" },
-    m1234: { role: "restaurant", department: "", label: "레스토랑", userName: "m1234", name: "레스토랑" },
+    m1234: { role: "department", department: "먹자", label: "먹자", userName: "m1234", name: "먹자" },
     madmin: { role: "admin", department: "", label: "관리자", userName: "madmin", name: "관리자" }
   };
   const defaultIngredients = [
@@ -693,9 +693,17 @@
     return auth()?.role === "admin";
   }
 
+  function isMukjaSession(session = auth()) {
+    return normalizeTargetName(session?.department || session?.label) === "먹자";
+  }
+
+  function canCreateRequest(session = auth()) {
+    return session?.role === "admin" || isMukjaSession(session);
+  }
+
   function allowedTargets() {
     const session = auth();
-    if (session?.role === "department" && session.department) return [session.department];
+    if (session?.role === "department" && session.department && !isMukjaSession(session)) return [session.department];
     return activeTargetNames();
   }
 
@@ -1150,7 +1158,7 @@
   }
 
   function historyToCsv(rows) {
-    const header = ["날짜", "시간", "모드", "요청자", "주문부서", "품목", "품목영문", "수량", "단위", "입고여부", "메모"];
+    const header = ["날짜", "시간", "모드", "요청자", "주문부서", "품목", "품목영문", "수량", "단위", "출고여부", "입고여부", "메모"];
     const lines = [header.map(csvEscape).join(",")];
     rows.forEach((entry) => {
       entry.items.forEach((item) => {
@@ -1165,6 +1173,7 @@
           item.quantity || "",
           item.unit || "",
           item.received ? "Y" : "",
+          item.restaurantReceived ? "Y" : "",
           entry.memo || ""
         ].map(csvEscape).join(","));
       });
@@ -1365,7 +1374,8 @@
         target,
         quantity: field(row, map, ["수량", "quantity", "Quantity"]),
         unit: field(row, map, ["단위", "unit", "Unit"]),
-        received: ["Y", "true", "1", "입고"].includes(field(row, map, ["입고여부", "received", "Received"])),
+        received: ["Y", "true", "1", "출고", "출고완료"].includes(field(row, map, ["출고여부", "received", "Received"])),
+        restaurantReceived: ["Y", "true", "1", "입고", "입고완료"].includes(field(row, map, ["입고여부", "restaurantReceived", "Restaurant Received", "restaurant_received"])),
         category: field(row, map, ["카테고리", "category", "분류", "section"]),
         enabled: true
       });
@@ -1787,6 +1797,8 @@
     authenticate,
     logoutAuth,
     canAdmin,
+    canCreateRequest,
+    isMukjaSession,
     startPath,
     seedTestData,
     resetDemoData,
@@ -1823,8 +1835,8 @@
       const badgeColor = session ? roleBadgeColor(badgeSource, session.role) : "";
       const badgeTextColor = session ? roleBadgeTextColor(badgeSource, session.role) : "";
       const isRestricted = (key) => {
-        if (key === "order") return !["restaurant", "admin"].includes(session?.role);
-        if (key === "menus") return !["restaurant", "admin"].includes(session?.role);
+        if (key === "order") return !canCreateRequest(session);
+        if (key === "menus") return !(session?.role === "admin" || isMukjaSession(session));
         if (key === "admin") return session?.role !== "admin";
         return false;
       };

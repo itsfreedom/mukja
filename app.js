@@ -15,12 +15,11 @@
   const toggleIcon = '<svg class="toggle-triangle-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="toggle-icon-line" d="M5 5.5h14v3.5H5z" /><path class="toggle-icon-triangle" d="M5 11h14l-7 8z" /></svg>';
 
   function canUseHomeNavigation() {
-    return ["admin", "restaurant"].includes(session?.role);
+    return session?.role === "admin" || Store.isMukjaSession(session);
   }
 
   function usesIncomingHomeCheck() {
-    return session?.role === "admin" ||
-      Store.normalizeTargetName(session?.department || session?.label) === "먹자";
+    return session?.role === "admin" || Store.isMukjaSession(session);
   }
 
   function escapeHtml(value) {
@@ -39,7 +38,7 @@
     const hasItems = Array.isArray(entry.items) && entry.items.length > 0;
     const hasMemo = String(entry.memo || "").trim() || (Array.isArray(entry.memos) && entry.memos.some((memo) => String(memo?.text || "").trim()));
     if (!hasItems && hasMemo) return { ...entry, items: [] };
-    if (session?.role === "department" && session.department) {
+    if (session?.role === "department" && session.department && !Store.isMukjaSession(session)) {
       const department = Store.normalizeTargetName(session.department);
       const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
       return items.length ? { ...entry, items } : null;
@@ -503,7 +502,7 @@
       I18n.applyI18n();
       return;
     }
-    const isDepartment = session?.role === "department";
+    const isDepartment = session?.role === "department" && !Store.isMukjaSession(session);
     const targetOrder = Store.getTargets();
     const categoryOrders = Object.fromEntries(targetOrder.map((target) => [
       target,

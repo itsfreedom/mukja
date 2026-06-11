@@ -6,7 +6,7 @@ const cwd = process.cwd();
 const site = 'https://mukjamtl.netlify.app';
 const users = {
   admin: { role: 'admin', department: '', label: '관리자' },
-  restaurant: { role: 'restaurant', department: '', label: '레스토랑' },
+  mukja: { role: 'department', department: '먹자', label: '먹자' },
   cafeteria: { role: 'department', department: '카페테리아', label: '카페테리아' },
   vegetable: { role: 'department', department: '야채', label: '야채' },
   grocery: { role: 'department', department: '매장', label: '매장' }
@@ -21,7 +21,7 @@ const pages = [
 ];
 const expectedHomeMemos = {
   admin: ['레스토랑', '카페테리아', '야채', '매장', '먹자', '로드포드'],
-  restaurant: ['관리자', '카페테리아', '야채', '매장', '먹자', '로드포드'],
+  mukja: ['관리자', '레스토랑', '카페테리아', '야채', '매장', '로드포드'],
   cafeteria: ['관리자', '레스토랑', '야채', '매장', '먹자', '로드포드'],
   vegetable: ['관리자', '레스토랑', '카페테리아', '매장', '먹자', '로드포드'],
   grocery: ['관리자', '레스토랑', '카페테리아', '야채', '먹자', '로드포드']
@@ -149,7 +149,7 @@ async function runPage(userName, session, page, language = 'ko') {
     result.subtitle = window.document.querySelector('[data-home-subtitle]')?.textContent || '';
     result.sample = homeText.slice(0, 180);
     result.latestRequestVisible = window.document.querySelectorAll('#home-request-list .receive-row').length > 0;
-    const expectsHomeControls = ['admin', 'restaurant'].includes(userName);
+    const expectsHomeControls = ['admin', 'mukja'].includes(userName);
     if (expectsHomeControls) {
       result.homeJumpPanelVisible = Boolean(window.document.querySelector('[data-home-jump-panel]'));
       const targetToggle = window.document.querySelector('[data-home-target-action="toggle"]');
@@ -383,7 +383,7 @@ async function runPage(userName, session, page, language = 'ko') {
       result.duplicateIngredientBlocked = duplicateIngredientKoreanBlocked && duplicateIngredientEnglishBlocked;
       result.dragLockedWhileEditFormOpen = window.document.querySelectorAll('[data-request-item-row][draggable="true"], [data-request-category-row][draggable="true"]').length === 0;
     }
-    result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
+    result.pass = ['admin','mukja'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.emptyRequestBlocked === false) result.pass = false;
     if (result.memoOnlyCreatesHistory === false) result.pass = false;
     if (result.cancelRestoresLatestRequest === false) result.pass = false;
@@ -404,7 +404,7 @@ async function runPage(userName, session, page, language = 'ko') {
   } else if (page.file === 'menu.html') {
     const text = window.document.querySelector('#menu-list')?.textContent?.replace(/\s+/g, ' ').trim() || '';
     result.sample = text.slice(0, 180);
-    if (['admin','restaurant'].includes(userName)) {
+    if (['admin','mukja'].includes(userName)) {
       const menuCategory = window.document.querySelector('[data-menu-category-row]');
       const menuToggle = menuCategory?.querySelector('[data-menu-category-action="toggle"]');
       const menuRowCount = menuCategory?.querySelectorAll('[data-menu]').length || 0;
@@ -444,7 +444,7 @@ async function runPage(userName, session, page, language = 'ko') {
       result.duplicateMenuBlocked = alerts.some((message) => message.includes('이미 같은 메뉴명'))
         && window.Store.getMenus().length === menuCountBefore;
     }
-    result.pass = ['admin','restaurant'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
+    result.pass = ['admin','mukja'].includes(userName) ? text.length > 0 && !/권한/.test(text) : /권한/.test(text);
     if (result.menuCategoryCollapseWorks === false) result.pass = false;
     if (result.requiredMenuNamesBlocked === false) result.pass = false;
     if (result.duplicateMenuBlocked === false) result.pass = false;

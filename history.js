@@ -20,7 +20,7 @@
   function visibleHistory() {
     const session = Store.getAuth();
     return Store.getHistory().flatMap((entry) => {
-      if (session?.role !== "department" || !session.department) return [entry];
+      if (session?.role !== "department" || !session.department || Store.isMukjaSession(session)) return [entry];
       const department = Store.normalizeTargetName(session.department);
       const items = (entry.items || []).filter((item) => Store.normalizeTargetName(item.target) === department);
       return items.length ? [{ ...entry, items }] : [];

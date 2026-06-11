@@ -15,7 +15,7 @@ https://mukjamtl.netlify.app
 | 항목 | 내용 |
 | --- | --- |
 | 앱 버전 | Version 1.0 |
-| 정적 자산 버전 | `v204` |
+| 정적 자산 버전 | `v205` |
 | 기준일 | 2026-06-06 |
 | 기준 브랜치 | `main` |
 | 다음 개발 | 새 브랜치에서 시작 |
@@ -44,7 +44,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 | 카페테리아 | `c1234` | 카페테리아 요청 확인, 메모 작성 |
 | 야채 | `v1234` | 야채 요청 확인, 메모 작성 |
 | 매장 | `g1234` | 매장 요청 확인, 메모 작성 |
-| 레스토랑 | `m1234` | 전체 요청 작성, 출고 확인, 메뉴/레시피 조회 |
+| 먹자 | `m1234` | 전체 요청 작성, 입고 확인, 메뉴/레시피 조회 |
 | 관리자 | `madmin` | 전체 기능, 재료/메뉴/레시피/부서/비밀번호/데이터 백업 관리 |
 
 ## 기능 요약
@@ -63,8 +63,8 @@ https://mukjamtl.netlify.app/reset-cache.html
 - 최신 요청 조회
 - 요청 내역 DB의 `updatedAt/createdAt` 기준 최신 요청 우선 표시
 - 부서별 요청 필터
-- 관리자/레스토랑 홈 이동 컨트롤
-- 관리자/레스토랑 홈 부서/카테고리 접기/펼치기
+- 관리자/먹자 홈 이동 컨트롤
+- 관리자/먹자 홈 부서/카테고리 접기/펼치기
 - 홈 체크 저장: 관리자/먹자 사용자는 입고, 그 외 사용자는 출고 상태로 요청 내역에 저장
 - 요청별 메모 저장
 - 브라우저 포커스 복귀 시 DB 최신화
@@ -79,7 +79,7 @@ https://mukjamtl.netlify.app/reset-cache.html
 
 ### 요청하기
 
-- 레스토랑/관리자 주문 모드
+- 먹자/관리자 주문 모드
 - 품목 체크와 메모 저장
 - 브라우저 현지 날짜 기준 요청 날짜 저장
 - 품목과 메모가 모두 비어 있으면 저장 차단
@@ -168,7 +168,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | `access_accounts` | 입장 비밀번호, 연결 사용자, 역할, 부서, 표시 이름 |
 | `app_settings` | 부서 DB 설정, 부서별 요청 카테고리, 보조 메모 등 설정 |
 | `orders` | 요청 날짜, 시간, 메모, 요청 메시지 |
-| `order_items` | 요청별 품목, 카테고리, 부서, 입고 상태 |
+| `order_items` | 요청별 품목, 카테고리, 부서, 출고/입고 상태 |
 | `order_memos` | 역할/부서별 요청 메모 |
 | `receipt_confirmations` | 입고 확인 기록 |
 | `department_confirmations` | 출고 확인 기록 |
@@ -195,7 +195,7 @@ Netlify DB 환경변수가 연결된 배포 환경에서는 PostgreSQL DB를 우
 | 테이블 | 주요 컬럼 |
 | --- | --- |
 | `orders` | `id` PK, `order_date`, `order_time`, `mode`, `employee`, `target`, `memo`, `message`, 생성자/접속 정보, `created_at`, `updated_at` |
-| `order_items` | `id` PK, `order_id` FK, `item_index`, `name`, `name_en`, `category`, `target`, `quantity`, `unit`, `received`, `restaurant_received`, 입고 처리자/접속 정보, `received_at` |
+| `order_items` | `id` PK, `order_id` FK, `item_index`, `name`, `name_en`, `category`, `target`, `quantity`, `unit`, `received`, `restaurant_received`, 출고/입고 상태, 처리자/접속 정보, `received_at` |
 | `order_memos` | `id` PK, `order_id` FK, `memo_index`, `role`, `department`, `author_label`, `memo_text`, 작성자/접속 정보, `created_at` |
 | `receipt_confirmations` | `id` UUID PK, `order_item_id` FK, `received`, `confirmed_by_identity_id`, `confirmed_ip`, `confirmed_user_agent`, `confirmed_at`, `memo` |
 | `department_confirmations` | `id` UUID PK, `order_item_id` FK, `department`, `confirmed`, `confirmed_by_identity_id`, `confirmed_ip`, `confirmed_user_agent`, `confirmed_at`, `memo` |
@@ -258,7 +258,7 @@ id,name,nameEn,section,description,descriptionEn,ingredients,ingredientsEn,seaso
 요청 내역:
 
 ```text
-날짜,시간,모드,요청자,주문부서,품목,품목영문,수량,단위,입고여부,메모
+날짜,시간,모드,요청자,주문부서,품목,품목영문,수량,단위,출고여부,입고여부,메모
 ```
 
 ## 테스트 방식
@@ -270,7 +270,7 @@ npm run test:user-flows
 npm run test:db-consistency
 ```
 
-- `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 홈 화면에서는 관리자/레스토랑 이동 컨트롤, 부서/카테고리 접기, 일반 부서 권한의 컨트롤 숨김도 확인합니다. 관리자 페이지에서는 부서 관리 영역 표시, 부서/비밀번호/데이터 백업 순서, 부서 목록 언어 표시, 숨겨진 CSV 백업 함수도 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
+- `test:user-flows`: 권한별 로그인 세션을 만들고 홈, 요청 내역, 요청하기, 메뉴, 레시피, 관리자 화면 렌더링과 접근 제한을 확인합니다. 홈 화면에서는 관리자/먹자 이동 컨트롤, 부서/카테고리 접기, 일반 부서 권한의 컨트롤 숨김도 확인합니다. 관리자 페이지에서는 부서 관리 영역 표시, 부서/비밀번호/데이터 백업 순서, 부서 목록 언어 표시, 숨겨진 CSV 백업 함수도 확인합니다. 테스트용 요청을 생성한 뒤 삭제합니다.
 - 요청하기 테스트는 요청 버튼 클릭 후 총 요청 품목 수, 부서별 메시지 3개, 카카오톡 열기 링크 3개가 생성되는지, 메시지에 카테고리 라인이 포함되는지, 메모만 저장, 빈 요청 차단, 취소 버튼 복구, 마지막 요청 업데이트, 재료 한글명/영문명 필수 입력, 부서별 카테고리/품목 중복 저장 차단, 부서/카테고리 접기, 카테고리 추가 아이콘, 부서별 `기타` 카테고리 보호가 동작하는지도 확인합니다.
 - 메뉴 테스트는 카테고리 접기/펼치기, 메뉴 한글명/영문명 필수 입력, 중복 메뉴명 저장 차단도 확인합니다.
 - `test:db-consistency`: 실제 DB에 임시 요청을 생성, 조회, 수정, 삭제하고 홈/요청 내역/상세 화면의 데이터 일관성을 확인합니다. 홈 저장 시 관리자/먹자는 입고 체크, 일반 부서는 출고 체크로 요청 내역에 반영되는지도 검증합니다. 요청 내역이 날짜 묶음 없이 최신순 일반 리스트로 표시되고 오래된 요청도 같은 목록 페이지에서 확인되는지도 검증합니다. `app_settings.departments` 부서 DB 설정과 부서별 `기타` 카테고리도 확인합니다.

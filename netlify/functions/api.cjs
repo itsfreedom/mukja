@@ -611,13 +611,22 @@ async function upsertOrder(client, entry, info) {
       item.received ? info.ip : null,
       item.received ? info.userAgent : null
     ]);
-    if (item.received) {
+    const dbItemId = itemDbId(id, item, index);
+    if (item.restaurantReceived) {
       await client.query(`
         insert into receipt_confirmations (
           order_item_id, received, confirmed_by_identity_id, confirmed_ip, confirmed_user_agent
         )
         values ($1, true, $2, $3, $4)
-      `, [itemDbId(id, item, index), info.memberId, info.ip, info.userAgent]);
+      `, [dbItemId, info.memberId, info.ip, info.userAgent]);
+    }
+    if (item.received) {
+      await client.query(`
+        insert into department_confirmations (
+          order_item_id, department, confirmed, confirmed_by_identity_id, confirmed_ip, confirmed_user_agent, confirmed_at
+        )
+        values ($1, $2, true, $3, $4, $5, now())
+      `, [dbItemId, item.target || "", info.memberId, info.ip, info.userAgent]);
     }
   }
   const memos = Array.isArray(entry.memos) ? entry.memos : [];

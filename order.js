@@ -4,7 +4,7 @@
   AppUI.registerServiceWorker();
 
   const session = Store.getAuth();
-  const canCreateRequest = ["restaurant", "admin"].includes(session?.role);
+  const canCreateRequest = Store.canCreateRequest(session);
   const canEditCatalog = session?.role === "admin";
   const selected = new Set();
   const editSelected = new Set();
@@ -1059,7 +1059,12 @@
       setStatus(I18n.t("chooseItemOrMemo"));
       return;
     }
-    const baseEntry = templateEntry && templateEntry.id !== "standalone-memos" ? templateEntry : null;
+    const todayEntry = Store.getHistory()
+      .slice()
+      .filter((entry) => entry.date === Store.today())
+      .sort((a, b) => String(b.updatedAt || b.createdAt || `${b.date}T${b.time || "00:00"}`)
+        .localeCompare(String(a.updatedAt || a.createdAt || `${a.date}T${a.time || "00:00"}`)))[0] || null;
+    const baseEntry = todayEntry || (templateEntry && templateEntry.id !== "standalone-memos" && templateEntry.date === Store.today() ? templateEntry : null);
     const memos = mergeMemos(baseEntry, memo);
     const entry = {
       ...(baseEntry || {}),
