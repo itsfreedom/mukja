@@ -544,6 +544,8 @@ function parseBody(event) {
 }
 
 function itemDbId(orderId, item, index) {
+  const existing = String(item?.id || "");
+  if (existing.startsWith(`${orderId}-item-`)) return existing.slice(0, 180);
   const base = item.id || item.name || "item";
   return `${orderId}-item-${index}-${base}`.replace(/[^a-zA-Z0-9가-힣_.:-]/g, "-").slice(0, 180);
 }

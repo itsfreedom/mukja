@@ -18,6 +18,11 @@
     return ["admin", "restaurant"].includes(session?.role);
   }
 
+  function usesIncomingHomeCheck() {
+    return session?.role === "admin" ||
+      Store.normalizeTargetName(session?.department || session?.label) === "먹자";
+  }
+
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
@@ -247,16 +252,15 @@
   }
 
   function renderRows(items) {
-    const showRestaurantReceive = session?.role === "restaurant";
+    const checkField = usesIncomingHomeCheck() ? "restaurantReceived" : "received";
     return `
       <div class="item-section-list">
         ${items.map((item) => `
-          <label class="receive-row ${showRestaurantReceive ? "has-restaurant-receive" : ""}">
-            <input type="checkbox" data-receive="${item.id}" ${item.received ? "checked" : ""} ${showRestaurantReceive ? "disabled" : ""} />
+          <label class="receive-row">
+            <input type="checkbox" data-home-receive="${item.id}" data-home-receive-field="${checkField}" ${item[checkField] ? "checked" : ""} />
             <span class="receive-row-main">
               <strong>${I18n.itemName(item)}</strong>
             </span>
-            ${showRestaurantReceive ? `<input class="restaurant-receive-check" type="checkbox" data-restaurant-receive="${item.id}" ${item.restaurantReceived ? "checked" : ""} aria-label="${I18n.itemName(item)} 입고 확인" />` : ""}
           </label>
         `).join("")}
       </div>
@@ -544,19 +548,12 @@
       ${renderMemoPanel(entry)}
     `;
     bindHomeNavigation();
-    list.querySelectorAll("[data-receive]").forEach((input) => {
+    list.querySelectorAll("[data-home-receive]").forEach((input) => {
       input.addEventListener("change", () => {
-        const itemId = input.dataset.receive;
+        const itemId = input.dataset.homeReceive;
+        const field = input.dataset.homeReceiveField || (usesIncomingHomeCheck() ? "restaurantReceived" : "received");
         draftItems = draftItems.map((item) =>
-          item.id === itemId ? { ...item, received: input.checked } : item
-        );
-      });
-    });
-    list.querySelectorAll("[data-restaurant-receive]").forEach((input) => {
-      input.addEventListener("change", () => {
-        const itemId = input.dataset.restaurantReceive;
-        draftItems = draftItems.map((item) =>
-          item.id === itemId ? { ...item, restaurantReceived: input.checked } : item
+          item.id === itemId ? { ...item, [field]: input.checked } : item
         );
       });
     });
@@ -617,18 +614,13 @@
 
   function resetDraft() {
     draftItems = draftItems.map((item) =>
-      session?.role === "restaurant"
+      usesIncomingHomeCheck()
         ? { ...item, restaurantReceived: false }
         : { ...item, received: false }
     );
     const memo = document.getElementById("home-memo");
     if (memo) memo.value = "";
-    if (session?.role !== "restaurant") {
-      list.querySelectorAll("[data-receive]").forEach((input) => {
-        input.checked = false;
-      });
-    }
-    list.querySelectorAll("[data-restaurant-receive]").forEach((input) => {
+    list.querySelectorAll("[data-home-receive]").forEach((input) => {
       input.checked = false;
     });
     setStatus(I18n.t("resetDone"));

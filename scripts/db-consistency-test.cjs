@@ -15,7 +15,8 @@ const sessions = {
   restaurant: { role: "restaurant", department: "", label: "레스토랑" },
   cafeteria: { role: "department", department: "카페테리아", label: "카페테리아" },
   vegetable: { role: "department", department: "야채", label: "야채" },
-  grocery: { role: "department", department: "매장", label: "매장" }
+  grocery: { role: "department", department: "매장", label: "매장" },
+  mukja: { role: "department", department: "먹자", label: "먹자" }
 };
 const local = (file) => fs.readFile(path.join(cwd, file), "utf8");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -92,7 +93,8 @@ function testEntry(id, suffix = "", date = today(), time = "23:59") {
     items: [
       { id: `consistency-cafe-${suffix}`, name: "테스트 닭강정", nameKo: "테스트 닭강정", nameEn: "Test Gangjeong", category: "반조리", target: "카페테리아", quantity: "", unit: "", received: false, restaurantReceived: false },
       { id: `consistency-veg-${suffix}`, name: "테스트 두부", nameKo: "테스트 두부", nameEn: "Test Tofu", category: "두부", target: "야채", quantity: "", unit: "", received: false, restaurantReceived: false },
-      { id: `consistency-grocery-${suffix}`, name: "테스트 다시다", nameKo: "테스트 다시다", nameEn: "Test Powder", category: "분말", target: "매장", quantity: "", unit: "", received: false, restaurantReceived: false }
+      { id: `consistency-grocery-${suffix}`, name: "테스트 다시다", nameKo: "테스트 다시다", nameEn: "Test Powder", category: "분말", target: "매장", quantity: "", unit: "", received: false, restaurantReceived: false },
+      { id: `consistency-mukja-${suffix}`, name: "테스트 먹자", nameKo: "테스트 먹자", nameEn: "Test Mukja", category: "기타", target: "먹자", quantity: "", unit: "", received: false, restaurantReceived: false }
     ],
     memos: [
       { id: `consistency-memo-${suffix}`, role: "admin", department: "", authorLabel: "관리자", text: `DB 일관성 테스트 ${suffix}`, createdAt: new Date().toISOString() }
@@ -133,6 +135,40 @@ async function runPage(userName, file, query = "") {
     text: window.document.body.textContent.replace(/\s+/g, " ").trim(),
     pagerText: (window.document.querySelector("#history-pager")?.textContent || "").replace(/\s+/g, " ").trim(),
     errors
+  };
+}
+
+async function runHomeCheckSave(userName, itemIdPart = "") {
+  const html = await local("index.html");
+  const dom = new JSDOM(html, { url: `${site}/index.html`, runScripts: "outside-only", pretendToBeVisual: true });
+  const { window } = dom;
+  window.alert = () => {};
+  window.confirm = () => true;
+  window.URL.createObjectURL = () => "blob:test";
+  window.URL.revokeObjectURL = () => {};
+  window.matchMedia = () => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
+  window.fetch = async (url, options = {}) => fetch(String(url).startsWith("/api") ? `${site}${url}` : String(url), options);
+  Object.defineProperty(window.navigator, "serviceWorker", { configurable: true, value: { getRegistrations: async () => [], register: async () => ({ update: async () => {} }) } });
+  window.localStorage.setItem("restaurant_lang", "ko");
+  window.localStorage.setItem("restaurant_auth", JSON.stringify({ ...sessions[userName], signedInAt: new Date().toISOString() }));
+  for (const script of ["storage.js", "i18n.js", "app.js"]) {
+    window.eval(`${await local(script)}\n//# sourceURL=${script}`);
+  }
+  await waitUntil(() => (window.document.querySelector("#home-request-list")?.textContent || "").trim());
+  const checkboxes = Array.from(window.document.querySelectorAll("[data-home-receive]"));
+  const checkbox = itemIdPart
+    ? checkboxes.find((input) => String(input.dataset.homeReceive || "").includes(itemIdPart))
+    : checkboxes[0];
+  if (!checkbox) return { ok: false, error: "missing home checkbox" };
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new window.Event("change", { bubbles: true }));
+  window.document.querySelector("#home-save")?.click();
+  await waitUntil(() => (window.document.querySelector("#home-status")?.textContent || "").trim());
+  return {
+    ok: true,
+    itemId: checkbox.dataset.homeReceive,
+    field: checkbox.dataset.homeReceiveField,
+    status: window.document.querySelector("#home-status")?.textContent || ""
   };
 }
 
@@ -180,6 +216,21 @@ function assertCheck(report, check, ok, detail = "") {
 
     const homeGrocery = await runPage("grocery", "index.html");
     assertCheck(report, "grocery home filters and shows powder category", homeGrocery.text.includes("분말") && homeGrocery.text.includes("테스트 다시다") && !homeGrocery.text.includes("테스트 두부"));
+
+    const adminHomeSave = await runHomeCheckSave("admin", "consistency-cafe-update");
+    const afterAdminHomeSave = ((await req("/history")).history || []).find((entry) => entry.id === id);
+    const adminSavedItem = afterAdminHomeSave?.items?.find((item) => item.id === adminHomeSave.itemId);
+    assertCheck(report, "admin home check saves incoming flag", adminHomeSave.field === "restaurantReceived" && adminSavedItem?.restaurantReceived === true && adminSavedItem?.received === false, `field=${adminHomeSave.field}`);
+
+    const mukjaHomeSave = await runHomeCheckSave("mukja", "consistency-mukja-update");
+    const afterMukjaHomeSave = ((await req("/history")).history || []).find((entry) => entry.id === id);
+    const mukjaSavedItem = afterMukjaHomeSave?.items?.find((item) => item.id === mukjaHomeSave.itemId);
+    assertCheck(report, "mukja home check saves incoming flag", mukjaHomeSave.field === "restaurantReceived" && mukjaSavedItem?.restaurantReceived === true && mukjaSavedItem?.received === false, `field=${mukjaHomeSave.field}`);
+
+    const cafeteriaHomeSave = await runHomeCheckSave("cafeteria", "consistency-cafe-update");
+    const afterDepartmentHomeSave = ((await req("/history")).history || []).find((entry) => entry.id === id);
+    const departmentSavedItem = afterDepartmentHomeSave?.items?.find((item) => item.id === cafeteriaHomeSave.itemId);
+    assertCheck(report, "department home check saves outgoing flag", cafeteriaHomeSave.field === "received" && departmentSavedItem?.received === true, `field=${cafeteriaHomeSave.field}`);
 
     const historyList = await runPage("admin", "history.html");
     assertCheck(report, "history list shows created request", historyList.text.includes(requestDate) && historyList.text.includes(requestTime));
