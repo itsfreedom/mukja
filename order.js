@@ -114,7 +114,6 @@
   function memoLabel(memo) {
     if (memo.authorLabel) return I18n.roleLabel(memo.authorLabel);
     if (memo.department) return I18n.targetLabel(memo.department);
-    if (memo.role === "restaurant") return I18n.roleLabel("레스토랑");
     if (memo.role === "admin") return I18n.roleLabel("관리자");
     return I18n.t("memo");
   }
@@ -914,14 +913,12 @@
 
   function memoSlot(memo) {
     if (memo?.role === "admin" || Store.normalizeTargetName(memo?.authorLabel) === "관리자") return "admin";
-    if (memo?.role === "restaurant" || Store.normalizeTargetName(memo?.authorLabel) === "레스토랑") return "restaurant";
     const department = Store.normalizeTargetName(memo?.department || memo?.authorLabel);
     return department ? `department:${department}` : "other";
   }
 
   function sessionMemoSlot() {
     if (session?.role === "admin") return "admin";
-    if (session?.role === "restaurant") return "restaurant";
     const department = Store.normalizeTargetName(session?.department || session?.label);
     return department ? `department:${department}` : "other";
   }

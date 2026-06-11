@@ -12,7 +12,6 @@ const apiHeaders = {
 };
 const sessions = {
   admin: { role: "admin", department: "", label: "관리자" },
-  restaurant: { role: "restaurant", department: "", label: "레스토랑" },
   cafeteria: { role: "department", department: "카페테리아", label: "카페테리아" },
   vegetable: { role: "department", department: "야채", label: "야채" },
   grocery: { role: "department", department: "매장", label: "매장" },
@@ -201,7 +200,7 @@ function assertCheck(report, check, ok, detail = "") {
 
     const updated = testEntry(id, "update", requestDate, requestTime);
     updated.items = updated.items.map((item) => item.target === "매장" ? { ...item, received: true, restaurantReceived: true } : item);
-    updated.memos.push({ id: "consistency-memo-restaurant", role: "restaurant", department: "", authorLabel: "레스토랑", text: "레스토랑 업데이트 확인", createdAt: new Date().toISOString() });
+    updated.memos.push({ id: "consistency-memo-mukja", role: "department", department: "먹자", authorLabel: "먹자", text: "먹자 업데이트 확인", createdAt: new Date().toISOString() });
     await req("/history", { method: "POST", body: JSON.stringify({ entry: updated }) });
     const afterUpdateRows = ((await req("/history")).history || []).filter((entry) => entry.id === id);
     const afterUpdate = afterUpdateRows[0];

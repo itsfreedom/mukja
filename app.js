@@ -94,7 +94,6 @@
   function memoLabel(memo) {
     if (memo.authorLabel) return I18n.roleLabel(memo.authorLabel);
     if (memo.department) return I18n.targetLabel(memo.department);
-    if (memo.role === "restaurant") return I18n.roleLabel("레스토랑");
     if (memo.role === "admin") return I18n.roleLabel("관리자");
     return I18n.t("memo");
   }
@@ -107,7 +106,6 @@
     const author = normalizedLabel(memo.authorLabel);
     const department = normalizedLabel(memo.department);
     if (memo.role === "admin" || author === "관리자") return "admin";
-    if (memo.role === "restaurant" || author === "레스토랑") return "restaurant";
     const target = department || author;
     if (target) return `department:${target}`;
     return "other";
@@ -115,7 +113,6 @@
 
   function sessionMemoSlot() {
     if (session?.role === "admin") return "admin";
-    if (session?.role === "restaurant") return "restaurant";
     const department = normalizedLabel(session?.department || session?.label);
     if (department) return `department:${department}`;
     return "other";
@@ -127,13 +124,12 @@
       return { role: "department", department, label: department };
     }
     return {
-      admin: { role: "admin", department: "", label: "관리자" },
-      restaurant: { role: "restaurant", department: "", label: "레스토랑" }
+      admin: { role: "admin", department: "", label: "관리자" }
     }[slot] || { role: session?.role || "", department: session?.department || "", label: session?.label || "" };
   }
 
   function memoSlots() {
-    return ["admin", "restaurant", ...Store.getTargets().map((target) => `department:${target}`)];
+    return ["admin", ...Store.getTargets().map((target) => `department:${target}`)];
   }
 
   function orderedMemos(memos) {

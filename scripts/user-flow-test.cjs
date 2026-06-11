@@ -20,11 +20,11 @@ const pages = [
   { file: 'admin.html', script: 'admin.js' }
 ];
 const expectedHomeMemos = {
-  admin: ['레스토랑', '카페테리아', '야채', '매장', '먹자', '로드포드'],
-  mukja: ['관리자', '레스토랑', '카페테리아', '야채', '매장', '로드포드'],
-  cafeteria: ['관리자', '레스토랑', '야채', '매장', '먹자', '로드포드'],
-  vegetable: ['관리자', '레스토랑', '카페테리아', '매장', '먹자', '로드포드'],
-  grocery: ['관리자', '레스토랑', '카페테리아', '야채', '먹자', '로드포드']
+  admin: ['카페테리아', '야채', '매장', '먹자', '로드포드'],
+  mukja: ['관리자', '카페테리아', '야채', '매장', '로드포드'],
+  cafeteria: ['관리자', '야채', '매장', '먹자', '로드포드'],
+  vegetable: ['관리자', '카페테리아', '매장', '먹자', '로드포드'],
+  grocery: ['관리자', '카페테리아', '야채', '먹자', '로드포드']
 };
 const sharedScripts = ['storage.js', 'i18n.js'];
 const apiHeaders = {
@@ -89,7 +89,6 @@ function seededEntry(id) {
     ],
     memos: [
       { id: `${id}-memo-admin`, role: 'admin', department: '', authorLabel: '관리자', text: '기능 테스트 관리자 메모', createdAt: new Date().toISOString() },
-      { id: `${id}-memo-restaurant`, role: 'restaurant', department: '', authorLabel: '레스토랑', text: '기능 테스트 레스토랑 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-cafe`, role: 'department', department: '카페테리아', authorLabel: '카페테리아', text: '기능 테스트 카페테리아 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-veg`, role: 'department', department: '야채', authorLabel: '야채', text: '기능 테스트 야채 메모', createdAt: new Date().toISOString() },
       { id: `${id}-memo-grocery`, role: 'department', department: '매장', authorLabel: '매장', text: '기능 테스트 매장 메모', createdAt: new Date().toISOString() },

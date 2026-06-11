@@ -1,5 +1,5 @@
 (function () {
-  const appAssetVersion = "v205";
+  const appAssetVersion = "v206";
   const appDisplayVersion = "Version 1.0";
   const keys = {
     initialized: "restaurant_initialized",
@@ -395,14 +395,6 @@
               text: `관리자 테스트 메모 ${week + 1}-${day + 1}`,
               createdAt: `${dateForHistory(week, day)}T09:30:00.000Z`
             },
-            {
-              id: `memo-test-restaurant-${week}-${day}`,
-              role: "restaurant",
-              department: "",
-              authorLabel: "레스토랑",
-              text: `레스토랑 테스트 메모 ${week + 1}-${day + 1}`,
-              createdAt: `${dateForHistory(week, day)}T09:40:00.000Z`
-            },
             ...["카페테리아", "야채", "매장", "먹자"].map((target, index) => ({
               id: `memo-test-dept-${week}-${day}-${index}`,
               role: "department",
@@ -539,7 +531,6 @@
   function roleBadgeLabel(value, role = "") {
     const target = normalizeTargetName(value);
     if (role === "admin" || target === "관리자") return "A";
-    if (role === "restaurant" || target === "레스토랑") return "R";
     if (target === "카페테리아") return "C";
     if (target === "야채") return "V";
     if (target === "매장") return "G";
@@ -550,7 +541,6 @@
   function roleBadgeColor(value, role = "") {
     const target = normalizeTargetName(value);
     if (role === "admin" || target === "관리자") return "#f26b7a";
-    if (role === "restaurant" || target === "레스토랑") return "#ffd861";
     if (target === "카페테리아") return "#8a5a35";
     if (target === "야채") return "#2f8f4e";
     if (target === "매장") return "#e87a22";
@@ -560,7 +550,7 @@
 
   function roleBadgeTextColor(value, role = "") {
     const target = normalizeTargetName(value);
-    return target === "먹자" || role === "restaurant" || target === "레스토랑" ? "#10131f" : "#ffffff";
+    return target === "먹자" ? "#10131f" : "#ffffff";
   }
 
   function normalizeDepartment(row, index = 0) {

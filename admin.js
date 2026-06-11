@@ -32,13 +32,11 @@
 
   function roleValue(account = {}) {
     if (account.role === "admin") return "admin";
-    if (account.role === "restaurant") return "restaurant";
     return `department:${Store.normalizeTargetName(account.department || account.label || Store.getTargets()[0] || "카페테리아")}`;
   }
 
   function roleFromValue(value) {
     if (value === "admin") return { role: "admin", department: "", label: "관리자" };
-    if (value === "restaurant") return { role: "restaurant", department: "", label: "레스토랑" };
     const department = Store.normalizeTargetName(String(value || "").replace(/^department:/, "")) || Store.getTargets()[0] || "카페테리아";
     return { role: "department", department, label: department };
   }
@@ -46,7 +44,6 @@
   function roleOptions(selected = `department:${Store.getTargets()[0] || "카페테리아"}`) {
     return [
       ...Store.getTargets().map((name) => [`department:${name}`, name]),
-      ["restaurant", "레스토랑"],
       ["admin", "관리자"]
     ].map(([value, label]) => `<option value="${value}" ${value === selected ? "selected" : ""}>${I18n.roleLabel(label)}</option>`).join("");
   }
